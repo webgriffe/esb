@@ -99,6 +99,9 @@ PHP;
 
     private function keepWorkerProcessAlive(Process $process)
     {
+        // Here we keep the worker process alive forever without any check. Maybe there should be an improved logic
+        // which logs when a specific worker keeps crashing.
+        // TODO Improve keep alive worker process checks
         if ($process->isRunning()) {
             return;
         }
