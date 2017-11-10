@@ -1,16 +1,31 @@
 <?php
 
-namespace Webgriffe\Esb;
+namespace Webgriffe\Esb\Service;
 
 use Symfony\Component\Process\PhpProcess;
 use Symfony\Component\Process\Process;
+use Webgriffe\Esb\WorkerInterface;
 
 class WorkerManager
 {
     /**
+     * @var string
+     */
+    private $autoloaderPath;
+
+    /**
      * @var WorkerInterface[]
      */
     private $workers = [];
+
+    /**
+     * WorkerManager constructor.
+     * @param string $autoloaderPath
+     */
+    public function __construct($autoloaderPath)
+    {
+        $this->autoloaderPath = $autoloaderPath;
+    }
 
     public function startAllWorkers()
     {
@@ -37,19 +52,19 @@ class WorkerManager
         $this->workers[$worker->getCode()] = $worker;
     }
 
-    public function getWorkerByCode($code)
+    public function getWorkerByCode($code): WorkerInterface
     {
         return $this->workers[$code];
     }
 
-    private function getChildWorkerProcessCode()
+    private function getChildWorkerProcessCode(): string
     {
         return <<<'PHP'
 <?php
 
 use Webgriffe\Esb\Kernel;
 use Webgriffe\Esb\WorkerInterface;
-use Webgriffe\Esb\WorkerManager;
+use Webgriffe\Esb\Service\WorkerManager;
 
 require_once getenv('AUTOLOADER');
 
@@ -57,7 +72,7 @@ $workerCode = getenv('WORKER_CODE');
 
 $kernel = new Kernel();
 /** @var WorkerManager $workerManager */
-$workerManager = $kernel->getContainer()->get('worker_manager');
+$workerManager = $kernel->getContainer()->get(WorkerManager::class);
 
 $worker = $workerManager->getWorkerByCode($workerCode);
 $worker->work();
@@ -70,12 +85,12 @@ PHP;
      * @throws \Symfony\Component\Process\Exception\RuntimeException
      * @throws \Symfony\Component\Process\Exception\LogicException
      */
-    private function startWorkerProcess(WorkerInterface $worker)
+    private function startWorkerProcess(WorkerInterface $worker): PhpProcess
     {
         $process = new PhpProcess(
             $this->getChildWorkerProcessCode(),
             null,
-            ['WORKER_CODE' => $worker->getCode(), 'AUTOLOADER' => __DIR__ . '/../vendor/autoload.php'],
+            ['WORKER_CODE' => $worker->getCode(), 'AUTOLOADER' => $this->autoloaderPath],
             null
         );
         $process->start();
@@ -87,7 +102,6 @@ PHP;
         if ($process->isRunning()) {
             return;
         }
-        echo 'Worker crashed... Restart!';
         $process->restart();
     }
 }

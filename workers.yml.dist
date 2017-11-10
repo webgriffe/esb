@@ -1,8 +1,0 @@
-services:
-  _defaults:
-    autoconfigure: true
-
-#  Define your workers here
-#  worker1:
-#    class:     \Webgriffe\Esb\Worker1
-#    arguments: []

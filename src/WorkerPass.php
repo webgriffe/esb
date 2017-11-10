@@ -5,6 +5,7 @@ namespace Webgriffe\Esb;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
+use Webgriffe\Esb\Service\WorkerManager;
 
 class WorkerPass implements CompilerPassInterface
 {
@@ -16,11 +17,11 @@ class WorkerPass implements CompilerPassInterface
      */
     public function process(ContainerBuilder $container)
     {
-        if (!$container->has('worker_manager')) {
+        if (!$container->has(WorkerManager::class)) {
             return;
         }
 
-        $definition = $container->findDefinition('worker_manager');
+        $definition = $container->findDefinition(WorkerManager::class);
 
         // find all service IDs with the app.mail_transport tag
         $taggedServices = $container->findTaggedServiceIds(Kernel::WORKER_TAG);

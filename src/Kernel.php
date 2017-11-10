@@ -33,6 +33,5 @@ class Kernel
     {
         $loader = new YamlFileLoader($this->container, new FileLocator(dirname(__DIR__)));
         $loader->load('config.yml');
-        $loader->load('workers.yml');
     }
 }

@@ -2,9 +2,9 @@
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use Pheanstalk\Pheanstalk;
+$kernel = new \Webgriffe\Esb\Kernel();
 
-$pheanstalk = new Pheanstalk('127.0.0.1', 32768);
+$pheanstalk = $kernel->getContainer()->get(\Pheanstalk\PheanstalkInterface::class)
 
 $pheanstalk
     ->useTube('testtube')
