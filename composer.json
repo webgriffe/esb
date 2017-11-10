@@ -1,22 +1,36 @@
 {
     "name": "webgriffe/esb",
     "type": "project",
+    "authors": [
+        {
+            "name": "Webgriffe SRL",
+            "email": "support@webgriffe.com"
+        }
+    ],
     "require": {
         "pda/pheanstalk": "^3.1",
         "symfony/dependency-injection": "^3.3",
         "symfony/config": "^3.3",
         "symfony/yaml": "^3.3",
-        "symfony/process": "^3.3"
+        "symfony/process": "^3.3",
+        "incenteev/composer-parameter-handler": "^2.1"
     },
     "autoload": {
         "psr-4": {
             "Webgriffe\\Esb\\": "src/"
         }
     },
-    "authors": [
-        {
-            "name": "Webgriffe SRL",
-            "email": "support@webgriffe.com"
+    "scripts": {
+        "post-install-cmd": [
+            "Incenteev\\ParameterHandler\\ScriptHandler::buildParameters"
+        ],
+        "post-update-cmd": [
+            "Incenteev\\ParameterHandler\\ScriptHandler::buildParameters"
+        ]
+    },
+    "extra": {
+        "incenteev-parameters": {
+            "file": "parameters.yml"
         }
-    ]
+    }
 }
