@@ -5,6 +5,7 @@ namespace Webgriffe\Esb;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
+use Webgriffe\Esb\Service\Worker\WorkerInterface;
 
 class Kernel
 {

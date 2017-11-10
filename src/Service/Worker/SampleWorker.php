@@ -4,7 +4,6 @@ namespace Webgriffe\Esb\Service\Worker;
 
 use Pheanstalk\Job;
 use Pheanstalk\PheanstalkInterface;
-use Webgriffe\Esb\WorkerInterface;
 
 /**
  * This is a sample worker which simply writes job data to the /tmp/sample_worker.data file

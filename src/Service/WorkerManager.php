@@ -4,7 +4,7 @@ namespace Webgriffe\Esb\Service;
 
 use Symfony\Component\Process\PhpProcess;
 use Symfony\Component\Process\Process;
-use Webgriffe\Esb\WorkerInterface;
+use Webgriffe\Esb\Service\Worker\WorkerInterface;
 
 class WorkerManager
 {
@@ -63,7 +63,7 @@ class WorkerManager
 <?php
 
 use Webgriffe\Esb\Kernel;
-use Webgriffe\Esb\WorkerInterface;
+use Webgriffe\Esb\Service\Worker\WorkerInterface;
 use Webgriffe\Esb\Service\WorkerManager;
 
 require_once getenv('AUTOLOADER');

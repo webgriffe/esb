@@ -1,6 +1,6 @@
 <?php
 
-namespace Webgriffe\Esb;
+namespace Webgriffe\Esb\Service\Worker;
 
 interface WorkerInterface
 {
