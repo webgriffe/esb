@@ -17,8 +17,9 @@ class Kernel
     {
         $this->container = new ContainerBuilder();
         $this->container->registerForAutoconfiguration(WorkerInterface::class)->addTag(self::WORKER_TAG);
-        $this->configureContainer();
         $this->container->addCompilerPass(new WorkerPass());
+        $loader = new YamlFileLoader($this->container, new FileLocator(dirname(__DIR__)));
+        $loader->load('config.yml');
         $this->container->compile();
     }
 
@@ -28,11 +29,5 @@ class Kernel
     public function getContainer()
     {
         return $this->container;
-    }
-
-    private function configureContainer()
-    {
-        $loader = new YamlFileLoader($this->container, new FileLocator(dirname(__DIR__)));
-        $loader->load('config.yml');
     }
 }
