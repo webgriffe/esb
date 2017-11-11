@@ -16,9 +16,7 @@ services:
   Webgriffe\Esb\Service\:
     resource: 'src/Service/*'
 
-  Pheanstalk\PheanstalkInterface:
-    class: \Pheanstalk\Pheanstalk
-    arguments: [ '%beanstalkd_host%', '%beanstalkd_port%', '%beanstalkd_timeout%', '%beanstalkd_persistent%' ]
-
-  Webgriffe\Esb\Service\WorkerManager:
-    arguments: [ '%autoloader_path%' ]
+  Amp\Beanstalk\BeanstalkClient:
+    class: \Amp\Beanstalk\BeanstalkClient
+    arguments: [ '%beanstalkd%' ]
+    shared: false

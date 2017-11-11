@@ -2,8 +2,7 @@
 
 namespace Webgriffe\Esb\Service\Worker;
 
-use Pheanstalk\Job;
-use Pheanstalk\PheanstalkInterface;
+use Amp\Beanstalk\BeanstalkClient;
 
 /**
  * This is a sample worker which simply writes job data to the /tmp/sample_worker.data file
@@ -13,37 +12,28 @@ class SampleWorker implements WorkerInterface
     const TUBE = 'sample_tube';
 
     /**
-     * @var PheanstalkInterface
+     * @var BeanstalkClient
      */
-    private $pheanstalk;
+    private $beanstalk;
 
     /**
      * SampleWorker constructor.
-     * @param PheanstalkInterface $pheanstalk
+     * @param BeanstalkClient $beanstalkClient
      */
-    public function __construct(PheanstalkInterface $pheanstalk)
+    public function __construct(BeanstalkClient $beanstalkClient)
     {
-        $this->pheanstalk = $pheanstalk;
+        $this->beanstalk = $beanstalkClient;
     }
 
     public function work()
     {
-        while (true) {
-            /** @var Job $job */
-            $job = $this->pheanstalk
-                ->watch(self::TUBE)
-                ->ignore(PheanstalkInterface::DEFAULT_TUBE)
-                ->reserve();
-            file_put_contents('/tmp/sample_worker.data', date('c') . ' - ' . $job->getData());
-            $this->pheanstalk->delete($job);
+        $this->beanstalk->ignore('default');
+        $this->beanstalk->watch(self::TUBE);
+        $filename = '/tmp/sample_worker.data';
+        touch($filename);
+        while ($job = yield $this->beanstalk->reserve()) {
+            file_put_contents($filename, date('c') . ' - ' . $job[1] . PHP_EOL, FILE_APPEND);
+            $this->beanstalk->delete($job[0]);
         }
-    }
-
-    /**
-     * @return string
-     */
-    public function getCode()
-    {
-        return 'sample_worker';
     }
 }

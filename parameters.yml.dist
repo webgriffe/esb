@@ -1,6 +1,2 @@
 parameters:
-  autoloader_path: /absolute/path/to/vendor/autoload.php
-  beanstalkd_host: 127.0.0.1
-  beanstalkd_port: 11300
-  beanstalkd_timeout: ~
-  beanstalkd_persistent: false
+  beanstalkd: tcp://127.0.0.1:11300
