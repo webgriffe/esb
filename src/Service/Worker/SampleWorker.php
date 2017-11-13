@@ -27,8 +27,8 @@ class SampleWorker implements WorkerInterface
 
     public function work()
     {
-        $this->beanstalk->ignore('default');
-        $this->beanstalk->watch(self::TUBE);
+        yield $this->beanstalk->watch(self::TUBE);
+        yield $this->beanstalk->ignore('default');
         $filename = '/tmp/sample_worker.data';
         touch($filename);
         while ($job = yield $this->beanstalk->reserve()) {
