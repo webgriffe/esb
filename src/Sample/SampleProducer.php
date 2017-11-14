@@ -1,8 +1,9 @@
 <?php
 
-namespace Webgriffe\Esb\Service\Producer;
+namespace Webgriffe\Esb\Sample;
 
-use Webgriffe\Esb\Service\Worker\SampleWorker;
+use Webgriffe\Esb\RepeatProducerInterface;
+use Webgriffe\Esb\Sample\SampleWorker;
 
 class SampleProducer implements RepeatProducerInterface
 {

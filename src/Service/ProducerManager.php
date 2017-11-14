@@ -4,8 +4,8 @@ namespace Webgriffe\Esb\Service;
 
 use Amp\Beanstalk\BeanstalkClient;
 use Amp\Loop;
-use Webgriffe\Esb\Service\Producer\ProducerInterface;
-use Webgriffe\Esb\Service\Producer\RepeatProducerInterface;
+use Webgriffe\Esb\ProducerInterface;
+use Webgriffe\Esb\RepeatProducerInterface;
 
 class ProducerManager
 {

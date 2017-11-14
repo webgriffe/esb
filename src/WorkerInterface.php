@@ -1,6 +1,6 @@
 <?php
 
-namespace Webgriffe\Esb\Service\Worker;
+namespace Webgriffe\Esb;
 
 use Webgriffe\Esb\Model\Job;
 

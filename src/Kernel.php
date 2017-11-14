@@ -6,9 +6,7 @@ use Amp\Loop;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
-use Webgriffe\Esb\Service\Producer\ProducerInterface;
 use Webgriffe\Esb\Service\ProducerManager;
-use Webgriffe\Esb\Service\Worker\WorkerInterface;
 use Webgriffe\Esb\Service\WorkerManager;
 
 class Kernel
@@ -18,7 +16,7 @@ class Kernel
 
     private $container;
 
-    public function __construct()
+    public function __construct(string $localConfig)
     {
         $this->container = new ContainerBuilder();
         $this->container->registerForAutoconfiguration(WorkerInterface::class)->addTag(self::WORKER_TAG);
@@ -26,7 +24,8 @@ class Kernel
         $this->container->addCompilerPass(new WorkerPass());
         $this->container->addCompilerPass(new ProducerPass());
         $loader = new YamlFileLoader($this->container, new FileLocator(dirname(__DIR__)));
-        $loader->load('config.yml');
+        $loader->load($localConfig);
+        $loader->load('services.yml');
         $this->container->compile();
     }
 

@@ -1,0 +1,6 @@
+parameters:
+  beanstalkd: tcp://127.0.0.1:11300
+
+services:
+  My\Esb\Namespace\:
+    resource: 'src/*'

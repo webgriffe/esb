@@ -1,6 +1,6 @@
 <?php
 
-namespace Webgriffe\Esb\Service\Producer;
+namespace Webgriffe\Esb;
 
 interface ProducerInterface
 {

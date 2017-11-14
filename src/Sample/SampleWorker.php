@@ -1,8 +1,9 @@
 <?php
 
-namespace Webgriffe\Esb\Service\Worker;
+namespace Webgriffe\Esb\Sample;
 
 use Webgriffe\Esb\Model\Job;
+use Webgriffe\Esb\WorkerInterface;
 
 /**
  * This is a sample worker which simply writes job data to the /tmp/sample_worker.data file

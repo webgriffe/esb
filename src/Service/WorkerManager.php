@@ -5,7 +5,7 @@ namespace Webgriffe\Esb\Service;
 use Amp\Beanstalk\BeanstalkClient;
 use Amp\Loop;
 use Webgriffe\Esb\Model\Job;
-use Webgriffe\Esb\Service\Worker\WorkerInterface;
+use Webgriffe\Esb\WorkerInterface;
 
 class WorkerManager
 {
@@ -15,7 +15,7 @@ class WorkerManager
     private $beanstalk;
 
     /**
-     * @var WorkerInterface[]
+     * @var \Webgriffe\Esb\WorkerInterface[]
      */
     private $workers = [];
 
