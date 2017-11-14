@@ -24,7 +24,7 @@ class Kernel
         $this->container->addCompilerPass(new WorkerPass());
         $this->container->addCompilerPass(new ProducerPass());
         $loader = new YamlFileLoader($this->container, new FileLocator(dirname(__DIR__)));
-        $loader->load($localConfig);
+        $loader->load(rtrim(getcwd(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $localConfig);
         $loader->load('services.yml');
         $this->container->compile();
     }

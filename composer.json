@@ -17,5 +17,8 @@
         "psr-4": {
             "Webgriffe\\Esb\\": "src/"
         }
-    }
+    },
+    "bin": [
+        "bin/esb"
+    ]
 }

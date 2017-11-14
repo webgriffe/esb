@@ -2,5 +2,10 @@ parameters:
   beanstalkd: tcp://127.0.0.1:11300
 
 services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: true
+
   My\Esb\Namespace\:
     resource: 'src/*'
