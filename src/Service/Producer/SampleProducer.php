@@ -2,53 +2,66 @@
 
 namespace Webgriffe\Esb\Service\Producer;
 
-use Amp\Beanstalk\BeanstalkClient;
-use function Amp\File\isdir;
-use Amp\Loop;
 use Webgriffe\Esb\Service\Worker\SampleWorker;
 
-class SampleProducer implements ProducerInterface
+class SampleProducer implements RepeatProducerInterface
 {
     /**
-     * @var BeanstalkClient
+     * @return string
      */
-    private $beanstalk;
-
-    /**
-     * SampleProducer constructor.
-     * @param BeanstalkClient $beanstalk
-     */
-    public function __construct(BeanstalkClient $beanstalk)
+    public function getTube(): string
     {
-        $this->beanstalk = $beanstalk;
+        return SampleWorker::TUBE;
     }
 
     /**
-     * @return void
-     * @throws \RuntimeException
+     * @return array
      */
-    public function produce()
+    public function produce(): array
     {
-        Loop::repeat(1000, function () {
-            $dir = '/tmp/sample_producer';
-            if (!is_dir($dir)) {
-                if (!mkdir($dir) && !is_dir($dir)) {
-                    throw new \RuntimeException(sprintf('Directory "%s" was not created', $dir));
-                }
+        $dir = '/tmp/sample_producer';
+        if (!is_dir($dir)) {
+            if (!mkdir($dir) && !is_dir($dir)) {
+                throw new \RuntimeException(sprintf('Directory "%s" was not created', $dir));
             }
-            $files = scandir($dir, SCANDIR_SORT_NONE);
-            foreach ($files as $file) {
-                $file = $dir . DIRECTORY_SEPARATOR . $file;
-                if (is_dir($file)) {
-                    continue;
-                }
-                $data = file_get_contents($file);
-                yield $this->beanstalk->use(SampleWorker::TUBE);
-                $jobId = yield $this->beanstalk->put($data);
-                if ($jobId) {
-                    \Amp\File\unlink($file);
-                }
+        }
+        $files = scandir($dir, SCANDIR_SORT_NONE);
+        $payloads = [];
+        foreach ($files as $file) {
+            $file = $dir . DIRECTORY_SEPARATOR . $file;
+            if (is_dir($file)) {
+                continue;
             }
-        });
+            $payloads[] = serialize(['file' => $file, 'data' => file_get_contents($file)]);
+        }
+        return $payloads;
+    }
+
+    /**
+     * @param string $payload
+     * @return void
+     */
+    public function onProduceSuccess(string $payload)
+    {
+        $payload = unserialize($payload);
+        unlink($payload['file']);
+    }
+
+    /**
+     * @param string $payload
+     * @param \Exception $exception
+     * @return void
+     */
+    public function onProduceFail(string $payload, \Exception $exception)
+    {
+        // TODO: Implement onProduceFail() method.
+    }
+
+    /**
+     * @return int
+     */
+    public function getInterval(): int
+    {
+        return 1000;
     }
 }

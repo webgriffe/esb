@@ -2,15 +2,31 @@
 
 namespace Webgriffe\Esb\Service;
 
+use Amp\Beanstalk\BeanstalkClient;
 use Amp\Loop;
 use Webgriffe\Esb\Service\Producer\ProducerInterface;
+use Webgriffe\Esb\Service\Producer\RepeatProducerInterface;
 
 class ProducerManager
 {
     /**
+     * @var BeanstalkClient
+     */
+    private $beanstalk;
+
+    /**
      * @var ProducerInterface[]
      */
     private $producers;
+
+    /**
+     * ProducerManager constructor.
+     * @param BeanstalkClient $beanstalk
+     */
+    public function __construct(BeanstalkClient $beanstalk)
+    {
+        $this->beanstalk = $beanstalk;
+    }
 
     public function bootProducers()
     {
@@ -21,7 +37,24 @@ class ProducerManager
 
         printf('Starting "%s" producers...' . PHP_EOL, count($this->producers));
         foreach ($this->producers as $producer) {
-            Loop::defer([$producer, 'produce']);
+            Loop::defer(function () use ($producer) {
+                if ($producer instanceof RepeatProducerInterface) {
+                    yield $this->beanstalk->use($producer->getTube());
+                    Loop::repeat($producer->getInterval(), function () use ($producer) {
+                        $payloads = $producer->produce();
+                        foreach ($payloads as $payload) {
+                            try {
+                                yield $this->beanstalk->put($payload);
+                                $producer->onProduceSuccess($payload);
+                            } catch (\Exception $e) {
+                                $producer->onProduceFail($payload, $e);
+                            }
+                        }
+                    });
+                } else {
+                    throw new \RuntimeException(sprintf('Unknown producer type "%s".', get_class($producer)));
+                }
+            });
         }
     }
 
