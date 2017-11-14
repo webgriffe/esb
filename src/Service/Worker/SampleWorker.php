@@ -2,7 +2,7 @@
 
 namespace Webgriffe\Esb\Service\Worker;
 
-use Amp\Beanstalk\BeanstalkClient;
+use Webgriffe\Esb\Model\Job;
 
 /**
  * This is a sample worker which simply writes job data to the /tmp/sample_worker.data file
@@ -12,28 +12,16 @@ class SampleWorker implements WorkerInterface
     const TUBE = 'sample_tube';
 
     /**
-     * @var BeanstalkClient
+     * @return string
      */
-    private $beanstalk;
-
-    /**
-     * SampleWorker constructor.
-     * @param BeanstalkClient $beanstalkClient
-     */
-    public function __construct(BeanstalkClient $beanstalkClient)
+    public function getTube(): string
     {
-        $this->beanstalk = $beanstalkClient;
+        return self::TUBE;
     }
 
-    public function work()
+    public function work(Job $job)
     {
-        yield $this->beanstalk->watch(self::TUBE);
-        yield $this->beanstalk->ignore('default');
         $filename = '/tmp/sample_worker.data';
-        touch($filename);
-        while ($job = yield $this->beanstalk->reserve()) {
-            file_put_contents($filename, date('c') . ' - ' . $job[1] . PHP_EOL, FILE_APPEND);
-            $this->beanstalk->delete($job[0]);
-        }
+        file_put_contents($filename, date('c') . ' - ' . $job->getPayload() . PHP_EOL, FILE_APPEND);
     }
 }
