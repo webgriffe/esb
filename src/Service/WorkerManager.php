@@ -4,7 +4,7 @@ namespace Webgriffe\Esb\Service;
 
 use Amp\Beanstalk\BeanstalkClient;
 use Amp\Loop;
-use Webgriffe\Esb\Model\Job;
+use Webgriffe\Esb\Model\QueuedJob;
 use Webgriffe\Esb\WorkerInterface;
 
 class WorkerManager
@@ -41,7 +41,7 @@ class WorkerManager
                 yield $this->beanstalk->watch($worker->getTube());
                 yield $this->beanstalk->ignore('default');
                 while ($rawJob = yield $this->beanstalk->reserve()) {
-                    $job = new Job($rawJob[0], $rawJob[1]);
+                    $job = new QueuedJob($rawJob[0], unserialize($rawJob[1]));
                     try {
                         $worker->work($job);
                         $this->beanstalk->delete($job->getId());

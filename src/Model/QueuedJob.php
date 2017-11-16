@@ -2,20 +2,35 @@
 
 namespace Webgriffe\Esb\Model;
 
-class Job
+class QueuedJob
 {
+    /**
+     * @var int
+     */
+    private $id;
+
     /**
      * @var array
      */
     private $payloadData;
 
     /**
-     * Job constructor.
+     * QueuedJob constructor.
+     * @param int $id
      * @param array $payloadData
      */
-    public function __construct(array $payloadData)
+    public function __construct(int $id, array $payloadData)
     {
+        $this->id = $id;
         $this->payloadData = $payloadData;
+    }
+
+    /**
+     * @return int
+     */
+    public function getId(): int
+    {
+        return $this->id;
     }
 
     /**

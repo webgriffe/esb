@@ -2,6 +2,8 @@
 
 namespace Webgriffe\Esb;
 
+use Webgriffe\Esb\Model\Job;
+
 interface ProducerInterface
 {
     /**
@@ -10,20 +12,20 @@ interface ProducerInterface
     public function getTube(): string;
 
     /**
-     * @return string[]
+     * @return Job[]
      */
     public function produce(): array;
 
     /**
-     * @param string $payload
+     * @param Job $job
      * @return void
      */
-    public function onProduceSuccess(string $payload);
+    public function onProduceSuccess(Job $job);
 
     /**
-     * @param string $payload
+     * @param Job $job
      * @param \Exception $exception
      * @return void
      */
-    public function onProduceFail(string $payload, \Exception $exception);
+    public function onProduceFail(Job $job, \Exception $exception);
 }

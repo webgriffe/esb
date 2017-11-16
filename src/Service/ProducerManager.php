@@ -41,13 +41,14 @@ class ProducerManager
                 if ($producer instanceof RepeatProducerInterface) {
                     yield $this->beanstalk->use($producer->getTube());
                     Loop::repeat($producer->getInterval(), function () use ($producer) {
-                        $payloads = $producer->produce();
-                        foreach ($payloads as $payload) {
+                        $jobs = $producer->produce();
+                        foreach ($jobs as $job) {
                             try {
+                                $payload = serialize($job->getPayloadData());
                                 yield $this->beanstalk->put($payload);
-                                $producer->onProduceSuccess($payload);
+                                $producer->onProduceSuccess($job);
                             } catch (\Exception $e) {
-                                $producer->onProduceFail($payload, $e);
+                                $producer->onProduceFail($job, $e);
                             }
                         }
                     });

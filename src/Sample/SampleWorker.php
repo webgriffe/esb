@@ -23,6 +23,6 @@ class SampleWorker implements WorkerInterface
     public function work(Job $job)
     {
         $filename = '/tmp/sample_worker.data';
-        file_put_contents($filename, date('c') . ' - ' . $job->getPayload() . PHP_EOL, FILE_APPEND);
+        file_put_contents($filename, date('c') . ' - ' . $job->getPayloadData() . PHP_EOL, FILE_APPEND);
     }
 }

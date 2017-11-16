@@ -2,7 +2,7 @@
 
 namespace Webgriffe\Esb;
 
-use Webgriffe\Esb\Model\Job;
+use Webgriffe\Esb\Model\QueuedJob;
 
 interface WorkerInterface
 {
@@ -12,8 +12,8 @@ interface WorkerInterface
     public function getTube(): string;
 
     /**
-     * @param Job $job
+     * @param QueuedJob $job
      * @return void
      */
-    public function work(Job $job);
+    public function work(QueuedJob $job);
 }
