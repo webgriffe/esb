@@ -12,9 +12,9 @@ interface ProducerInterface
     public function getTube(): string;
 
     /**
-     * @return Job[]
+     * @return \Generator|Job[]
      */
-    public function produce(): array;
+    public function produce(): \Generator;
 
     /**
      * @param Job $job
