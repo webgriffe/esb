@@ -3,6 +3,7 @@
 namespace Webgriffe\Esb;
 
 use Amp\Loop;
+use Monolog\Logger;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
@@ -37,6 +38,7 @@ class Kernel
         /** @var ProducerManager $producerManager */
         $producerManager = $this->getContainer()->get(ProducerManager::class);
         $producerManager->bootProducers();
+        Loop::setErrorHandler([$this, 'errorHandler']);
         Loop::run();
     }
 
@@ -46,5 +48,21 @@ class Kernel
     public function getContainer()
     {
         return $this->container;
+    }
+
+    public function errorHandler(\Throwable $exception)
+    {
+        /** @var Logger $logger */
+        $logger = $this->container->get(Logger::class);
+        $logger->error(
+            'An error occurred...',
+            [
+                'code' => $exception->getCode(),
+                'message' => $exception->getMessage(),
+                'file' => $exception->getFile(),
+                'line' => $exception->getLine(),
+                'trace' => $exception->getTrace()
+            ]
+        );
     }
 }

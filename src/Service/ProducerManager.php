@@ -5,6 +5,7 @@ namespace Webgriffe\Esb\Service;
 use Amp\Beanstalk\BeanstalkClient;
 use Amp\Loop;
 use Monolog\Logger;
+use Webgriffe\Esb\Model\Job;
 use Webgriffe\Esb\ProducerInterface;
 use Webgriffe\Esb\RepeatProducerInterface;
 
@@ -51,10 +52,15 @@ class ProducerManager
                     Loop::repeat($producer->getInterval(), function ($watcherId) use ($producer) {
                         Loop::disable($watcherId);
                         $jobs = $producer->produce();
-                        foreach ($jobs as $job) {
+                        /** @var Job $job */
+                        foreach($jobs as $job) {
                             try {
                                 $payload = serialize($job->getPayloadData());
                                 yield $this->beanstalk->put($payload);
+                                $this->logger->info(
+                                    'Successfully produced a new Job',
+                                    ['producer' => get_class($producer), 'payload_data' => $job->getPayloadData()]
+                                );
                                 $producer->onProduceSuccess($job);
                             } catch (\Exception $e) {
                                 $this
@@ -63,8 +69,8 @@ class ProducerManager
                                         'An error occurred producing a job.',
                                         [
                                             'producer' => get_class($producer),
+                                            'payload_data' => $job->getPayloadData(),
                                             'error' => $e->getMessage(),
-                                            'payload_data' => $job->getPayloadData()
                                         ]
                                     );
                                 $producer->onProduceFail($job, $e);
