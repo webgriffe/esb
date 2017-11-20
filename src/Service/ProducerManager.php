@@ -48,7 +48,8 @@ class ProducerManager
             Loop::defer(function () use ($producer) {
                 if ($producer instanceof RepeatProducerInterface) {
                     yield $this->beanstalk->use($producer->getTube());
-                    Loop::repeat($producer->getInterval(), function () use ($producer) {
+                    Loop::repeat($producer->getInterval(), function ($watcherId) use ($producer) {
+                        Loop::disable($watcherId);
                         $jobs = $producer->produce();
                         foreach ($jobs as $job) {
                             try {
@@ -69,6 +70,7 @@ class ProducerManager
                                 $producer->onProduceFail($job, $e);
                             }
                         }
+                        Loop::enable($watcherId);
                     });
                 } else {
                     throw new \RuntimeException(sprintf('Unknown producer type "%s".', get_class($producer)));
