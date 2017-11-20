@@ -4,6 +4,7 @@ namespace Webgriffe\Esb\Service;
 
 use Amp\Beanstalk\BeanstalkClient;
 use Amp\Loop;
+use Monolog\Logger;
 use Webgriffe\Esb\Model\QueuedJob;
 use Webgriffe\Esb\WorkerInterface;
 
@@ -15,6 +16,11 @@ class WorkerManager
     private $beanstalk;
 
     /**
+     * @var Logger
+     */
+    private $logger;
+
+    /**
      * @var \Webgriffe\Esb\WorkerInterface[]
      */
     private $workers = [];
@@ -22,20 +28,22 @@ class WorkerManager
     /**
      * WorkerManager constructor.
      * @param BeanstalkClient $beanstalk
+     * @param Logger $logger
      */
-    public function __construct(BeanstalkClient $beanstalk)
+    public function __construct(BeanstalkClient $beanstalk, Logger $logger)
     {
         $this->beanstalk = $beanstalk;
+        $this->logger = $logger;
     }
 
     public function bootWorkers()
     {
         if (!count($this->workers)) {
-            printf('No workers to start.' . PHP_EOL);
+            $this->logger->notice('No workers to start.');
             return;
         }
 
-        printf('Starting "%s" workers...' . PHP_EOL, count($this->workers));
+        $this->logger->info(sprintf('Starting "%s" workers...', count($this->workers)));
         foreach ($this->workers as $worker) {
             Loop::defer(function () use ($worker){
                 yield $this->beanstalk->watch($worker->getTube());

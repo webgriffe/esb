@@ -17,3 +17,7 @@ services:
     class: \Amp\Beanstalk\BeanstalkClient
     arguments: [ '%beanstalkd%' ]
     shared: false
+
+  Monolog\Logger:
+    class: \Monolog\Logger
+    arguments: [ 'esb' ]

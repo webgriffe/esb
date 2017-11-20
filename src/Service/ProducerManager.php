@@ -4,6 +4,7 @@ namespace Webgriffe\Esb\Service;
 
 use Amp\Beanstalk\BeanstalkClient;
 use Amp\Loop;
+use Monolog\Logger;
 use Webgriffe\Esb\ProducerInterface;
 use Webgriffe\Esb\RepeatProducerInterface;
 
@@ -15,6 +16,11 @@ class ProducerManager
     private $beanstalk;
 
     /**
+     * @var Logger
+     */
+    private $logger;
+
+    /**
      * @var ProducerInterface[]
      */
     private $producers;
@@ -22,20 +28,22 @@ class ProducerManager
     /**
      * ProducerManager constructor.
      * @param BeanstalkClient $beanstalk
+     * @param Logger $logger
      */
-    public function __construct(BeanstalkClient $beanstalk)
+    public function __construct(BeanstalkClient $beanstalk, Logger $logger)
     {
         $this->beanstalk = $beanstalk;
+        $this->logger = $logger;
     }
 
     public function bootProducers()
     {
         if (!count($this->producers)) {
-            printf('No producer to start.' . PHP_EOL);
+            $this->logger->notice('No producer to start.');
             return;
         }
 
-        printf('Starting "%s" producers...' . PHP_EOL, count($this->producers));
+        $this->logger->info(sprintf('Starting "%s" producers...', count($this->producers)));
         foreach ($this->producers as $producer) {
             Loop::defer(function () use ($producer) {
                 if ($producer instanceof RepeatProducerInterface) {
@@ -48,6 +56,16 @@ class ProducerManager
                                 yield $this->beanstalk->put($payload);
                                 $producer->onProduceSuccess($job);
                             } catch (\Exception $e) {
+                                $this
+                                    ->logger
+                                    ->error(
+                                        'An error occurred producing a job.',
+                                        [
+                                            'producer' => get_class($producer),
+                                            'error' => $e->getMessage(),
+                                            'payload_data' => $job->getPayloadData()
+                                        ]
+                                    );
                                 $producer->onProduceFail($job, $e);
                             }
                         }
