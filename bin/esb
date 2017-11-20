@@ -23,9 +23,12 @@ if (!defined('AUTOLOADER')) {
 
 require_once AUTOLOADER;
 
-$config = $argv[1];
+$config = 'esb.yml';
+if (!file_exists($config)) {
+    $config = $argv[1];
+}
 if (!$config) {
-    echo 'Please provide the configuration file path.';
+    echo 'Please provide the configuration file esb.yml.' . PHP_EOL;
     exit(1);
 }
 
