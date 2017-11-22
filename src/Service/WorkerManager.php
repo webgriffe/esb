@@ -43,8 +43,8 @@ class WorkerManager
             return;
         }
 
-        $this->logger->info(sprintf('Starting "%s" workers...', count($this->workers)));
         foreach ($this->workers as $worker) {
+            $this->logger->info(sprintf('Starting worker "%s"...', get_class($worker)));
             Loop::defer(function () use ($worker){
                 yield $this->beanstalk->watch($worker->getTube());
                 yield $this->beanstalk->ignore('default');
@@ -52,9 +52,22 @@ class WorkerManager
                     $job = new QueuedJob($rawJob[0], unserialize($rawJob[1]));
                     try {
                         $worker->work($job);
+                        $this->logger->info(
+                            'Successfully worked a QueuedJob',
+                            ['worker' => get_class($worker), 'payload_data' => $job->getPayloadData()]
+                        );
                         $this->beanstalk->delete($job->getId());
                     } catch (\Exception $e) {
-                        // TODO worker failure error handling
+                        $this
+                            ->logger
+                            ->error(
+                                'An error occurred while working a job.',
+                                [
+                                    'worker' => get_class($worker),
+                                    'payload_data' => $job->getPayloadData(),
+                                    'error' => $e->getMessage(),
+                                ]
+                            );
                     }
                 }
             });

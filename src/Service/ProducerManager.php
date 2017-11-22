@@ -44,8 +44,8 @@ class ProducerManager
             return;
         }
 
-        $this->logger->info(sprintf('Starting "%s" producers...', count($this->producers)));
         foreach ($this->producers as $producer) {
+            $this->logger->info(sprintf('Starting producer "%s"...', get_class($producer)));
             Loop::defer(function () use ($producer) {
                 if ($producer instanceof RepeatProducerInterface) {
                     yield $this->beanstalk->use($producer->getTube());
