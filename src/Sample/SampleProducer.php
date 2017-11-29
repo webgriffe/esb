@@ -18,7 +18,7 @@ class SampleProducer implements RepeatProducerInterface
     /**
      * @return void
      */
-    public function init(): void
+    public function init()
     {
         // No init needed.
     }

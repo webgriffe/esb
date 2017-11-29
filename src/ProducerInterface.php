@@ -14,7 +14,7 @@ interface ProducerInterface
     /**
      * @return void
      */
-    public function init(): void;
+    public function init();
 
     /**
      * @return \Generator|Job[]
