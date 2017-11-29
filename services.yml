@@ -18,6 +18,14 @@ services:
     arguments: [ '%beanstalkd%' ]
     shared: false
 
+  Monolog\Handler\StreamHandler:
+    class: \Monolog\Handler\StreamHandler
+    arguments: [ 'php://stdout', !php/const:Monolog\Logger::DEBUG ]
+
+  Monolog\Handler\ErrorLogHandler:
+    class: \Monolog\Handler\ErrorLogHandler
+    arguments: [ !php/const:Monolog\Handler\ErrorLogHandler::OPERATING_SYSTEM, !php/const:Monolog\Logger::ERROR ]
+
   Monolog\Logger:
     class: \Monolog\Logger
-    arguments: [ 'esb' ]
+    arguments: [ 'esb', ['@Monolog\Handler\StreamHandler', '@Monolog\Handler\ErrorLogHandler'] ]
