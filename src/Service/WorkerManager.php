@@ -46,8 +46,9 @@ class WorkerManager
         }
 
         foreach ($this->workers as $worker) {
-            $this->logger->info(sprintf('Starting worker "%s"...', get_class($worker)));
             Loop::defer(function () use ($worker){
+                yield call([$worker, 'init']);
+                $this->logger->info(sprintf('Worker "%s" successfully initialized.', get_class($worker)));
                 yield $this->beanstalk->watch($worker->getTube());
                 yield $this->beanstalk->ignore('default');
                 while ($rawJob = yield $this->beanstalk->reserve()) {

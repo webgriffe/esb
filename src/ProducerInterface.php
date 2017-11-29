@@ -12,6 +12,11 @@ interface ProducerInterface
     public function getTube(): string;
 
     /**
+     * @return void
+     */
+    public function init(): void;
+
+    /**
      * @return \Generator|Job[]
      */
     public function produce(): \Generator;

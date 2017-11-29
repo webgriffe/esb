@@ -3,6 +3,7 @@
 namespace Webgriffe\Esb\Service;
 
 use Amp\Beanstalk\BeanstalkClient;
+use function Amp\call;
 use Amp\Loop;
 use Monolog\Logger;
 use Webgriffe\Esb\Model\Job;
@@ -45,8 +46,9 @@ class ProducerManager
         }
 
         foreach ($this->producers as $producer) {
-            $this->logger->info(sprintf('Starting producer "%s"...', get_class($producer)));
             Loop::defer(function () use ($producer) {
+                yield call([$producer, 'init']);
+                $this->logger->info(sprintf('Producer "%s" successfully initialized.', get_class($producer)));
                 if ($producer instanceof RepeatProducerInterface) {
                     yield $this->beanstalk->use($producer->getTube());
                     Loop::repeat($producer->getInterval(), function ($watcherId) use ($producer) {

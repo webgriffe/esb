@@ -12,6 +12,11 @@ interface WorkerInterface
     public function getTube(): string;
 
     /**
+     * @return void
+     */
+    public function init();
+
+    /**
      * @param QueuedJob $job
      * @return void
      */
