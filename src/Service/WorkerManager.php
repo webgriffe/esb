@@ -5,7 +5,6 @@ namespace Webgriffe\Esb\Service;
 use Amp\Beanstalk\BeanstalkClient;
 use function Amp\call;
 use Amp\Loop;
-use function Amp\Promise\wait;
 use Monolog\Logger;
 use Webgriffe\Esb\Model\QueuedJob;
 use Webgriffe\Esb\WorkerInterface;
@@ -57,50 +56,42 @@ class WorkerManager
         foreach ($this->workers as $worker) {
             Loop::defer(function () use ($worker){
                 yield call([$worker, 'init']);
-                $this->logger->info(sprintf('Worker "%s" successfully initialized.', get_class($worker)));
+                $this->logger->info('A Worker has been successfully initialized', ['worker' => get_class($worker)]);
                 yield $this->beanstalk->watch($worker->getTube());
                 yield $this->beanstalk->ignore('default');
                 while ($rawJob = yield $this->beanstalk->reserve()) {
-                    $jobId = $rawJob[0];
-                    $job = new QueuedJob($jobId, unserialize($rawJob[1]));
+                    $job = new QueuedJob($rawJob[0], unserialize($rawJob[1]));
+                    $logContext = [
+                        'worker' => get_class($worker),
+                        'job_id' => $job->getId(),
+                        'payload_data' => $job->getPayloadData()
+                    ];
+                    $this->logger->info('Worker reserved a Job', $logContext);
                     try {
-                        if (!array_key_exists($jobId, $this->workCounts)) {
-                            $this->workCounts[$jobId] = 0;
+                        if (!array_key_exists($job->getId(), $this->workCounts)) {
+                            $this->workCounts[$job->getId()] = 0;
                         }
-                        ++$this->workCounts[$jobId];
+                        ++$this->workCounts[$job->getId()];
                         yield call([$worker, 'work'], $job);
-                        $this->logger->info(
-                            'Successfully worked a QueuedJob',
-                            ['worker' => get_class($worker), 'payload_data' => $job->getPayloadData()]
-                        );
+                        $this->logger->info('Successfully worked a Job', $logContext);
                         yield $this->beanstalk->delete($job->getId());
-                        unset($this->workCounts[$jobId]);
+                        unset($this->workCounts[$job->getId()]);
                     } catch (\Exception $e) {
-                        $this
-                            ->logger
-                            ->error(
-                                'An error occurred while working a job.',
-                                [
-                                    'worker' => get_class($worker),
-                                    'payload_data' => $job->getPayloadData(),
-                                    'error' => $e->getMessage(),
-                                ]
+                        $this->logger->error(
+                            'An error occurred while working a Job.',
+                            array_merge($logContext, ['error' => $e->getMessage()])
+                        );
+                        if ($this->workCounts[$job->getId()] >= 5) {
+                            yield $this->beanstalk->bury($job->getId(), self::BURY_PRIORITY);
+                            $this->logger->critical(
+                                'A Job reached maximum work retry limit and has been buried',
+                                $logContext
                             );
-                        if ($this->workCounts[$jobId] >= 5) {
-                            yield $this->beanstalk->bury($jobId, self::BURY_PRIORITY);
-                            $this
-                                ->logger
-                                ->critical(
-                                    'Job reached maximum work retry limit, it will be buried.',
-                                    [
-                                        'worker' => get_class($worker),
-                                        'job_id' => $jobId,
-                                        'payload_data' => $job->getPayloadData(),
-                                    ]
-                                );
+                            unset($this->workCounts[$job->getId()]);
                             continue;
                         }
-                        yield $this->beanstalk->release($jobId, self::RELEASE_DELAY, self::RELEASE_PRIORITY);
+                        yield $this->beanstalk->release($job->getId(), self::RELEASE_DELAY, self::RELEASE_PRIORITY);
+                        $this->logger->info('Worker released a Job', $logContext);
                     }
                 }
             });

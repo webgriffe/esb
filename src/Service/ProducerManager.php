@@ -48,7 +48,10 @@ class ProducerManager
         foreach ($this->producers as $producer) {
             Loop::defer(function () use ($producer) {
                 yield call([$producer, 'init']);
-                $this->logger->info(sprintf('Producer "%s" successfully initialized.', get_class($producer)));
+                $this->logger->info(
+                    'A Producer has been successfully initialized',
+                    ['producer' => get_class($producer)]
+                );
                 if ($producer instanceof RepeatProducerInterface) {
                     yield $this->beanstalk->use($producer->getTube());
                     Loop::repeat($producer->getInterval(), function ($watcherId) use ($producer) {
@@ -58,23 +61,25 @@ class ProducerManager
                         foreach($jobs as $job) {
                             try {
                                 $payload = serialize($job->getPayloadData());
-                                yield $this->beanstalk->put($payload);
+                                $jobId = yield $this->beanstalk->put($payload);
                                 $this->logger->info(
                                     'Successfully produced a new Job',
-                                    ['producer' => get_class($producer), 'payload_data' => $job->getPayloadData()]
+                                    [
+                                        'producer' => get_class($producer),
+                                        'job_id' => $jobId,
+                                        'payload_data' => $job->getPayloadData()
+                                    ]
                                 );
                                 $producer->onProduceSuccess($job);
                             } catch (\Exception $e) {
-                                $this
-                                    ->logger
-                                    ->error(
-                                        'An error occurred producing a job.',
-                                        [
-                                            'producer' => get_class($producer),
-                                            'payload_data' => $job->getPayloadData(),
-                                            'error' => $e->getMessage(),
-                                        ]
-                                    );
+                                $this->logger->error(
+                                    'An error occurred producing a job.',
+                                    [
+                                        'producer' => get_class($producer),
+                                        'payload_data' => $job->getPayloadData(),
+                                        'error' => $e->getMessage(),
+                                    ]
+                                );
                                 $producer->onProduceFail($job, $e);
                             }
                         }
