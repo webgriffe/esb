@@ -3,6 +3,7 @@
 namespace Webgriffe\Esb\Sample;
 
 use Webgriffe\Esb\Model\Job;
+use Webgriffe\Esb\Model\QueuedJob;
 use Webgriffe\Esb\WorkerInterface;
 
 /**
@@ -20,7 +21,14 @@ class SampleWorker implements WorkerInterface
         return self::TUBE;
     }
 
-    public function work(Job $job)
+    /**
+     * @return void
+     */
+    public function init()
+    {
+    }
+
+    public function work(QueuedJob $job)
     {
         $filename = '/tmp/sample_worker.data';
         file_put_contents($filename, date('c') . ' - ' . $job->getPayloadData() . PHP_EOL, FILE_APPEND);

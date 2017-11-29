@@ -2,8 +2,8 @@
 
 namespace Webgriffe\Esb\Sample;
 
+use Webgriffe\Esb\Model\Job;
 use Webgriffe\Esb\RepeatProducerInterface;
-use Webgriffe\Esb\Sample\SampleWorker;
 
 class SampleProducer implements RepeatProducerInterface
 {
@@ -16,9 +16,18 @@ class SampleProducer implements RepeatProducerInterface
     }
 
     /**
-     * @return array
+     * @return void
      */
-    public function produce(): array
+    public function init(): void
+    {
+        // No init needed.
+    }
+
+    /**
+     * @return \Generator
+     * @throws \RuntimeException
+     */
+    public function produce(): \Generator
     {
         $dir = '/tmp/sample_producer';
         if (!is_dir($dir)) {
@@ -27,35 +36,32 @@ class SampleProducer implements RepeatProducerInterface
             }
         }
         $files = scandir($dir, SCANDIR_SORT_NONE);
-        $payloads = [];
         foreach ($files as $file) {
             $file = $dir . DIRECTORY_SEPARATOR . $file;
             if (is_dir($file)) {
                 continue;
             }
-            $payloads[] = serialize(['file' => $file, 'data' => file_get_contents($file)]);
+            yield serialize(['file' => $file, 'data' => file_get_contents($file)]);
         }
-        return $payloads;
     }
 
     /**
-     * @param string $payload
+     * @param Job $job
      * @return void
      */
-    public function onProduceSuccess(string $payload)
+    public function onProduceSuccess(Job $job)
     {
-        $payload = unserialize($payload);
+        $payload = $job->getPayloadData();
         unlink($payload['file']);
     }
 
     /**
-     * @param string $payload
+     * @param Job $job
      * @param \Exception $exception
      * @return void
      */
-    public function onProduceFail(string $payload, \Exception $exception)
+    public function onProduceFail(Job $job, \Exception $exception)
     {
-        // TODO: Implement onProduceFail() method.
     }
 
     /**
