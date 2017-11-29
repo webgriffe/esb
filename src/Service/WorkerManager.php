@@ -12,6 +12,10 @@ use Webgriffe\Esb\WorkerInterface;
 
 class WorkerManager
 {
+    const RELEASE_DELAY = 30;
+    const RELEASE_PRIORITY = 0;
+    const BURY_PRIORITY = 0;
+
     /**
      * @var BeanstalkClient
      */
@@ -26,6 +30,11 @@ class WorkerManager
      * @var \Webgriffe\Esb\WorkerInterface[]
      */
     private $workers = [];
+
+    /**
+     * @var array
+     */
+    private $workCounts = [];
 
     /**
      * WorkerManager constructor.
@@ -52,14 +61,20 @@ class WorkerManager
                 yield $this->beanstalk->watch($worker->getTube());
                 yield $this->beanstalk->ignore('default');
                 while ($rawJob = yield $this->beanstalk->reserve()) {
-                    $job = new QueuedJob($rawJob[0], unserialize($rawJob[1]));
+                    $jobId = $rawJob[0];
+                    $job = new QueuedJob($jobId, unserialize($rawJob[1]));
                     try {
+                        if (!array_key_exists($jobId, $this->workCounts)) {
+                            $this->workCounts[$jobId] = 0;
+                        }
+                        ++$this->workCounts[$jobId];
                         yield call([$worker, 'work'], $job);
                         $this->logger->info(
                             'Successfully worked a QueuedJob',
                             ['worker' => get_class($worker), 'payload_data' => $job->getPayloadData()]
                         );
                         yield $this->beanstalk->delete($job->getId());
+                        unset($this->workCounts[$jobId]);
                     } catch (\Exception $e) {
                         $this
                             ->logger
@@ -71,6 +86,21 @@ class WorkerManager
                                     'error' => $e->getMessage(),
                                 ]
                             );
+                        if ($this->workCounts[$jobId] >= 5) {
+                            yield $this->beanstalk->bury($jobId, self::BURY_PRIORITY);
+                            $this
+                                ->logger
+                                ->critical(
+                                    'Job reached maximum work retry limit, it will be buried.',
+                                    [
+                                        'worker' => get_class($worker),
+                                        'job_id' => $jobId,
+                                        'payload_data' => $job->getPayloadData(),
+                                    ]
+                                );
+                            continue;
+                        }
+                        yield $this->beanstalk->release($jobId, self::RELEASE_DELAY, self::RELEASE_PRIORITY);
                     }
                 }
             });
