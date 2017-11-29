@@ -3,7 +3,9 @@
 namespace Webgriffe\Esb\Service;
 
 use Amp\Beanstalk\BeanstalkClient;
+use function Amp\call;
 use Amp\Loop;
+use function Amp\Promise\wait;
 use Monolog\Logger;
 use Webgriffe\Esb\Model\QueuedJob;
 use Webgriffe\Esb\WorkerInterface;
@@ -51,12 +53,12 @@ class WorkerManager
                 while ($rawJob = yield $this->beanstalk->reserve()) {
                     $job = new QueuedJob($rawJob[0], unserialize($rawJob[1]));
                     try {
-                        $worker->work($job);
+                        yield call([$worker, 'work'], $job);
                         $this->logger->info(
                             'Successfully worked a QueuedJob',
                             ['worker' => get_class($worker), 'payload_data' => $job->getPayloadData()]
                         );
-                        $this->beanstalk->delete($job->getId());
+                        yield $this->beanstalk->delete($job->getId());
                     } catch (\Exception $e) {
                         $this
                             ->logger
