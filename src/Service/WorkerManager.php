@@ -11,10 +11,6 @@ use Webgriffe\Esb\WorkerInterface;
 
 class WorkerManager
 {
-    const RELEASE_DELAY = 30;
-    const RELEASE_PRIORITY = 0;
-    const BURY_PRIORITY = 0;
-
     /**
      * @var BeanstalkClient
      */
@@ -82,7 +78,7 @@ class WorkerManager
                             array_merge($logContext, ['error' => $e->getMessage()])
                         );
                         if ($this->workCounts[$job->getId()] >= 5) {
-                            yield $this->beanstalk->bury($job->getId(), self::BURY_PRIORITY);
+                            yield $this->beanstalk->bury($job->getId());
                             $this->logger->critical(
                                 'A Job reached maximum work retry limit and has been buried',
                                 $logContext
@@ -90,7 +86,7 @@ class WorkerManager
                             unset($this->workCounts[$job->getId()]);
                             continue;
                         }
-                        yield $this->beanstalk->release($job->getId(), self::RELEASE_DELAY, self::RELEASE_PRIORITY);
+                        yield $this->beanstalk->release($job->getId(), $worker->getReleaseDelay());
                         $this->logger->info('Worker released a Job', $logContext);
                     }
                 }

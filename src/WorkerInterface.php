@@ -21,4 +21,9 @@ interface WorkerInterface
      * @return void
      */
     public function work(QueuedJob $job);
+
+    /**
+     * @return int
+     */
+    public function getReleaseDelay(): int;
 }

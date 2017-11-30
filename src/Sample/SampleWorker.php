@@ -28,9 +28,20 @@ class SampleWorker implements WorkerInterface
     {
     }
 
+    /**
+     * @param QueuedJob $job
+     */
     public function work(QueuedJob $job)
     {
         $filename = '/tmp/sample_worker.data';
         file_put_contents($filename, date('c') . ' - ' . $job->getPayloadData() . PHP_EOL, FILE_APPEND);
+    }
+
+    /**
+     * @return int
+     */
+    public function getReleaseDelay(): int
+    {
+        return 0;
     }
 }
