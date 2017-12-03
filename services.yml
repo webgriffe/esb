@@ -13,10 +13,9 @@ services:
   Webgriffe\Esb\Service\:
     resource: 'src/Service/*'
 
-  Amp\Beanstalk\BeanstalkClient:
-    class: \Amp\Beanstalk\BeanstalkClient
+  Webgriffe\Esb\Service\BeanstalkClientFactory:
+    class: \Webgriffe\Esb\Service\BeanstalkClientFactory
     arguments: [ '%beanstalkd%' ]
-    shared: false
 
   Monolog\Handler\StreamHandler:
     class: \Monolog\Handler\StreamHandler
