@@ -25,15 +25,28 @@ Webgriffe ESB is designed to use a single binary which is used as a main entry p
 
 Installation
 ------------
-*TODO...*
+Require this package using [Composer](https://getcomposer.org/):
+
+```bash
+composer require webgriffe/esb dev-master
+```
 
 Configuration
 -------------
-*TODO...*
+Copy the sample configuration file into your ESB root directory:
+
+```bash
+cp vendor/webgriffe/esb/esb.yml.sample ./esb.yml
+```
+
+The `esb.yml` file is the main configuration of your ESB application, where you have to register workers and producers. All the services implementing 
+[WorkerInterface](https://github.com/webgriffe/esb/blob/master/src/WorkerInterface.php) and [ProducerInterface](https://github.com/webgriffe/esb/blob/master/src/ProducerInterface.php) are registered automatically as workers and producers. Refer to the [Symfony Dependency Injection](http://symfony.com/doc/current/components/dependency_injection.html) component documentation and the [sample configuration file](https://github.com/webgriffe/esb/blob/master/esb.yml.sample) for more information about configuration of your ESB services.
 
 Deployment
 ----------
-*TODO...*
+As said all workers and producers are managed by a single PHP binary. This binary is located at `vendor/bin/esb`. So to deploy and run your ESB application all you have to do is to deploy your application as any other PHP application (for example using [Deployer](https://deployer.org/)) and make sure that `vendor/bin/esb` is always running (we suggest to use [Supervisord](http://supervisord.org/) for this purpose).
+
+Keep in mind that the `vendor/bin/esb` binary logs its operations to `stdout` and errors using `error_log()` function. With a standard PHP CLI configuration all the `error_log()` entries are then redirected to `stderr`. This is done through [Monolog](https://github.com/Seldaek/monolog)'s [StreamHandler](https://github.com/Seldaek/monolog/blob/master/src/Monolog/Handler/StreamHandler.php) and [ErrorHandler](https://github.com/Seldaek/monolog/blob/master/src/Monolog/Handler/ErrorLogHandler.php) handlers. You can also add your own handlers using the `esb.yml` configuration file.
 
 License
 -------
