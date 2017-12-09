@@ -53,30 +53,44 @@ class ProducerManagerTest extends TestCase
             )
             ->shouldHaveBeenCalledTimes(1)
         ;
-        $this->logger
-            ->info(
-                'Successfully produced a new Job',
-                [
-                    'producer' => \get_class($producer),
-                    'job_id' => $job1Id,
-                    'payload_data' => $job1->getPayloadData()
-                ]
-            )
-            ->shouldHaveBeenCalled()
-        ;
-        $this->logger
-            ->info(
-                'Successfully produced a new Job',
-                [
-                    'producer' => \get_class($producer),
-                    'job_id' => $job2Id,
-                    'payload_data' => $job2->getPayloadData()
-                ]
-            )
-            ->shouldHaveBeenCalled()
-        ;
+        $this->loggerShouldHaveLoggedSuccessProducedJob($producer, $job1Id, $job1);
+        $this->loggerShouldHaveLoggedSuccessProducedJob($producer, $job2Id, $job2);
     }
 
+    public function testBootProducersWithMultipleProducers()
+    {
+        $job1 = new Job(['job1 data']);
+        $job2 = new Job(['job2 data']);
+        $job1Id = 1;
+        $job2Id = 2;
+        $producer1 = new DummyRepeatProducer([$job1]);
+        $producer2 = new DummyRepeatProducer([$job2]);
+        $beanstalkClient1 = $this->getBeanstalkClientMockForProducer($producer1);
+        $beanstalkClient2 = $this->getBeanstalkClientMockForProducer($producer2);
+        $beanstalkClient1->put(serialize($job1->getPayloadData()))->shouldBeCalled()->willReturn(new Success($job1Id));
+        $beanstalkClient2->put(serialize($job2->getPayloadData()))->shouldBeCalled()->willReturn(new Success($job2Id));
+        $this->beanstalkClientFactory->create()->shouldBeCalled()->will(
+            function () use ($beanstalkClient1, $beanstalkClient2) {
+                $this->create()->shouldBeCalled()->willReturn($beanstalkClient2->reveal());
+                return $beanstalkClient1->reveal();
+            }
+        );
+        $this->producerManager->addProducer($producer1);
+        $this->producerManager->addProducer($producer2);
+        $this->producerManager->bootProducers();
+
+        Loop::run();
+
+        $this->logger
+            ->info(
+                'A Producer has been successfully initialized',
+                ['producer' => \get_class($producer1)]
+            )
+            ->shouldHaveBeenCalledTimes(2)
+        ;
+        $this->loggerShouldHaveLoggedSuccessProducedJob($producer1, $job1Id, $job1);
+        $this->loggerShouldHaveLoggedSuccessProducedJob($producer2, $job2Id, $job2);
+    }
 
     /**
      * @param $producer
@@ -87,5 +101,24 @@ class ProducerManagerTest extends TestCase
         $beanstalkClient = $this->prophesize(BeanstalkClient::class);
         $beanstalkClient->use($producer->getTube())->shouldBeCalled()->willReturn(new Success(null));
         return $beanstalkClient;
+    }
+
+    /**
+     * @param $producer
+     * @param $jobId
+     * @param $job
+     */
+    private function loggerShouldHaveLoggedSuccessProducedJob($producer, $jobId, $job)
+    {
+        $this->logger
+            ->info(
+                'Successfully produced a new Job',
+                [
+                    'producer' => \get_class($producer),
+                    'job_id' => $jobId,
+                    'payload_data' => $job->getPayloadData()
+                ]
+            )
+            ->shouldHaveBeenCalled();
     }
 }
