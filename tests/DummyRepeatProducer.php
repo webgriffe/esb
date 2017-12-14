@@ -11,14 +11,26 @@ class DummyRepeatProducer implements RepeatProducerInterface
      * @var array
      */
     private $jobs;
+    /**
+     * @var string
+     */
+    private $tube;
+    /**
+     * @var int
+     */
+    private $interval;
 
     /**
      * DummyRepeatProducer constructor.
      * @param array $jobs
+     * @param string $tube
+     * @param int $interval
      */
-    public function __construct(array $jobs = [])
+    public function __construct(array $jobs = [], string $tube, int $interval)
     {
         $this->jobs = $jobs;
+        $this->tube = $tube;
+        $this->interval = $interval;
     }
 
     /**
@@ -26,7 +38,7 @@ class DummyRepeatProducer implements RepeatProducerInterface
      */
     public function getTube(): string
     {
-        return 'test';
+        return $this->tube;
     }
 
     /**
@@ -67,6 +79,6 @@ class DummyRepeatProducer implements RepeatProducerInterface
      */
     public function getInterval(): int
     {
-        return 1;
+        return $this->interval;
     }
 }

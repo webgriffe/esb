@@ -48,6 +48,18 @@ As said all workers and producers are managed by a single PHP binary. This binar
 
 Keep in mind that the `vendor/bin/esb` binary logs its operations to `stdout` and errors using `error_log()` function. With a standard PHP CLI configuration all the `error_log()` entries are then redirected to `stderr`. This is done through [Monolog](https://github.com/Seldaek/monolog)'s [StreamHandler](https://github.com/Seldaek/monolog/blob/master/src/Monolog/Handler/StreamHandler.php) and [ErrorHandler](https://github.com/Seldaek/monolog/blob/master/src/Monolog/Handler/ErrorLogHandler.php) handlers. You can also add your own handlers using the `esb.yml` configuration file.
 
+Contributing
+------------
+
+To contribute simply fork this repository, do your changes and then propose a pull requests. The test suite requires a running instance of Beanstalkd:
+
+```bash
+beanstalkd &
+vendor/bin/phpunit
+```
+
+By default it tries to connect to a Beanstalkd running on `127.0.0.1` and default port `11300`. If you have Beanstalkd running elsewhere (for example in a Docker container) you can set the `BEANSTALKD_CONNECTION_URI` environment variable with the connection string (like `tcp://docker:11300`).
+
 License
 -------
 This library is under the MIT license. See the complete license in the LICENSE file.
