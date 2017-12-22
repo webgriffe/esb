@@ -4,8 +4,6 @@ namespace Webgriffe\Esb\Service;
 
 use Amp\Loop;
 use Monolog\Logger;
-use Pheanstalk\Pheanstalk;
-use PHPUnit\Framework\TestCase;
 use Prophecy\Argument;
 use Webgriffe\Esb\BeanstalkTestCase;
 use Webgriffe\Esb\DummyRepeatProducer;
@@ -39,6 +37,7 @@ class ProducerManagerTest extends BeanstalkTestCase
         $producer = new DummyRepeatProducer([$job1, $job2], 'test_tube', 1);
         $this->producerManager->addProducer($producer);
         $this->producerManager->bootProducers();
+        Loop::delay(50, function () {Loop::stop();});
         Loop::run();
 
         $this->logger
@@ -62,6 +61,7 @@ class ProducerManagerTest extends BeanstalkTestCase
         $this->producerManager->addProducer($producer1);
         $this->producerManager->addProducer($producer2);
         $this->producerManager->bootProducers();
+        Loop::delay(50, function () {Loop::stop();});
         Loop::run();
 
         $this->logger

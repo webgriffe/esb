@@ -2,8 +2,8 @@
 
 namespace Webgriffe\Esb;
 
+use Amp\PHPUnit\TestCase;
 use Pheanstalk\Pheanstalk;
-use PHPUnit\Framework\TestCase;
 
 class BeanstalkTestCase extends TestCase
 {
@@ -14,6 +14,7 @@ class BeanstalkTestCase extends TestCase
 
     public function setUp()
     {
+        parent::setUp();
         $this->pheanstalk = $this->getPheanstalk();
         $this->purgeBeanstalk();
     }

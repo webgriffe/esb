@@ -54,7 +54,7 @@ class DummyRepeatProducer implements RepeatProducerInterface
     public function produce(): \Generator
     {
         yield from $this->jobs;
-        Loop::stop(); // Stops the loop after first produced jobs
+        $this->jobs = []; // We want to produce given jobs only once
     }
 
     /**
