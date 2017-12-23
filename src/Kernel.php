@@ -17,6 +17,10 @@ class Kernel
 
     private $container;
 
+    /**
+     * Kernel constructor.
+     * @param string $localConfig Local configuration absolute file path
+     */
     public function __construct(string $localConfig)
     {
         $this->container = new ContainerBuilder();
@@ -25,8 +29,8 @@ class Kernel
         $this->container->addCompilerPass(new WorkerPass());
         $this->container->addCompilerPass(new ProducerPass());
         $loader = new YamlFileLoader($this->container, new FileLocator(dirname(__DIR__)));
-        $loader->load(rtrim(getcwd(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $localConfig);
         $loader->load('services.yml');
+        $loader->load($localConfig);
         $this->container->compile();
     }
 
@@ -50,12 +54,16 @@ class Kernel
         return $this->container;
     }
 
+    /**
+     * @param \Throwable $exception
+     * @throws \Throwable
+     */
     public function errorHandler(\Throwable $exception)
     {
         /** @var Logger $logger */
         $logger = $this->container->get(Logger::class);
-        $logger->error(
-            'An error occurred...',
+        $logger->critical(
+            'An uncaught exception occurred, ESB will be stopped now!',
             [
                 'code' => $exception->getCode(),
                 'message' => $exception->getMessage(),
@@ -64,5 +72,6 @@ class Kernel
                 'trace' => $exception->getTrace()
             ]
         );
+        throw $exception;
     }
 }

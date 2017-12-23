@@ -23,9 +23,9 @@ if (!defined('AUTOLOADER')) {
 
 require_once AUTOLOADER;
 
-$config = 'esb.yml';
+$config = rtrim(getcwd(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'esb.yml';
 if (!file_exists($config)) {
-    $config = $argv[1];
+    $config = realpath($argv[1]);
 }
 if (!$config) {
     echo 'Please provide the configuration file esb.yml.' . PHP_EOL;
