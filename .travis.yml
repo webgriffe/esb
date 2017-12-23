@@ -3,4 +3,6 @@ php:
   - 7.0
   - 7.1
 
-before_script: composer install
+before_script:
+  - sudo apt-get install beanstalkd
+  - composer install
