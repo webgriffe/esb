@@ -37,7 +37,7 @@ class ProducerManagerTest extends BeanstalkTestCase
         $producer = new DummyRepeatProducer([$job1, $job2], 'test_tube', 1);
         $this->producerManager->addProducer($producer);
         $this->producerManager->bootProducers();
-        Loop::delay(50, function () {Loop::stop();});
+        Loop::delay(200, function () {Loop::stop();});
         Loop::run();
 
         $this->logger
@@ -61,7 +61,7 @@ class ProducerManagerTest extends BeanstalkTestCase
         $this->producerManager->addProducer($producer1);
         $this->producerManager->addProducer($producer2);
         $this->producerManager->bootProducers();
-        Loop::delay(50, function () {Loop::stop();});
+        Loop::delay(200, function () {Loop::stop();});
         Loop::run();
 
         $this->logger
