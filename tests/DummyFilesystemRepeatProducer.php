@@ -1,18 +1,30 @@
 <?php
 
-namespace Webgriffe\Esb\Sample;
+namespace Webgriffe\Esb;
 
 use Webgriffe\Esb\Model\Job;
-use Webgriffe\Esb\RepeatProducerInterface;
 
-class SampleProducer implements RepeatProducerInterface
+/**
+ * Sample repeat producer which produces a job for every file found in a given directory.
+ */
+class DummyFilesystemRepeatProducer implements RepeatProducerInterface
 {
+    /**
+     * @var string
+     */
+    private $directory;
+
+    public function __construct(string $directory)
+    {
+        $this->directory = $directory;
+    }
+
     /**
      * @return string
      */
     public function getTube(): string
     {
-        return SampleWorker::TUBE;
+        return DummyFilesystemWorker::TUBE;
     }
 
     /**
@@ -29,19 +41,19 @@ class SampleProducer implements RepeatProducerInterface
      */
     public function produce(): \Generator
     {
-        $dir = '/tmp/sample_producer';
-        if (!is_dir($dir)) {
-            if (!mkdir($dir) && !is_dir($dir)) {
-                throw new \RuntimeException(sprintf('Directory "%s" was not created', $dir));
+        if (!is_dir($this->directory)) {
+            if (!mkdir($this->directory) && !is_dir($this->directory)) {
+                throw new \RuntimeException(sprintf('Directory "%s" was not created', $this->directory));
             }
         }
-        $files = scandir($dir, SCANDIR_SORT_NONE);
+        $files = scandir($this->directory, SCANDIR_SORT_NONE);
         foreach ($files as $file) {
-            $file = $dir . DIRECTORY_SEPARATOR . $file;
+            $file = $this->directory . DIRECTORY_SEPARATOR . $file;
             if (is_dir($file)) {
                 continue;
             }
-            yield serialize(['file' => $file, 'data' => file_get_contents($file)]);
+            yield new Job(['file' => $file, 'data' => file_get_contents($file)]);
+            unlink($file);
         }
     }
 
@@ -51,8 +63,6 @@ class SampleProducer implements RepeatProducerInterface
      */
     public function onProduceSuccess(Job $job)
     {
-        $payload = $job->getPayloadData();
-        unlink($payload['file']);
     }
 
     /**

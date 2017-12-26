@@ -38,7 +38,7 @@ class KernelTestCase extends TestCase
     }
 
     /**
-     * @return object
+     * @return TestHandler
      * @throws \Exception
      */
     protected function logHandler()
