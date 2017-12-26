@@ -3,6 +3,8 @@ Webgriffe ESB
 
 Simple, beanstalkd powered, ESB framework.
 
+[![Build Status](https://travis-ci.org/webgriffe/esb.svg?branch=master)](https://travis-ci.org/webgriffe/esb)
+
 Introduction
 ------------
 
