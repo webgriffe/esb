@@ -79,6 +79,6 @@ class DummyFilesystemRepeatProducer implements RepeatProducerInterface
      */
     public function getInterval(): int
     {
-        return 1000;
+        return 1;
     }
 }
