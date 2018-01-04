@@ -17,11 +17,6 @@ interface ProducerInterface
     public function init();
 
     /**
-     * @return \Generator|Job[]
-     */
-    public function produce(): \Generator;
-
-    /**
      * @param Job $job
      * @return void
      */
@@ -29,8 +24,8 @@ interface ProducerInterface
 
     /**
      * @param Job $job
-     * @param \Exception $exception
+     * @param \Throwable $exception
      * @return void
      */
-    public function onProduceFail(Job $job, \Exception $exception);
+    public function onProduceFail(Job $job, \Throwable $exception);
 }

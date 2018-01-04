@@ -70,7 +70,7 @@ class DummyFilesystemRepeatProducer implements RepeatProducerInterface
      * @param \Exception $exception
      * @return void
      */
-    public function onProduceFail(Job $job, \Exception $exception)
+    public function onProduceFail(Job $job, \Throwable $exception)
     {
     }
 

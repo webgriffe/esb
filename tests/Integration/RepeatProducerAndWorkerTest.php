@@ -21,9 +21,19 @@ class RepeatProducerAndWorkerTest extends KernelTestCase
             ]
         ]);
         mkdir($producerDir);
-        touch($producerDir . DIRECTORY_SEPARATOR . 'job1');
-        touch($producerDir . DIRECTORY_SEPARATOR . 'job2');
-        Loop::delay(100, function () {Loop::stop();});
+        Loop::delay(
+            10,
+            function () use ($producerDir) {
+                touch($producerDir . DIRECTORY_SEPARATOR . 'job1');
+                Loop::delay(
+                    10,
+                    function () use ($producerDir) {
+                        touch($producerDir . DIRECTORY_SEPARATOR . 'job2');
+                        Loop::delay(10, function () {Loop::stop();});
+                    }
+                );
+            }
+        );
 
         self::$kernel->boot();
 
@@ -31,6 +41,7 @@ class RepeatProducerAndWorkerTest extends KernelTestCase
         $this->assertCount(2, $workerFileLines);
         $this->assertContains('job1', $workerFileLines[0]);
         $this->assertContains('job2', $workerFileLines[1]);
+        $this->assertReadyJobsCountInTube(0, DummyFilesystemWorker::TUBE);
     }
 
     /**

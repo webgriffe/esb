@@ -6,9 +6,10 @@ use Amp\PHPUnit\TestCase;
 use Monolog\Handler\TestHandler;
 use Monolog\Logger;
 use org\bovigo\vfs\vfsStream;
+use Pheanstalk\Pheanstalk;
 use Symfony\Component\Yaml\Yaml;
 
-class KernelTestCase extends TestCase
+class KernelTestCase extends BeanstalkTestCase
 {
     /**
      * @var Kernel
@@ -21,7 +22,7 @@ class KernelTestCase extends TestCase
     protected static function createKernel(array $additionalConfig)
     {
         $basicConfig = [
-            'parameters' => ['beanstalkd' => 'tcp://127.0.0.1:11300'],
+            'parameters' => ['beanstalkd' => self::getBeanstalkdConnectionUri()],
             'services' => [
                 '_defaults' => [
                     'autowire' => true,

@@ -14,7 +14,7 @@
         </whitelist>
     </filter>
 
-    <listeners>
-        <listener class="Amp\PHPUnit\LoopReset" />
-    </listeners>
+    <!--<listeners>-->
+        <!--<listener class="Amp\PHPUnit\LoopReset" />-->
+    <!--</listeners>-->
 </phpunit>

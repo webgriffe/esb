@@ -2,7 +2,7 @@
 
 namespace Webgriffe\Esb;
 
-use Amp\PHPUnit\TestCase;
+use PHPUnit\Framework\TestCase;
 use Pheanstalk\Pheanstalk;
 
 class BeanstalkTestCase extends TestCase
@@ -22,7 +22,7 @@ class BeanstalkTestCase extends TestCase
     /**
      * @return string
      */
-    protected function getBeanstalkdConnectionUri(): string
+    protected static function getBeanstalkdConnectionUri(): string
     {
         return getenv('BEANSTALKD_CONNECTION_URI') ?: 'tcp://127.0.0.1:11300';
     }
@@ -32,7 +32,7 @@ class BeanstalkTestCase extends TestCase
      */
     protected function getPheanstalk(): Pheanstalk
     {
-        $uri = $this->getBeanstalkdConnectionUri();
+        $uri = self::getBeanstalkdConnectionUri();
         $parsedUri = parse_url($uri);
         return new Pheanstalk($parsedUri['host'], (int)$parsedUri['port']);
     }

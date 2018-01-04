@@ -67,10 +67,10 @@ class DummyRepeatProducer implements RepeatProducerInterface
 
     /**
      * @param Job $job
-     * @param \Exception $exception
+     * @param \Throwable $exception
      * @return void
      */
-    public function onProduceFail(Job $job, \Exception $exception)
+    public function onProduceFail(Job $job, \Throwable $exception)
     {
     }
 
