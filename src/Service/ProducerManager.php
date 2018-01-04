@@ -12,6 +12,7 @@ use Monolog\Logger;
 use Psr\Http\Message\ServerRequestInterface;
 use React\Http\Response;
 use React\Promise\Promise;
+use Webgriffe\Esb\Callback\RepeatProducerRunner;
 use Webgriffe\Esb\HttpServerProducerInterface;
 use Webgriffe\Esb\Model\Job;
 use Webgriffe\Esb\ProducerInterface;
@@ -54,57 +55,15 @@ class ProducerManager
 
         foreach ($this->producers as $producer) {
             if ($producer instanceof RepeatProducerInterface) {
-                $this->bootRepeatProducer($producer);
+                Loop::defer(
+                    new RepeatProducerRunner($producer, $this->beanstalkClientFactory->create(), $this->logger)
+                );
             } else if ($producer instanceof  HttpServerProducerInterface) {
                 $this->bootHttpServerProducer($producer);
             } else {
                 throw new \RuntimeException(sprintf('Unknown producer type "%s".', get_class($producer)));
             }
         }
-    }
-
-    public function bootRepeatProducer(RepeatProducerInterface $producer)
-    {
-        Loop::defer(function () use ($producer) {
-            $beanstalkClient = $this->beanstalkClientFactory->create();
-            yield call([$producer, 'init']);
-            $this->logger->info(
-                'A Producer has been successfully initialized',
-                ['producer' => \get_class($producer)]
-            );
-            yield $beanstalkClient->use($producer->getTube());
-            Loop::repeat($producer->getInterval(), function ($watcherId) use ($producer, $beanstalkClient) {
-                Loop::disable($watcherId);
-                $jobs = $producer->produce();
-                /** @var Job $job */
-                foreach($jobs as $job) {
-                    try {
-                        $payload = serialize($job->getPayloadData());
-                        $jobId = yield $beanstalkClient->put($payload);
-                        $this->logger->info(
-                            'Successfully produced a new Job',
-                            [
-                                'producer' => \get_class($producer),
-                                'job_id' => $jobId,
-                                'payload_data' => $job->getPayloadData()
-                            ]
-                        );
-                        $producer->onProduceSuccess($job);
-                    } catch (\Exception $e) {
-                        $this->logger->error(
-                            'An error occurred producing a job.',
-                            [
-                                'producer' => \get_class($producer),
-                                'payload_data' => $job->getPayloadData(),
-                                'error' => $e->getMessage(),
-                            ]
-                        );
-                        $producer->onProduceFail($job, $e);
-                    }
-                }
-                Loop::enable($watcherId);
-            });
-        });
     }
 
     private function bootHttpServerProducer(HttpServerProducerInterface $producer)
