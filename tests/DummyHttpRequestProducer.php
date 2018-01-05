@@ -6,7 +6,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use React\Http\Response;
 use Webgriffe\Esb\Model\Job;
 
-class DummyHttpServerProducer implements HttpServerProducerInterface
+class DummyHttpRequestProducer implements HttpRequestProducerInterface
 {
     /**
      * @var ServerRequestInterface

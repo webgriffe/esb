@@ -13,7 +13,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use React\Http\Response;
 use React\Promise\Promise;
 use Webgriffe\Esb\Callback\RepeatProducerRunner;
-use Webgriffe\Esb\HttpServerProducerInterface;
+use Webgriffe\Esb\HttpRequestProducerInterface;
 use Webgriffe\Esb\Model\Job;
 use Webgriffe\Esb\ProducerInterface;
 use Webgriffe\Esb\RepeatProducerInterface;
@@ -58,18 +58,18 @@ class ProducerManager
                 Loop::defer(
                     new RepeatProducerRunner($producer, $this->beanstalkClientFactory->create(), $this->logger)
                 );
-            } else if ($producer instanceof  HttpServerProducerInterface) {
-                $this->bootHttpServerProducer($producer);
+            } else if ($producer instanceof  HttpRequestProducerInterface) {
+                $this->bootHttpRequestProducer($producer);
             } else {
                 throw new \RuntimeException(sprintf('Unknown producer type "%s".', get_class($producer)));
             }
         }
     }
 
-    private function bootHttpServerProducer(HttpServerProducerInterface $producer)
+    private function bootHttpRequestProducer(HttpRequestProducerInterface $producer)
     {
-        Loop::defer(function () use ($producer) {
-            $beanstalkClient = $this->beanstalkClientFactory->create();
+        $beanstalkClient = $this->beanstalkClientFactory->create();
+        Loop::defer(function () use ($producer, $beanstalkClient) {
             yield call([$producer, 'init']);
             $this->logger->info(
                 'A Producer has been successfully initialized',

@@ -5,7 +5,7 @@ namespace Webgriffe\Esb;
 use Psr\Http\Message\ServerRequestInterface;
 use Webgriffe\Esb\Model\Job;
 
-interface HttpServerProducerInterface extends ProducerInterface
+interface HttpRequestProducerInterface extends ProducerInterface
 {
     public function getPort(): int;
 

@@ -8,17 +8,17 @@ use Amp\Loop;
 use Monolog\Logger;
 use org\bovigo\vfs\vfsStream;
 use Webgriffe\Esb\DummyFilesystemWorker;
-use Webgriffe\Esb\DummyHttpServerProducer;
+use Webgriffe\Esb\DummyHttpRequestProducer;
 use Webgriffe\Esb\KernelTestCase;
 
-class HttpServerProducerAndWorkerTest extends KernelTestCase
+class HttpRequestProducerAndWorkerTest extends KernelTestCase
 {
     public function testHttpServerProducerAndWorker()
     {
         $workerFile = vfsStream::url('root/worker.data');
         self::createKernel([
             'services' => [
-                DummyHttpServerProducer::class => ['arguments' => []],
+                DummyHttpRequestProducer::class => ['arguments' => []],
                 DummyFilesystemWorker::class => ['arguments' => [$workerFile]]
             ]
         ]);
