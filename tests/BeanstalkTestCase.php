@@ -4,19 +4,50 @@ namespace Webgriffe\Esb;
 
 use PHPUnit\Framework\TestCase;
 use Pheanstalk\Pheanstalk;
+use Symfony\Component\Process\Process;
 
 class BeanstalkTestCase extends TestCase
 {
+    /**
+     * @var Process
+     */
+    protected static $process;
+
     /**
      * @var Pheanstalk
      */
     protected $pheanstalk;
 
+    /**
+     * @throws \Symfony\Component\Process\Exception\LogicException
+     * @throws \Symfony\Component\Process\Exception\RuntimeException
+     */
     public function setUp()
     {
-        parent::setUp();
+        if (!self::$process) {
+            self::$process = new Process(self::getBeanstalkdCommand());
+        }
+        if (self::$process->isRunning()) {
+            self::$process->stop();
+            while (!self::$process->isTerminated()) {
+                // wait
+            }
+        }
+        self::$process->start();
+        while (!self::$process->isStarted()) {
+            // wait
+        }
         $this->pheanstalk = $this->getPheanstalk();
-        $this->purgeBeanstalk();
+    }
+
+    public function tearDown()
+    {
+        if (self::$process->isRunning()) {
+            self::$process->stop();
+            while (!self::$process->isTerminated()) {
+                // wait
+            }
+        }
     }
 
     /**
@@ -28,6 +59,14 @@ class BeanstalkTestCase extends TestCase
     }
 
     /**
+     * @return string
+     */
+    protected static function getBeanstalkdCommand(): string
+    {
+        return getenv('BEANSTALKD_COMMAND') ?: 'beanstalkd -V';
+    }
+
+    /**
      * @return Pheanstalk
      */
     protected function getPheanstalk(): Pheanstalk
@@ -35,33 +74,6 @@ class BeanstalkTestCase extends TestCase
         $uri = self::getBeanstalkdConnectionUri();
         $parsedUri = parse_url($uri);
         return new Pheanstalk($parsedUri['host'], (int)$parsedUri['port']);
-    }
-
-    protected function purgeBeanstalk()
-    {
-        foreach ($this->pheanstalk->listTubes() as $tube) {
-            try {
-                while ($job = $this->pheanstalk->peekReady($tube)) {
-                    $this->pheanstalk->delete($job);
-                }
-            } catch (\Exception $e) {
-                // Continue
-            }
-            try {
-                while ($job = $this->pheanstalk->peekDelayed($tube)) {
-                    $this->pheanstalk->delete($job);
-                }
-            } catch (\Exception $e) {
-                // Continue
-            }
-            try {
-                while ($job = $this->pheanstalk->peekBuried($tube)) {
-                    $this->pheanstalk->delete($job);
-                }
-            } catch (\Exception $e) {
-                // Continue
-            }
-        }
     }
 
     /**

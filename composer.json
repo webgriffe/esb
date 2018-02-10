@@ -29,6 +29,7 @@
         "amphp/phpunit-util": "^1.0",
         "pda/pheanstalk": "^3.1",
         "mikey179/vfsStream": "^1.6",
-        "amphp/artax": "^3.0"
+        "amphp/artax": "^3.0",
+        "symfony/process": "^3.4"
     }
 }
