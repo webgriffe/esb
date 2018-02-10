@@ -25,6 +25,10 @@ services:
     class: \Monolog\Handler\ErrorLogHandler
     arguments: [ !php/const:Monolog\Handler\ErrorLogHandler::OPERATING_SYSTEM, !php/const:Monolog\Logger::ERROR ]
 
+  Monolog\Handler\NativeMailerHandler:
+    class: \Monolog\Handler\NativeMailerHandler
+    arguments: [ '%critical_events_to%', 'Critical event from ESB', '%critical_events_from%', !php/const:Monolog\Logger::CRITICAL ]
+
   Monolog\Logger:
     class: \Monolog\Logger
-    arguments: [ 'esb', ['@Monolog\Handler\StreamHandler', '@Monolog\Handler\ErrorLogHandler'] ]
+    arguments: [ 'esb', ['@Monolog\Handler\StreamHandler', '@Monolog\Handler\ErrorLogHandler', '@Monolog\Handler\NativeMailerHandler'] ]

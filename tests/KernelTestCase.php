@@ -22,7 +22,11 @@ class KernelTestCase extends BeanstalkTestCase
     protected static function createKernel(array $additionalConfig)
     {
         $basicConfig = [
-            'parameters' => ['beanstalkd' => self::getBeanstalkdConnectionUri()],
+            'parameters' => [
+                'beanstalkd' => self::getBeanstalkdConnectionUri(),
+                'critical_events_to' => 'toemail@address.com',
+                'critical_events_from' => 'From Name <fromemail@address.com>',
+            ],
             'services' => [
                 '_defaults' => [
                     'autowire' => true,

@@ -1,5 +1,7 @@
 parameters:
-  beanstalkd: tcp://127.0.0.1:11300
+  beanstalkd: tcp://127.0.0.1:11300                         # Beanstalkd connection URI
+  critical_events_to: toemail@address.com                   # Email address where to send critical events notifications
+  critical_events_from: "From Name <fromemail@address.com>" # From name/address for critical events notifications
 
 services:
   _defaults:

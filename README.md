@@ -44,23 +44,49 @@ cp vendor/webgriffe/esb/esb.yml.sample ./esb.yml
 The `esb.yml` file is the main configuration of your ESB application, where you have to register workers and producers. All the services implementing 
 [WorkerInterface](https://github.com/webgriffe/esb/blob/master/src/WorkerInterface.php) and [ProducerInterface](https://github.com/webgriffe/esb/blob/master/src/ProducerInterface.php) are registered automatically as workers and producers. Refer to the [Symfony Dependency Injection](http://symfony.com/doc/current/components/dependency_injection.html) component documentation and the [sample configuration file](https://github.com/webgriffe/esb/blob/master/esb.yml.sample) for more information about configuration of your ESB services.
 
+You also have to define some parameters under the `parameters` section, refer to the `esb.yml.sample` file for more informations about required parameters. Usually it's better to isolate parameters in a `parameters.yml` file which can be included in the `esb.yml` as follows:
+
+```yaml
+# esb.yml
+imports:
+  - { resource: parameters.yml}
+
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: true
+  
+  My\Esb\Namespace\:
+    resource: 'src/*'
+```
+
+```yaml
+# parameters.yml
+parameters:
+  beanstalkd: tcp://127.0.0.1:11300
+  critical_events_to: toemail@address.com
+  critical_events_from: "From Name <fromemail@address.com>"
+```
+
 Deployment
 ----------
 As said all workers and producers are managed by a single PHP binary. This binary is located at `vendor/bin/esb`. So to deploy and run your ESB application all you have to do is to deploy your application as any other PHP application (for example using [Deployer](https://deployer.org/)) and make sure that `vendor/bin/esb` is always running (we suggest to use [Supervisord](http://supervisord.org/) for this purpose).
 
-Keep in mind that the `vendor/bin/esb` binary logs its operations to `stdout` and errors using `error_log()` function. With a standard PHP CLI configuration all the `error_log()` entries are then redirected to `stderr`. This is done through [Monolog](https://github.com/Seldaek/monolog)'s [StreamHandler](https://github.com/Seldaek/monolog/blob/master/src/Monolog/Handler/StreamHandler.php) and [ErrorHandler](https://github.com/Seldaek/monolog/blob/master/src/Monolog/Handler/ErrorLogHandler.php) handlers. You can also add your own handlers using the `esb.yml` configuration file.
+Keep in mind that the `vendor/bin/esb` binary logs its operations to `stdout` and errors using `error_log()` function. With a standard PHP CLI configuration all the `error_log()` entries are then redirected to `stderr`. This is done through [Monolog](https://github.com/Seldaek/monolog)'s [StreamHandler](https://github.com/Seldaek/monolog/blob/master/src/Monolog/Handler/StreamHandler.php) and [ErrorHandler](https://github.com/Seldaek/monolog/blob/master/src/Monolog/Handler/ErrorLogHandler.php) handlers. Moreover all critical events are handled by the [NativeMailHander](https://github.com/Seldaek/monolog/blob/master/src/Monolog/Handler/NativeMailerHandler.php) (configured with `critical_events_to ` and `critical_events_from` parameters).
+
+You can also add your own handlers using the `esb.yml` configuration file.
 
 Contributing
 ------------
 
-To contribute simply fork this repository, do your changes and then propose a pull requests. The test suite requires a running instance of Beanstalkd:
+To contribute fork this repository, do your changes and then propose a pull requests. You can run the test suite with:
 
 ```bash
-beanstalkd &
 vendor/bin/phpunit
 ```
 
-By default it tries to connect to a Beanstalkd running on `127.0.0.1` and default port `11300`. If you have Beanstalkd running elsewhere (for example in a Docker container) you can set the `BEANSTALKD_CONNECTION_URI` environment variable with the connection string (like `tcp://docker:11300`).
+The test suite requires that Beanstalkd is available on your system. By default Beanstalkd is started with the command `beanstalkd -V`. If you would like to customize the Beanstalkd start command you can define the `BEANSTALKD_COMMAND` environment variable. The test suite tries to connect to Beanstalkd at `127.0.0.1` and default port `11300`. If you would like to customize the Beanstalkd connection URI you can set the `BEANSTALKD_CONNECTION_URI` environment variable.
 
 License
 -------
