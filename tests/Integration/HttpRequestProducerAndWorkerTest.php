@@ -4,24 +4,35 @@ namespace Webgriffe\Esb\Integration;
 
 use Amp\Artax\DefaultClient;
 use Amp\Artax\Request;
+use Amp\Artax\Response;
 use Amp\Loop;
 use Monolog\Logger;
 use org\bovigo\vfs\vfsStream;
+use Psr\Http\Message\ResponseInterface;
 use Webgriffe\Esb\DummyFilesystemWorker;
 use Webgriffe\Esb\DummyHttpRequestProducer;
 use Webgriffe\Esb\KernelTestCase;
 
 class HttpRequestProducerAndWorkerTest extends KernelTestCase
 {
-    public function testHttpServerProducerAndWorker()
+    private $workerFile;
+
+    public function setUp()
     {
-        $workerFile = vfsStream::url('root/worker.data');
-        self::createKernel([
-            'services' => [
-                DummyHttpRequestProducer::class => ['arguments' => []],
-                DummyFilesystemWorker::class => ['arguments' => [$workerFile]]
+        parent::setUp();
+        $this->workerFile = vfsStream::url('root/worker.data');
+        self::createKernel(
+            [
+                'services' => [
+                    DummyHttpRequestProducer::class => ['arguments' => []],
+                    DummyFilesystemWorker::class => ['arguments' => [$this->workerFile]]
+                ]
             ]
-        ]);
+        );
+    }
+
+    public function testHttpRequestProducerAndWorker()
+    {
         Loop::delay(10, function () {
             $payload = json_encode(['jobs' => ['job1', 'job2', 'job3']]);
             $client = new DefaultClient();
@@ -33,7 +44,7 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
 
         self::$kernel->boot();
 
-        $workerFileLines = $this->getFileLines($workerFile);
+        $workerFileLines = $this->getFileLines($this->workerFile);
         $this->assertCount(3, $workerFileLines);
         $this->assertContains('job1', $workerFileLines[0]);
         $this->assertContains('job2', $workerFileLines[1]);
@@ -50,6 +61,24 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
             '/Successfully produced a new Job .*? "payload_data":["job3"]/',
             Logger::INFO
         );
+        $this->assertReadyJobsCountInTube(0, DummyFilesystemWorker::TUBE);
+    }
+
+    public function testHttpRequestProducerWithWrongUriShouldReturn404()
+    {
+        Loop::delay(10, function () {
+            $payload = json_encode(['jobs' => ['job1', 'job2', 'job3']]);
+            $client = new DefaultClient();
+            $request = (new Request('http://127.0.0.1:8080/wrong-uri', 'POST'))->withBody($payload);
+            /** @var Response $response */
+            $response = yield $client->request($request);
+            $this->assertEquals(404, $response->getStatus());
+            Loop::delay(10, function () {Loop::stop();});
+        });
+
+        self::$kernel->boot();
+
+        $this->assertFileNotExists($this->workerFile);
         $this->assertReadyJobsCountInTube(0, DummyFilesystemWorker::TUBE);
     }
 

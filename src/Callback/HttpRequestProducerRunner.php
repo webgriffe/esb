@@ -60,6 +60,12 @@ class HttpRequestProducerRunner
     {
         $producer = $this->producer;
         $beanstalkClient = $this->beanstalkClient;
+
+        if ($request->getUri()->getPath() !== $producer->getAttachedRequestUri() ||
+            $producer->getAttachedRequestMethod() !== $request->getMethod()) {
+            return new Response(404, [], 'Producer Not Found');
+        }
+
         $jobsCount = 0;
         $jobs = $producer->produce($request);
         /** @var Job $job */
