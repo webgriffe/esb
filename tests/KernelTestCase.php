@@ -24,6 +24,7 @@ class KernelTestCase extends BeanstalkTestCase
         $basicConfig = [
             'parameters' => [
                 'beanstalkd' => self::getBeanstalkdConnectionUri(),
+                'http_server_port' => self::getHttpServerPort(),
                 'critical_events_to' => 'toemail@address.com',
                 'critical_events_from' => 'From Name <fromemail@address.com>',
             ],
@@ -40,6 +41,11 @@ class KernelTestCase extends BeanstalkTestCase
         $config = array_replace_recursive($basicConfig, $additionalConfig);
         vfsStream::setup('root', null, ['config.yml' => Yaml::dump($config)]);
         self::$kernel = new Kernel(vfsStream::url('root/config.yml'));
+    }
+
+    protected static function getHttpServerPort()
+    {
+        return getenv('HTTP_SERVER_PORT') ?: 34981;
     }
 
     /**

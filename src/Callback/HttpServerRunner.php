@@ -12,44 +12,54 @@ use Psr\Log\LoggerInterface;
 use React\Http\Response;
 use Webgriffe\Esb\HttpRequestProducerInterface;
 use Webgriffe\Esb\Model\Job;
+use Webgriffe\Esb\Service\BeanstalkClientFactory;
 
-class HttpRequestProducerRunner
+class HttpServerRunner
 {
     use CallableMaker;
 
     /**
-     * @var HttpRequestProducerInterface
+     * @var HttpRequestProducerInterface[]
      */
-    private $producer;
+    private $producers;
     /**
-     * @var BeanstalkClient
+     * @var int
      */
-    private $beanstalkClient;
+    private $port;
+    /**
+     * @var BeanstalkClientFactory
+     */
+    private $beanstalkClientFactory;
     /**
      * @var LoggerInterface
      */
     private $logger;
+    /**
+     * @var BeanstalkClient[]
+     */
+    private $beanstalkClients = [];
 
-    public function __construct(
-        HttpRequestProducerInterface $producer,
-        BeanstalkClient $beanstalkClient,
-        LoggerInterface $logger
-    ) {
-        $this->producer = $producer;
-        $this->beanstalkClient = $beanstalkClient;
+    public function __construct(array $producers, int $port, BeanstalkClientFactory $beanstalkClientFactory, LoggerInterface $logger)
+    {
+        $this->producers = $producers;
+        $this->port = $port;
+        $this->beanstalkClientFactory = $beanstalkClientFactory;
         $this->logger = $logger;
     }
 
     public function __invoke()
     {
-        yield call([$this->producer, 'init']);
-        $this->logger->info(
-            'A Producer has been successfully initialized',
-            ['producer' => \get_class($this->producer)]
-        );
-        yield $this->beanstalkClient->use($this->producer->getTube());
+        foreach ($this->producers as $producer) {
+            yield call([$producer, 'init']);
+            $this->logger->info(
+                'A Producer has been successfully initialized',
+                ['producer' => \get_class($producer)]
+            );
+            $this->beanstalkClients[\get_class($producer)] = $this->beanstalkClientFactory->create();
+            yield $this->beanstalkClients[\get_class($producer)]->use($producer->getTube());
+        }
         $server = new \React\Http\Server($this->callableFromInstanceMethod('requestHandler'));
-        $server->listen(new \React\Socket\Server($this->producer->getPort(), ReactAdapter::get()));
+        $server->listen(new \React\Socket\Server($this->port, ReactAdapter::get()));
     }
 
     /** @noinspection PhpUnusedPrivateMethodInspection
@@ -58,20 +68,24 @@ class HttpRequestProducerRunner
      */
     private function requestHandler(ServerRequestInterface $request): ResponseInterface
     {
-        $producer = $this->producer;
-        $beanstalkClient = $this->beanstalkClient;
-
-        if ($request->getUri()->getPath() !== $producer->getAttachedRequestUri() ||
-            $producer->getAttachedRequestMethod() !== $request->getMethod()) {
+        $producer = $this->matchProducer($request);
+        if (!$producer) {
             return new Response(404, [], 'Producer Not Found');
         }
 
+        $this->logger->info(
+            'Matched an HTTP Producer for an incoming HTTP request.',
+            [
+                'producer' => \get_class($producer),
+                'request' => sprintf('%s %s', strtoupper($request->getMethod()), $request->getUri())
+            ]
+        );
+        $beanstalkClient = $this->beanstalkClients[\get_class($producer)];
         $jobsCount = 0;
         $jobs = $producer->produce($request);
         /** @var Job $job */
         foreach($jobs as $job) {
             $payload = serialize($job->getPayloadData());
-            $this->logger->info($payload);
             $beanstalkClient->put($payload)->onResolve(
                 function (\Throwable $error = null, int $jobId) use ($producer, $job) {
                     if ($error) {
@@ -102,5 +116,20 @@ class HttpRequestProducerRunner
         $responseMessage = sprintf('Successfully scheduled %s job(s) to be queued.', $jobsCount);
         $statusCode = 200;
         return new Response($statusCode, [], sprintf('"%s"', $responseMessage));
+    }
+
+    /**
+     * @param ServerRequestInterface $request
+     * @return false|HttpRequestProducerInterface
+     */
+    private function matchProducer(ServerRequestInterface $request)
+    {
+        foreach ($this->producers as $producer) {
+            if ($request->getUri()->getPath() === $producer->getAttachedRequestUri() &&
+                $producer->getAttachedRequestMethod() === $request->getMethod()) {
+                return $producer;
+            }
+        }
+        return false;
     }
 }

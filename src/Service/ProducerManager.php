@@ -13,6 +13,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use React\Http\Response;
 use React\Promise\Promise;
 use Webgriffe\Esb\Callback\HttpRequestProducerRunner;
+use Webgriffe\Esb\Callback\HttpServerRunner;
 use Webgriffe\Esb\Callback\RepeatProducerRunner;
 use Webgriffe\Esb\HttpRequestProducerInterface;
 use Webgriffe\Esb\Model\Job;
@@ -35,16 +36,21 @@ class ProducerManager
      * @var ProducerInterface[]
      */
     private $producers;
+    /**
+     * @var int
+     */
+    private $httpServerPort;
 
     /**
      * ProducerManager constructor.
      * @param BeanstalkClientFactory $beanstalkClientFactory
      * @param Logger $logger
      */
-    public function __construct(BeanstalkClientFactory $beanstalkClientFactory, Logger $logger)
+    public function __construct(BeanstalkClientFactory $beanstalkClientFactory, Logger $logger, int $httpServerPort)
     {
         $this->beanstalkClientFactory = $beanstalkClientFactory;
         $this->logger = $logger;
+        $this->httpServerPort = $httpServerPort;
     }
 
     public function bootProducers()
@@ -54,18 +60,28 @@ class ProducerManager
             return;
         }
 
+        $httpRequestProcucers = [];
         foreach ($this->producers as $producer) {
             if ($producer instanceof RepeatProducerInterface) {
                 Loop::defer(
                     new RepeatProducerRunner($producer, $this->beanstalkClientFactory->create(), $this->logger)
                 );
             } else if ($producer instanceof  HttpRequestProducerInterface) {
-                Loop::defer(
-                    new HttpRequestProducerRunner($producer, $this->beanstalkClientFactory->create(), $this->logger)
-                );
+                $httpRequestProcucers[] = $producer;
             } else {
                 throw new \RuntimeException(sprintf('Unknown producer type "%s".', get_class($producer)));
             }
+        }
+
+        if (\count($httpRequestProcucers)) {
+            Loop::defer(
+                new HttpServerRunner(
+                    $httpRequestProcucers,
+                    $this->httpServerPort,
+                    $this->beanstalkClientFactory,
+                    $this->logger
+                )
+            );
         }
     }
 
