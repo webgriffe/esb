@@ -16,6 +16,13 @@ class KernelTestCase extends BeanstalkTestCase
      */
     protected static $kernel;
 
+    protected function tearDown()
+    {
+        parent::tearDown();
+        self::$kernel = null;
+        gc_collect_cycles();
+    }
+
     /**
      * @param $additionalConfig
      */

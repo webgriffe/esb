@@ -65,8 +65,7 @@ services:
 # parameters.yml
 parameters:
   beanstalkd: tcp://127.0.0.1:11300
-  critical_events_to: toemail@address.com
-  critical_events_from: "From Name <fromemail@address.com>"
+  # Other parameters here ...
 ```
 
 Deployment
@@ -80,13 +79,14 @@ You can also add your own handlers using the `esb.yml` configuration file.
 Contributing
 ------------
 
-To contribute fork this repository, do your changes and then propose a pull requests. You can run the test suite with:
+To contribute simply fork this repository, do your changes and then propose a pull requests. The test suite requires a running instance of Beanstalkd:
 
 ```bash
+beanstalkd &
 vendor/bin/phpunit
 ```
 
-The test suite requires that Beanstalkd is available on your system. By default Beanstalkd is started with the command `beanstalkd -V`. If you would like to customize the Beanstalkd start command you can define the `BEANSTALKD_COMMAND` environment variable. The test suite tries to connect to Beanstalkd at `127.0.0.1` and default port `11300`. If you would like to customize the Beanstalkd connection URI you can set the `BEANSTALKD_CONNECTION_URI` environment variable.
+By default it tries to connect to a Beanstalkd running on `127.0.0.1` and default port `11300`. If you have Beanstalkd running elsewhere (for example in a Docker container) you can set the `BEANSTALKD_CONNECTION_URI` environment variable with the connection string (like `tcp://docker:11300`).
 
 License
 -------

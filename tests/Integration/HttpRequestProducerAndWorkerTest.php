@@ -35,13 +35,13 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
 
     public function testHttpRequestProducerAndWorker()
     {
-        Loop::delay(100, function () {
+        Loop::delay(200, function () {
             $payload = json_encode(['jobs' => ['job1', 'job2', 'job3']]);
             $client = new DefaultClient();
             $request = (new Request("http://127.0.0.1:{$this->httpPort}/dummy", 'POST'))->withBody($payload);
             $response = yield $client->request($request);
             $this->assertContains('"Successfully scheduled 3 job(s) to be queued."', yield $response->getBody());
-            Loop::delay(100, function () {Loop::stop();});
+            Loop::delay(200, function () {Loop::stop();});
         });
 
         self::$kernel->boot();
@@ -68,14 +68,14 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
 
     public function testHttpRequestProducerWithWrongUriShouldReturn404()
     {
-        Loop::delay(100, function () {
+        Loop::delay(200, function () {
             $payload = json_encode(['jobs' => ['job1', 'job2', 'job3']]);
             $client = new DefaultClient();
             $request = (new Request("http://127.0.0.1:{$this->httpPort}/wrong-uri", 'POST'))->withBody($payload);
             /** @var Response $response */
             $response = yield $client->request($request);
             $this->assertEquals(404, $response->getStatus());
-            Loop::delay(100, function () {Loop::stop();});
+            Loop::delay(200, function () {Loop::stop();});
         });
 
         self::$kernel->boot();

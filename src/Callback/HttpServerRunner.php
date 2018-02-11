@@ -39,8 +39,12 @@ class HttpServerRunner
      */
     private $beanstalkClients = [];
 
-    public function __construct(array $producers, int $port, BeanstalkClientFactory $beanstalkClientFactory, LoggerInterface $logger)
-    {
+    public function __construct(
+        array $producers,
+        int $port,
+        BeanstalkClientFactory $beanstalkClientFactory,
+        LoggerInterface $logger
+    ) {
         $this->producers = $producers;
         $this->port = $port;
         $this->beanstalkClientFactory = $beanstalkClientFactory;

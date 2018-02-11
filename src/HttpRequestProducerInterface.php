@@ -7,8 +7,6 @@ use Webgriffe\Esb\Model\Job;
 
 interface HttpRequestProducerInterface extends ProducerInterface
 {
-    public function getPort(): int;
-
     public function getAttachedRequestMethod(): string;
 
     public function getAttachedRequestUri(): string;

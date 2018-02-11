@@ -8,21 +8,6 @@ use Webgriffe\Esb\Model\Job;
 
 class DummyHttpRequestProducer implements HttpRequestProducerInterface
 {
-    /**
-     * @var ServerRequestInterface
-     */
-    private $request;
-
-    /**
-     * @var Response
-     */
-    private $response;
-
-    public function getPort(): int
-    {
-        return 8080;
-    }
-
     public function getAttachedRequestMethod(): string
     {
         return 'POST';
