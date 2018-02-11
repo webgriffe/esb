@@ -16,11 +16,13 @@ use Webgriffe\Esb\KernelTestCase;
 class HttpRequestProducerAndWorkerTest extends KernelTestCase
 {
     private $workerFile;
+    private $httpPort;
 
     public function setUp()
     {
         parent::setUp();
         $this->workerFile = vfsStream::url('root/worker.data');
+        $this->httpPort = self::getHttpServerPort();
         self::createKernel(
             [
                 'services' => [
@@ -33,13 +35,13 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
 
     public function testHttpRequestProducerAndWorker()
     {
-        Loop::delay(10, function () {
+        Loop::delay(100, function () {
             $payload = json_encode(['jobs' => ['job1', 'job2', 'job3']]);
             $client = new DefaultClient();
-            $request = (new Request('http://127.0.0.1:8080/dummy', 'POST'))->withBody($payload);
+            $request = (new Request("http://127.0.0.1:{$this->httpPort}/dummy", 'POST'))->withBody($payload);
             $response = yield $client->request($request);
             $this->assertContains('"Successfully scheduled 3 job(s) to be queued."', yield $response->getBody());
-            Loop::delay(10, function () {Loop::stop();});
+            Loop::delay(100, function () {Loop::stop();});
         });
 
         self::$kernel->boot();
@@ -66,14 +68,14 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
 
     public function testHttpRequestProducerWithWrongUriShouldReturn404()
     {
-        Loop::delay(10, function () {
+        Loop::delay(100, function () {
             $payload = json_encode(['jobs' => ['job1', 'job2', 'job3']]);
             $client = new DefaultClient();
-            $request = (new Request('http://127.0.0.1:8080/wrong-uri', 'POST'))->withBody($payload);
+            $request = (new Request("http://127.0.0.1:{$this->httpPort}/wrong-uri", 'POST'))->withBody($payload);
             /** @var Response $response */
             $response = yield $client->request($request);
             $this->assertEquals(404, $response->getStatus());
-            Loop::delay(10, function () {Loop::stop();});
+            Loop::delay(100, function () {Loop::stop();});
         });
 
         self::$kernel->boot();

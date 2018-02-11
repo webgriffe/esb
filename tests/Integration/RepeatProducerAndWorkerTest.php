@@ -22,14 +22,14 @@ class RepeatProducerAndWorkerTest extends KernelTestCase
         ]);
         mkdir($producerDir);
         Loop::delay(
-            10,
+            100,
             function () use ($producerDir) {
                 touch($producerDir . DIRECTORY_SEPARATOR . 'job1');
                 Loop::delay(
-                    10,
+                    100,
                     function () use ($producerDir) {
                         touch($producerDir . DIRECTORY_SEPARATOR . 'job2');
-                        Loop::delay(10, function () {Loop::stop();});
+                        Loop::delay(100, function () {Loop::stop();});
                     }
                 );
             }
