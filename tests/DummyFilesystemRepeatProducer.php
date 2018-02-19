@@ -39,7 +39,7 @@ class DummyFilesystemRepeatProducer implements RepeatProducerInterface
      * @return \Generator
      * @throws \RuntimeException
      */
-    public function produce(): \Generator
+    public function produce($data = null): \Generator
     {
         if (!is_dir($this->directory)) {
             if (!mkdir($this->directory) && !is_dir($this->directory)) {

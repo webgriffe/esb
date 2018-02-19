@@ -17,6 +17,12 @@ interface ProducerInterface
     public function init();
 
     /**
+     * @param mixed $data
+     * @return \Generator|Job[]
+     */
+    public function produce($data = null): \Generator;
+
+    /**
      * @param Job $job
      * @return void
      */

@@ -49,9 +49,10 @@ class DummyRepeatProducer implements RepeatProducerInterface
     }
 
     /**
+     * @param null $data
      * @return \Generator|Job[]
      */
-    public function produce(): \Generator
+    public function produce($data = null): \Generator
     {
         yield from $this->jobs;
         $this->jobs = []; // We want to produce given jobs only once

@@ -10,9 +10,4 @@ interface RepeatProducerInterface extends ProducerInterface
      * @return int
      */
     public function getInterval(): int;
-
-    /**
-     * @return \Generator|Job[]
-     */
-    public function produce(): \Generator;
 }

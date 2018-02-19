@@ -35,12 +35,18 @@ class DummyHttpRequestProducer implements HttpRequestProducerInterface
     }
 
     /**
-     * @param ServerRequestInterface $request
+     * @param ServerRequestInterface $data
      * @return \Generator|Job[]
+     * @throws \InvalidArgumentException
      */
-    public function produce(ServerRequestInterface $request): \Generator
+    public function produce($data = null): \Generator
     {
-        $body = json_decode($request->getBody(), true);
+        if (!$data instanceof ServerRequestInterface) {
+            throw new \InvalidArgumentException(
+                sprintf('Expected "%s" as data for "%s"', ServerRequestInterface::class, __CLASS__)
+            );
+        }
+        $body = json_decode($data->getBody(), true);
         foreach ($body['jobs'] as $job) {
             yield new Job([$job]);
         }
