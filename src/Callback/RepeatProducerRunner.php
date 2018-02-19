@@ -7,6 +7,7 @@ use function Amp\call;
 use Amp\CallableMaker;
 use Amp\Loop;
 use Psr\Log\LoggerInterface;
+use Webgriffe\Esb\JobsQueuer;
 use Webgriffe\Esb\Model\Job;
 use Webgriffe\Esb\RepeatProducerInterface;
 
@@ -49,36 +50,15 @@ class RepeatProducerRunner
     }
 
     /** @noinspection PhpUnusedPrivateMethodInspection */
+    /**
+     * @throws Loop\InvalidWatcherError
+     */
     private function repeatWatcher($watcherId)
     {
         $producer = $this->producer;
         $beanstalkClient = $this->beanstalkClient;
         Loop::disable($watcherId);
-        $jobs = $producer->produce();
-        /** @var Job $job */
-        foreach($jobs as $job) {
-            try {
-                $payload = serialize($job->getPayloadData());
-                $jobId = yield $beanstalkClient->put($payload);
-                $this->logger->info(
-                    'Successfully produced a new Job',
-                    [
-                        'producer' => \get_class($producer),
-                        'job_id' => $jobId,
-                        'payload_data' => $job->getPayloadData()
-                    ]
-                );
-            } catch (\Exception $e) {
-                $this->logger->error(
-                    'An error occurred producing a job.',
-                    [
-                        'producer' => \get_class($producer),
-                        'payload_data' => $job->getPayloadData(),
-                        'error' => $e->getMessage(),
-                    ]
-                );
-            }
-        }
+        JobsQueuer::queueJobs($beanstalkClient, $this->logger, $producer);
         Loop::enable($watcherId);
     }
 }

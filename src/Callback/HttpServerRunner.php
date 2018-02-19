@@ -11,7 +11,9 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Log\LoggerInterface;
 use React\Http\Response;
 use Webgriffe\Esb\HttpRequestProducerInterface;
+use Webgriffe\Esb\JobsQueuer;
 use Webgriffe\Esb\Model\Job;
+use Webgriffe\Esb\ProducerInterface;
 use Webgriffe\Esb\Service\BeanstalkClientFactory;
 
 class HttpServerRunner
@@ -85,36 +87,7 @@ class HttpServerRunner
             ]
         );
         $beanstalkClient = $this->beanstalkClients[\get_class($producer)];
-        $jobsCount = 0;
-        $jobs = $producer->produce($request);
-        /** @var Job $job */
-        foreach($jobs as $job) {
-            $payload = serialize($job->getPayloadData());
-            $beanstalkClient->put($payload)->onResolve(
-                function (\Throwable $error = null, int $jobId) use ($producer, $job) {
-                    if ($error) {
-                        $this->logger->error(
-                            'An error occurred producing a job.',
-                            [
-                                'producer' => \get_class($producer),
-                                'payload_data' => $job->getPayloadData(),
-                                'error' => $error->getMessage(),
-                            ]
-                        );
-                    } else {
-                        $this->logger->info(
-                            'Successfully produced a new Job',
-                            [
-                                'producer' => \get_class($producer),
-                                'job_id' => $jobId,
-                                'payload_data' => $job->getPayloadData()
-                            ]
-                        );
-                    }
-                }
-            );
-            $jobsCount++;
-        }
+        $jobsCount = JobsQueuer::queueJobs($beanstalkClient, $this->logger, $producer, $request);
         $responseMessage = sprintf('Successfully scheduled %s job(s) to be queued.', $jobsCount);
         $statusCode = 200;
         return new Response($statusCode, [], sprintf('"%s"', $responseMessage));
