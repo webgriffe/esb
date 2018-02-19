@@ -101,7 +101,6 @@ class HttpServerRunner
                                 'error' => $error->getMessage(),
                             ]
                         );
-                        $producer->onProduceFail($job, $error);
                     } else {
                         $this->logger->info(
                             'Successfully produced a new Job',
@@ -111,7 +110,6 @@ class HttpServerRunner
                                 'payload_data' => $job->getPayloadData()
                             ]
                         );
-                        $producer->onProduceSuccess($job);
                     }
                 }
             );

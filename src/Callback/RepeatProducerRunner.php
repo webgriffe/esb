@@ -68,7 +68,6 @@ class RepeatProducerRunner
                         'payload_data' => $job->getPayloadData()
                     ]
                 );
-                $producer->onProduceSuccess($job);
             } catch (\Exception $e) {
                 $this->logger->error(
                     'An error occurred producing a job.',
@@ -78,7 +77,6 @@ class RepeatProducerRunner
                         'error' => $e->getMessage(),
                     ]
                 );
-                $producer->onProduceFail($job, $e);
             }
         }
         Loop::enable($watcherId);

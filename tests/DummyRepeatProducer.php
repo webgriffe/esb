@@ -59,23 +59,6 @@ class DummyRepeatProducer implements RepeatProducerInterface
     }
 
     /**
-     * @param Job $job
-     * @return void
-     */
-    public function onProduceSuccess(Job $job)
-    {
-    }
-
-    /**
-     * @param Job $job
-     * @param \Throwable $exception
-     * @return void
-     */
-    public function onProduceFail(Job $job, \Throwable $exception)
-    {
-    }
-
-    /**
      * @return int
      */
     public function getInterval(): int

@@ -51,23 +51,4 @@ class DummyHttpRequestProducer implements HttpRequestProducerInterface
             yield new Job([$job]);
         }
     }
-
-    /**
-     * @param Job $job
-     * @return void
-     */
-    public function onProduceSuccess(Job $job)
-    {
-        // TODO: Implement onProduceSuccess() method.
-    }
-
-    /**
-     * @param Job $job
-     * @param \Exception $exception
-     * @return void
-     */
-    public function onProduceFail(Job $job, \Throwable $exception)
-    {
-        // TODO: Implement onProduceFail() method.
-    }
 }
