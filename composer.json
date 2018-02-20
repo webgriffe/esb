@@ -14,7 +14,8 @@
         "amphp/beanstalk": "^0.2.0",
         "monolog/monolog": "^1.23",
         "react/http": "^0.8.0",
-        "amphp/react-adapter": "^1.1"
+        "amphp/react-adapter": "^1.1",
+        "dragonmantank/cron-expression": "^2.0"
     },
     "autoload": {
         "psr-4": {

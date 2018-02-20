@@ -40,12 +40,7 @@ class RepeatProducerRunner
 
     public function __invoke()
     {
-        yield call([$this->producer, 'init']);
-        $this->logger->info(
-            'A Producer has been successfully initialized',
-            ['producer' => \get_class($this->producer)]
-        );
-        yield $this->beanstalkClient->use($this->producer->getTube());
+        yield call(new ProducerInitializer($this->producer, $this->beanstalkClient, $this->logger));
         Loop::repeat($this->producer->getInterval(), $this->callableFromInstanceMethod('repeatWatcher'));
     }
 

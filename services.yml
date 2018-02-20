@@ -18,8 +18,8 @@ services:
     arguments: [ '%beanstalkd%' ]
 
   Webgriffe\Esb\Service\ProducerManager:
-    class: \Webgriffe\Esb\Service\ProducerManager
-    arguments: [ '@Webgriffe\Esb\Service\BeanstalkClientFactory', '@Monolog\Logger', '%http_server_port%' ]
+    calls:
+      - [setContainer, [ '@service_container' ]]
 
   Monolog\Handler\StreamHandler:
     class: \Monolog\Handler\StreamHandler
@@ -36,3 +36,6 @@ services:
   Monolog\Logger:
     class: \Monolog\Logger
     arguments: [ 'esb', ['@Monolog\Handler\StreamHandler', '@Monolog\Handler\ErrorLogHandler', '@Monolog\Handler\NativeMailerHandler'] ]
+
+  Webgriffe\Esb\DateTimeBuilderInterface:
+    class: \Webgriffe\Esb\DateTimeBuilder

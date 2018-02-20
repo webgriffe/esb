@@ -56,13 +56,9 @@ class HttpServerRunner
     public function __invoke()
     {
         foreach ($this->producers as $producer) {
-            yield call([$producer, 'init']);
-            $this->logger->info(
-                'A Producer has been successfully initialized',
-                ['producer' => \get_class($producer)]
-            );
-            $this->beanstalkClients[\get_class($producer)] = $this->beanstalkClientFactory->create();
-            yield $this->beanstalkClients[\get_class($producer)]->use($producer->getTube());
+            $beanstalkClient = $this->beanstalkClientFactory->create();
+            $this->beanstalkClients[\get_class($producer)] = $beanstalkClient;
+            yield call(new ProducerInitializer($producer, $beanstalkClient, $this->logger));
         }
         $server = new \React\Http\Server($this->callableFromInstanceMethod('requestHandler'));
         $server->listen(new \React\Socket\Server($this->port, ReactAdapter::get()));
