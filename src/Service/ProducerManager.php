@@ -11,7 +11,7 @@ use Symfony\Component\DependencyInjection\ContainerAwareTrait;
 use Webgriffe\Esb\Callback\CrontabProducersRunner;
 use Webgriffe\Esb\Callback\HttpServerRunner;
 use Webgriffe\Esb\Callback\ProducerInitializer;
-use Webgriffe\Esb\Callback\RepeatProducerRunner;
+use Webgriffe\Esb\Callback\RepeatProducersRunner;
 use Webgriffe\Esb\CrontabProducerInterface;
 use Webgriffe\Esb\DateTimeBuilderInterface;
 use Webgriffe\Esb\HttpRequestProducerInterface;
@@ -51,14 +51,15 @@ class ProducerManager implements ContainerAwareInterface
             return;
         }
 
+        /** @var RepeatProducerInterface[] $repeatProducers */
+        $repeatProducers = [];
+        /** @var HttpRequestProducerInterface[] $httpRequestProcucers */
         $httpRequestProcucers = [];
         /** @var CrontabProducerInterface[] $crontabProducers */
         $crontabProducers = [];
         foreach ($this->producers as $producer) {
             if ($producer instanceof RepeatProducerInterface) {
-                Loop::defer(
-                    new RepeatProducerRunner($producer, $beanstalkClientFactory->create(), $logger)
-                );
+                $repeatProducers[] = $producer;
             } else if ($producer instanceof  HttpRequestProducerInterface) {
                 $httpRequestProcucers[] = $producer;
             } else if ($producer instanceof  CrontabProducerInterface) {
@@ -68,6 +69,11 @@ class ProducerManager implements ContainerAwareInterface
             }
         }
 
+        if (\count($repeatProducers)) {
+            Loop::defer(
+                new RepeatProducersRunner($repeatProducers, $beanstalkClientFactory, $logger)
+            );
+        }
         if (\count($httpRequestProcucers)) {
             $httpPort = $this->container->getParameter('http_server_port');
             Loop::defer(
