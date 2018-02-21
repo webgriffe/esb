@@ -2,6 +2,8 @@
 
 namespace Webgriffe\Esb;
 
+use Amp\Promise;
+use Amp\Success;
 use Webgriffe\Esb\Model\Job;
 
 /**
@@ -28,11 +30,12 @@ class DummyFilesystemRepeatProducer implements RepeatProducerInterface
     }
 
     /**
-     * @return void
+     * @return Promise
+     * @throws \Error
      */
-    public function init()
+    public function init(): Promise
     {
-        // No init needed.
+        return new Success(null);
     }
 
     /**

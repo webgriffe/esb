@@ -2,6 +2,8 @@
 
 namespace Webgriffe\Esb;
 
+use Amp\Promise;
+use Amp\Success;
 use Webgriffe\Esb\Model\Job;
 
 class DummyCrontabProducer implements CrontabProducerInterface
@@ -34,10 +36,12 @@ class DummyCrontabProducer implements CrontabProducerInterface
     }
 
     /**
-     * @return void
+     * @return Promise
+     * @throws \Error
      */
-    public function init()
+    public function init(): Promise
     {
+        return new Success(null);
     }
 
     /**

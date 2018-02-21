@@ -2,9 +2,9 @@
 
 namespace Webgriffe\Esb;
 
-use Webgriffe\Esb\Model\Job;
+use Amp\Promise;
+use Amp\Success;
 use Webgriffe\Esb\Model\QueuedJob;
-use Webgriffe\Esb\WorkerInterface;
 
 /**
  * This is a sample worker which simply writes job data to the /tmp/sample_worker.data file
@@ -32,10 +32,12 @@ class DummyFilesystemWorker implements WorkerInterface
     }
 
     /**
-     * @return void
+     * @return Promise
+     * @throws \Error
      */
-    public function init()
+    public function init(): Promise
     {
+        return new Success(null);
     }
 
     /**

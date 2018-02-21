@@ -2,6 +2,8 @@
 
 namespace Webgriffe\Esb;
 
+use Amp\Promise;
+use Amp\Success;
 use Psr\Http\Message\ServerRequestInterface;
 use React\Http\Response;
 use Webgriffe\Esb\Model\Job;
@@ -27,11 +29,12 @@ class DummyHttpRequestProducer implements HttpRequestProducerInterface
     }
 
     /**
-     * @return void
+     * @return Promise
+     * @throws \Error
      */
-    public function init()
+    public function init(): Promise
     {
-        // TODO: Implement init() method.
+        return new Success(null);
     }
 
     /**

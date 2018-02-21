@@ -60,15 +60,15 @@ class WorkerManager
     public function bootWorkerInstance(WorkerInterface $worker, int $instanceIndex)
     {
         $beanstalkClient = $this->beanstalkClientFactory->create();
-        yield call([$worker, 'init']);
+        yield $worker->init();
+        yield $beanstalkClient->watch($worker->getTube());
+        yield $beanstalkClient->ignore('default');
         $this->logger->info(
             'A Worker has been successfully initialized',
             ['worker' => \get_class($worker), 'instance_index' => $instanceIndex]
         );
-        yield $beanstalkClient->watch($worker->getTube());
-        yield $beanstalkClient->ignore('default');
         while ($rawJob = yield $beanstalkClient->reserve()) {
-            $job = new QueuedJob($rawJob[0], unserialize($rawJob[1]));
+            $job = new QueuedJob($rawJob[0], unserialize($rawJob[1], ['allowed_classes' => false]));
             $logContext = [
                 'worker' => \get_class($worker),
                 'instance_index' => $instanceIndex,

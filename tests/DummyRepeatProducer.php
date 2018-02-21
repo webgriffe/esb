@@ -3,6 +3,8 @@
 namespace Webgriffe\Esb;
 
 use Amp\Loop;
+use Amp\Promise;
+use Amp\Success;
 use Webgriffe\Esb\Model\Job;
 
 class DummyRepeatProducer implements RepeatProducerInterface
@@ -42,10 +44,12 @@ class DummyRepeatProducer implements RepeatProducerInterface
     }
 
     /**
-     * @return void
+     * @return Promise
+     * @throws \Error
      */
-    public function init()
+    public function init(): Promise
     {
+        return new Success(null);
     }
 
     /**

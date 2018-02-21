@@ -35,12 +35,12 @@ class ProducerInitializer
 
     public function __invoke()
     {
-        yield call([$this->producer, 'init']);
+        yield $this->producer->init();
+        yield $this->beanstalkClient->use($this->producer->getTube());
         $this->logger->info(
             'A Producer has been successfully initialized',
             ['producer' => \get_class($this->producer)]
         );
-        yield $this->beanstalkClient->use($this->producer->getTube());
     }
 
 

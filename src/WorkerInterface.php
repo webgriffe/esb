@@ -2,6 +2,7 @@
 
 namespace Webgriffe\Esb;
 
+use Amp\Promise;
 use Webgriffe\Esb\Model\QueuedJob;
 
 interface WorkerInterface
@@ -12,9 +13,9 @@ interface WorkerInterface
     public function getTube(): string;
 
     /**
-     * @return void
+     * @return Promise
      */
-    public function init();
+    public function init(): Promise;
 
     /**
      * @param QueuedJob $job
