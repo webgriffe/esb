@@ -19,9 +19,9 @@ interface WorkerInterface
 
     /**
      * @param QueuedJob $job
-     * @return void
+     * @return Promise
      */
-    public function work(QueuedJob $job);
+    public function work(QueuedJob $job): Promise;
 
     /**
      * @return int

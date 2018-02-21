@@ -2,6 +2,8 @@
 
 namespace Webgriffe\Esb;
 
+use Amp\File\BlockingDriver;
+use function Amp\File\filesystem;
 use Amp\PHPUnit\TestCase;
 use Monolog\Handler\TestHandler;
 use Monolog\Logger;
@@ -15,6 +17,15 @@ class KernelTestCase extends BeanstalkTestCase
      * @var Kernel
      */
     protected static $kernel;
+
+    /**
+     * @throws \Error
+     */
+    public function setUp()
+    {
+        parent::setUp();
+        filesystem(new BlockingDriver());
+    }
 
     protected function tearDown()
     {

@@ -6,6 +6,7 @@ use function Amp\call;
 use Amp\Deferred;
 use Amp\Loop;
 use Amp\Promise;
+use Amp\Success;
 use Psr\Log\LoggerInterface;
 use Webgriffe\Esb\Model\QueuedJob;
 
@@ -52,10 +53,12 @@ class DummyLongInitWorker implements WorkerInterface
 
     /**
      * @param QueuedJob $job
-     * @return void
+     * @return Promise
+     * @throws \Error
      */
-    public function work(QueuedJob $job)
+    public function work(QueuedJob $job): Promise
     {
+        return new Success(null);
     }
 
     /**
