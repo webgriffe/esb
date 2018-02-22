@@ -2,6 +2,8 @@
 
 namespace Webgriffe\Esb;
 
+use Amp\Iterator;
+use Amp\Producer;
 use Amp\Promise;
 use Amp\Success;
 use Webgriffe\Esb\Model\Job;
@@ -39,25 +41,28 @@ class DummyFilesystemRepeatProducer implements RepeatProducerInterface
     }
 
     /**
-     * @return \Generator
-     * @throws \RuntimeException
+     * @param mixed $data
+     * @return Iterator
+     * @throws \Error
      */
-    public function produce($data = null): \Generator
+    public function produce($data = null): Iterator
     {
-        if (!is_dir($this->directory)) {
-            if (!mkdir($this->directory) && !is_dir($this->directory)) {
-                throw new \RuntimeException(sprintf('Directory "%s" was not created', $this->directory));
+        return new Producer(function (callable $emit) {
+            if (!is_dir($this->directory)) {
+                if (!mkdir($this->directory) && !is_dir($this->directory)) {
+                    throw new \RuntimeException(sprintf('Directory "%s" was not created', $this->directory));
+                }
             }
-        }
-        $files = scandir($this->directory, SCANDIR_SORT_NONE);
-        foreach ($files as $file) {
-            $file = $this->directory . DIRECTORY_SEPARATOR . $file;
-            if (is_dir($file)) {
-                continue;
+            $files = yield \Amp\File\scandir($this->directory);
+            foreach ($files as $file) {
+                $file = $this->directory . DIRECTORY_SEPARATOR . $file;
+                if (is_dir($file)) {
+                    continue;
+                }
+                yield $emit(new Job(['file' => $file, 'data' => file_get_contents($file)]));
+                yield \Amp\File\unlink($file);
             }
-            yield new Job(['file' => $file, 'data' => file_get_contents($file)]);
-            unlink($file);
-        }
+        });
     }
 
     /**

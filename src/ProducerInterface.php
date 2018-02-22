@@ -2,8 +2,8 @@
 
 namespace Webgriffe\Esb;
 
+use Amp\Iterator;
 use Amp\Promise;
-use Webgriffe\Esb\Model\Job;
 
 interface ProducerInterface
 {
@@ -19,7 +19,7 @@ interface ProducerInterface
 
     /**
      * @param mixed $data
-     * @return \Generator|Job[]
+     * @return Iterator An Amp Iterator that must emit Jobs.
      */
-    public function produce($data = null): \Generator;
+    public function produce($data = null): Iterator;
 }

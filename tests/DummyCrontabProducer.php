@@ -2,6 +2,7 @@
 
 namespace Webgriffe\Esb;
 
+use Amp\Iterator;
 use Amp\Promise;
 use Amp\Success;
 use Webgriffe\Esb\Model\Job;
@@ -46,12 +47,14 @@ class DummyCrontabProducer implements CrontabProducerInterface
 
     /**
      * @param mixed $data
-     * @return \Generator|Job[]
+     * @return Iterator
+     * @throws \TypeError
      */
-    public function produce($data = null): \Generator
+    public function produce($data = null): Iterator
     {
-        yield from $this->jobs;
-        $this->jobs = []; // We want to produce given jobs only once
+        $iterator = Iterator\fromIterable($this->jobs);
+        $this->jobs = [];
+        return $iterator;
     }
 
     /**

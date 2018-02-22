@@ -61,7 +61,7 @@ class RepeatProducersRunner
     {
         $beanstalkClient = $this->beanstalkClients[\get_class($producer)];
         Loop::disable($watcherId);
-        JobsQueuer::queueJobs($beanstalkClient, $this->logger, $producer);
+        yield JobsQueuer::queueJobs($beanstalkClient, $this->logger, $producer);
         Loop::enable($watcherId);
     }
 }

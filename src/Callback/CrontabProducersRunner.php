@@ -79,7 +79,7 @@ class CrontabProducersRunner
                     ]
                 );
                 $beanstalkClient = $this->beanstalkClients[\get_class($producer)];
-                JobsQueuer::queueJobs($beanstalkClient, $this->logger, $producer);
+                yield JobsQueuer::queueJobs($beanstalkClient, $this->logger, $producer);
             }
         }
     }

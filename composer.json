@@ -15,7 +15,8 @@
         "monolog/monolog": "^1.23",
         "react/http": "^0.8.0",
         "amphp/react-adapter": "^1.1",
-        "dragonmantank/cron-expression": "^2.0"
+        "dragonmantank/cron-expression": "^2.0",
+        "umbri/amp-react-interop": "^0.0.1"
     },
     "autoload": {
         "psr-4": {

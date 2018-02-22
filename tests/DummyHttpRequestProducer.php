@@ -2,6 +2,8 @@
 
 namespace Webgriffe\Esb;
 
+use Amp\Iterator;
+use Amp\Producer;
 use Amp\Promise;
 use Amp\Success;
 use Psr\Http\Message\ServerRequestInterface;
@@ -39,10 +41,11 @@ class DummyHttpRequestProducer implements HttpRequestProducerInterface
 
     /**
      * @param ServerRequestInterface $data
-     * @return \Generator|Job[]
+     * @return Iterator
      * @throws \InvalidArgumentException
+     * @throws \Error
      */
-    public function produce($data = null): \Generator
+    public function produce($data = null): Iterator
     {
         if (!$data instanceof ServerRequestInterface) {
             throw new \InvalidArgumentException(
@@ -50,8 +53,11 @@ class DummyHttpRequestProducer implements HttpRequestProducerInterface
             );
         }
         $body = json_decode($data->getBody(), true);
-        foreach ($body['jobs'] as $job) {
-            yield new Job([$job]);
-        }
+        $jobsData = $body['jobs'];
+        return new Producer(function (callable $emit) use ($jobsData) {
+            foreach ($jobsData as $jobData) {
+                yield $emit(new Job([$jobData]));
+            }
+        });
     }
 }

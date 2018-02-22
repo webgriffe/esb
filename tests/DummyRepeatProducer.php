@@ -2,6 +2,7 @@
 
 namespace Webgriffe\Esb;
 
+use Amp\Iterator;
 use Amp\Loop;
 use Amp\Promise;
 use Amp\Success;
@@ -53,13 +54,15 @@ class DummyRepeatProducer implements RepeatProducerInterface
     }
 
     /**
-     * @param null $data
-     * @return \Generator|Job[]
+     * @param mixed $data
+     * @return Iterator
+     * @throws \TypeError
      */
-    public function produce($data = null): \Generator
+    public function produce($data = null): Iterator
     {
-        yield from $this->jobs;
-        $this->jobs = []; // We want to produce given jobs only once
+        $iterator = Iterator\fromIterable($this->jobs);
+        $this->jobs = [];
+        return $iterator;
     }
 
     /**

@@ -6,14 +6,14 @@ use Amp\Beanstalk\BeanstalkClient;
 use function Amp\call;
 use Amp\CallableMaker;
 use Amp\ReactAdapter\ReactAdapter;
+use function Interop\React\Promise\adapt;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Log\LoggerInterface;
 use React\Http\Response;
+use React\Promise\PromiseInterface;
 use Webgriffe\Esb\HttpRequestProducerInterface;
 use Webgriffe\Esb\JobsQueuer;
-use Webgriffe\Esb\Model\Job;
-use Webgriffe\Esb\ProducerInterface;
 use Webgriffe\Esb\Service\BeanstalkClientFactory;
 
 class HttpServerRunner
@@ -64,11 +64,15 @@ class HttpServerRunner
         $server->listen(new \React\Socket\Server($this->port, ReactAdapter::get()));
     }
 
-    /** @noinspection PhpUnusedPrivateMethodInspection
+    /** @noinspection PhpUnusedPrivateMethodInspection */
+    /**
      * @param ServerRequestInterface $request
-     * @return ResponseInterface
+     * @return PromiseInterface|ResponseInterface
+     * @throws \Error
+     * @throws \Throwable
+     * @throws \TypeError
      */
-    private function requestHandler(ServerRequestInterface $request): ResponseInterface
+    private function requestHandler(ServerRequestInterface $request)
     {
         $producer = $this->matchProducer($request);
         if (!$producer) {
@@ -83,10 +87,19 @@ class HttpServerRunner
             ]
         );
         $beanstalkClient = $this->beanstalkClients[\get_class($producer)];
-        $jobsCount = JobsQueuer::queueJobs($beanstalkClient, $this->logger, $producer, $request);
-        $responseMessage = sprintf('Successfully scheduled %s job(s) to be queued.', $jobsCount);
-        $statusCode = 200;
-        return new Response($statusCode, [], sprintf('"%s"', $responseMessage));
+        return adapt(call(function () use ($beanstalkClient, $producer, $request) {
+            $jobsCount = yield JobsQueuer::queueJobs($beanstalkClient, $this->logger, $producer, $request);
+            $responseMessage = sprintf('Successfully scheduled %s job(s) to be queued.', $jobsCount);
+            $statusCode = 200;
+            return new Response($statusCode, [], sprintf('"%s"', $responseMessage));
+        }));
+//        $promise = JobsQueuer::queueJobs($beanstalkClient, $this->logger, $producer, $request);
+//        $promise->onResolve(function (\Throwable $error = null, $jobsCount = null) {
+//            $responseMessage = sprintf('Successfully scheduled %s job(s) to be queued.', $jobsCount);
+//            $statusCode = 200;
+//            return new Response($statusCode, [], sprintf('"%s"', $responseMessage));
+//        });
+//        return adapt($promise);
     }
 
     /**
