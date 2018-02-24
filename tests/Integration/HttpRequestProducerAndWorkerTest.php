@@ -22,7 +22,6 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
     {
         parent::setUp();
         $this->workerFile = vfsStream::url('root/worker.data');
-        $this->httpPort = self::getHttpServerPort();
         self::createKernel(
             [
                 'services' => [
@@ -31,6 +30,7 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
                 ]
             ]
         );
+        $this->httpPort = self::$kernel->getContainer()->getParameter('http_server_port');
     }
 
     public function testHttpRequestProducerAndWorker()
