@@ -2,7 +2,9 @@
 
 namespace Webgriffe\Esb;
 
+use Amp\Deferred;
 use Amp\Iterator;
+use Amp\Loop;
 use Amp\Producer;
 use Amp\Promise;
 use Amp\Success;
@@ -17,10 +19,20 @@ class DummyFilesystemRepeatProducer implements RepeatProducerInterface
      * @var string
      */
     private $directory;
+    /**
+     * @var int
+     */
+    private $interval;
+    /**
+     * @var int
+     */
+    private $produceDelay;
 
-    public function __construct(string $directory)
+    public function __construct(string $directory, int $interval = 1, int $produceDelay = null)
     {
         $this->directory = $directory;
+        $this->interval = $interval;
+        $this->produceDelay = $produceDelay;
     }
 
     /**
@@ -59,6 +71,7 @@ class DummyFilesystemRepeatProducer implements RepeatProducerInterface
                 if (is_dir($file)) {
                     continue;
                 }
+                yield $this->longRunningOperation();
                 yield $emit(new Job(['file' => $file, 'data' => file_get_contents($file)]));
                 yield \Amp\File\unlink($file);
             }
@@ -70,6 +83,22 @@ class DummyFilesystemRepeatProducer implements RepeatProducerInterface
      */
     public function getInterval(): int
     {
-        return 1;
+        return $this->interval;
+    }
+
+    /**
+     * @return Promise
+     * @throws \Error
+     */
+    private function longRunningOperation(): Promise
+    {
+        if (!$this->produceDelay) {
+            return new Success(true);
+        }
+        $deferred = new Deferred();
+        Loop::delay($this->produceDelay, function () use ($deferred) {
+            $deferred->resolve(true);
+        });
+        return $deferred->promise();
     }
 }
