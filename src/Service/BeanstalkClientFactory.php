@@ -1,8 +1,6 @@
 <?php
 
-
 namespace Webgriffe\Esb\Service;
-
 
 use Amp\Beanstalk\BeanstalkClient;
 
@@ -18,7 +16,7 @@ class BeanstalkClientFactory
         $this->connectionUri = $connectionUri;
     }
 
-    public function create()
+    public function create(): BeanstalkClient
     {
         return new BeanstalkClient($this->connectionUri);
     }

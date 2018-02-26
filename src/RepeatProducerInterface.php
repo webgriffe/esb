@@ -2,8 +2,6 @@
 
 namespace Webgriffe\Esb;
 
-use Webgriffe\Esb\Model\Job;
-
 interface RepeatProducerInterface extends ProducerInterface
 {
     /**

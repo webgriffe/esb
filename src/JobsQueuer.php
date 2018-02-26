@@ -2,16 +2,17 @@
 
 namespace Webgriffe\Esb;
 
-use Amp\Beanstalk\BeanstalkClient;
-use function Amp\call;
 use Amp\Promise;
+use Amp\Beanstalk\BeanstalkClient;
 use Psr\Log\LoggerInterface;
 use Webgriffe\Esb\Model\Job;
+use function Amp\call;
 
 class JobsQueuer
 {
     /**
      * @param BeanstalkClient $beanstalkClient
+     * @param LoggerInterface $logger
      * @param ProducerInterface $producer
      * @param mixed $data
      * @return Promise
@@ -25,10 +26,12 @@ class JobsQueuer
         return call(function () use ($beanstalkClient, $logger, $producer, $data) {
             $jobsCount = 0;
             $jobs = $producer->produce($data);
+
             while (yield $jobs->advance()) {
                 /** @var Job $job */
                 $job = $jobs->getCurrent();
                 $payload = serialize($job->getPayloadData());
+
                 try {
                     $jobId = yield $beanstalkClient->put($payload);
                     $logger->info(

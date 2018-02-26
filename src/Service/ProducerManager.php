@@ -2,20 +2,16 @@
 
 namespace Webgriffe\Esb\Service;
 
-use function Amp\call;
 use Amp\Loop;
-use Cron\CronExpression;
 use Monolog\Logger;
 use Symfony\Component\DependencyInjection\ContainerAwareInterface;
 use Symfony\Component\DependencyInjection\ContainerAwareTrait;
 use Webgriffe\Esb\Callback\CrontabProducersRunner;
 use Webgriffe\Esb\Callback\HttpServerRunner;
-use Webgriffe\Esb\Callback\ProducerInitializer;
 use Webgriffe\Esb\Callback\RepeatProducersRunner;
 use Webgriffe\Esb\CrontabProducerInterface;
 use Webgriffe\Esb\DateTimeBuilderInterface;
 use Webgriffe\Esb\HttpRequestProducerInterface;
-use Webgriffe\Esb\JobsQueuer;
 use Webgriffe\Esb\ProducerInterface;
 use Webgriffe\Esb\RepeatProducerInterface;
 
@@ -53,15 +49,15 @@ class ProducerManager implements ContainerAwareInterface
 
         /** @var RepeatProducerInterface[] $repeatProducers */
         $repeatProducers = [];
-        /** @var HttpRequestProducerInterface[] $httpRequestProcucers */
-        $httpRequestProcucers = [];
+        /** @var HttpRequestProducerInterface[] $httpRequestProducers */
+        $httpRequestProducers = [];
         /** @var CrontabProducerInterface[] $crontabProducers */
         $crontabProducers = [];
         foreach ($this->producers as $producer) {
             if ($producer instanceof RepeatProducerInterface) {
                 $repeatProducers[] = $producer;
             } else if ($producer instanceof  HttpRequestProducerInterface) {
-                $httpRequestProcucers[] = $producer;
+                $httpRequestProducers[] = $producer;
             } else if ($producer instanceof  CrontabProducerInterface) {
                 $crontabProducers[] = $producer;
             } else {
@@ -74,12 +70,14 @@ class ProducerManager implements ContainerAwareInterface
                 new RepeatProducersRunner($repeatProducers, $beanstalkClientFactory, $logger)
             );
         }
-        if (\count($httpRequestProcucers)) {
+
+        if (\count($httpRequestProducers)) {
             $httpPort = $this->container->getParameter('http_server_port');
             Loop::defer(
-                new HttpServerRunner($httpRequestProcucers, $httpPort, $beanstalkClientFactory, $logger)
+                new HttpServerRunner($httpRequestProducers, $httpPort, $beanstalkClientFactory, $logger)
             );
         }
+
         if (\count($crontabProducers)) {
             /** @var DateTimeBuilderInterface $dateTimeBuilder */
             $dateTimeBuilder = $this->container->get(DateTimeBuilderInterface::class);

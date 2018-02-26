@@ -6,9 +6,7 @@ use Amp\Loop;
 use org\bovigo\vfs\vfsStream;
 use Webgriffe\Esb\DummyFilesystemRepeatProducer;
 use Webgriffe\Esb\DummyFilesystemWorker;
-use Webgriffe\Esb\DummyLongProduceRepeatProducer;
 use Webgriffe\Esb\KernelTestCase;
-use Webgriffe\Esb\Model\Job;
 
 class RepeatProducerAndWorkerTest extends KernelTestCase
 {

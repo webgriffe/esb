@@ -2,9 +2,9 @@
 
 namespace Webgriffe\Esb;
 
-use Amp\Iterator;
 use Amp\Promise;
 use Amp\Success;
+use Amp\Iterator;
 
 class DummyRepeatProducer implements RepeatProducerInterface
 {
