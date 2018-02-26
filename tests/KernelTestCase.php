@@ -3,10 +3,10 @@
 namespace Webgriffe\Esb;
 
 use Amp\File\BlockingDriver;
-use function Amp\File\filesystem;
 use Monolog\Handler\TestHandler;
 use org\bovigo\vfs\vfsStream;
 use Symfony\Component\Yaml\Yaml;
+use function Amp\File\filesystem;
 
 class KernelTestCase extends BeanstalkTestCase
 {

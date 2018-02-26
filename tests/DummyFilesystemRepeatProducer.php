@@ -2,13 +2,13 @@
 
 namespace Webgriffe\Esb;
 
-use Amp\Deferred;
-use Amp\File;
-use Amp\Iterator;
 use Amp\Loop;
+use Amp\File;
 use Amp\Producer;
 use Amp\Promise;
 use Amp\Success;
+use Amp\Deferred;
+use Amp\Iterator;
 use Webgriffe\Esb\Model\Job;
 
 /**

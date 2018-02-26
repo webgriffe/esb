@@ -3,14 +3,14 @@
 namespace Webgriffe\Esb\Callback;
 
 use Amp\Beanstalk\BeanstalkClient;
-use function Amp\call;
 use Amp\CallableMaker;
 use Amp\Loop;
 use Cron\CronExpression;
 use Psr\Log\LoggerInterface;
-use Webgriffe\Esb\DateTimeBuilderInterface;
 use Webgriffe\Esb\JobsQueuer;
+use Webgriffe\Esb\DateTimeBuilderInterface;
 use Webgriffe\Esb\Service\BeanstalkClientFactory;
+use function Amp\call;
 
 class CrontabProducersRunner
 {

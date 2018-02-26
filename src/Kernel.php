@@ -13,7 +13,7 @@ use Webgriffe\Esb\Service\WorkerManager;
 
 class Kernel
 {
-    const WORKER_TAG = 'esb.worker';
+    const WORKER_TAG   = 'esb.worker';
     const PRODUCER_TAG = 'esb.producer';
 
     private $container;
@@ -78,11 +78,11 @@ class Kernel
         $logger->critical(
             'An uncaught exception occurred, ESB will be stopped now!',
             [
-                'code' => $exception->getCode(),
+                'code'    => $exception->getCode(),
                 'message' => $exception->getMessage(),
-                'file' => $exception->getFile(),
-                'line' => $exception->getLine(),
-                'trace' => $exception->getTrace()
+                'file'    => $exception->getFile(),
+                'line'    => $exception->getLine(),
+                'trace'   => $exception->getTrace()
             ]
         );
         throw $exception;
@@ -102,36 +102,39 @@ class Kernel
      */
     private function loadSystemConfiguration(YamlFileLoader $loader)
     {
-        if ($this->environment) {
-            try {
-                $loader->load(sprintf('services_%s.yml', $this->environment));
-            } catch (FileLocatorFileNotFoundException $exception) {
-                $loader->load('services.yml');
-            }
-        } else {
+        if (!$this->environment) {
+            $loader->load('services.yml');
+            return;
+        }
+
+        try {
+            $loader->load(sprintf('services_%s.yml', $this->environment));
+        } catch (FileLocatorFileNotFoundException $exception) {
             $loader->load('services.yml');
         }
     }
 
     /**
-     * @param $loader
+     * @param YamlFileLoader $loader
      */
-    private function loadLocalConfiguration($loader)
+    private function loadLocalConfiguration(YamlFileLoader $loader)
     {
-        if ($this->environment) {
-            $localConfigPathinfo = pathinfo($this->localConfigFilePath);
-            $environmentLocalConfigFile = sprintf(
-                '%s/%s_%s.yml',
-                $localConfigPathinfo['dirname'],
-                $localConfigPathinfo['filename'],
-                $this->environment
-            );
-            try {
-                $loader->load($environmentLocalConfigFile);
-            } catch (FileLocatorFileNotFoundException $exception) {
-                $loader->load($this->localConfigFilePath);
-            }
-        } else {
+        if (!$this->environment) {
+            $loader->load($this->localConfigFilePath);
+            return;
+        }
+
+        $localConfigPathinfo = pathinfo($this->localConfigFilePath);
+        $environmentLocalConfigFile = sprintf(
+            '%s/%s_%s.yml',
+            $localConfigPathinfo['dirname'],
+            $localConfigPathinfo['filename'],
+            $this->environment
+        );
+
+        try {
+            $loader->load($environmentLocalConfigFile);
+        } catch (FileLocatorFileNotFoundException $exception) {
             $loader->load($this->localConfigFilePath);
         }
     }

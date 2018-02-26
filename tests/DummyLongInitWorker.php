@@ -2,13 +2,13 @@
 
 namespace Webgriffe\Esb;
 
-use function Amp\call;
-use Amp\Deferred;
 use Amp\Loop;
 use Amp\Promise;
+use Amp\Deferred;
 use Amp\Success;
 use Psr\Log\LoggerInterface;
 use Webgriffe\Esb\Model\QueuedJob;
+use function Amp\call;
 
 class DummyLongInitWorker implements WorkerInterface
 {

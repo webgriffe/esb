@@ -2,13 +2,12 @@
 
 namespace Webgriffe\Esb\Integration;
 
-use Amp\Artax\DefaultClient;
+use Amp\Loop;
 use Amp\Artax\Request;
 use Amp\Artax\Response;
-use Amp\Loop;
+use Amp\Artax\DefaultClient;
 use Monolog\Logger;
 use org\bovigo\vfs\vfsStream;
-use Psr\Http\Message\ResponseInterface;
 use Webgriffe\Esb\DummyFilesystemWorker;
 use Webgriffe\Esb\DummyHttpRequestProducer;
 use Webgriffe\Esb\KernelTestCase;
@@ -39,6 +38,7 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
             $payload = json_encode(['jobs' => ['job1', 'job2', 'job3']]);
             $client = new DefaultClient();
             $request = (new Request("http://127.0.0.1:{$this->httpPort}/dummy", 'POST'))->withBody($payload);
+            /** @var Response $response */
             $response = yield $client->request($request);
             $this->assertContains('"Successfully scheduled 3 job(s) to be queued."', yield $response->getBody());
             Loop::delay(200, function () {Loop::stop();});

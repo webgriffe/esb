@@ -2,11 +2,11 @@
 
 namespace Webgriffe\Esb;
 
-use function Amp\call;
-use Amp\File;
 use Amp\Promise;
+use Amp\File;
 use Amp\Success;
 use Webgriffe\Esb\Model\QueuedJob;
+use function Amp\call;
 
 /**
  * This is a sample worker which simply writes job data to the /tmp/sample_worker.data file
