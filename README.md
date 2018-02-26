@@ -117,11 +117,11 @@ Here follows an example of a producer test which verify that the producer produc
 ```php
 public function testShouldProduceMultipleJobsWithMultipleEntriesFile()
 {
-	filesystem(new BlockingDriver());
-	vfsStream::setup();
-	$this->importFile = vfsStream::url('root/stock.xml');
-	$this->producer = new Stock($this->importFile);
-	copy(__DIR__ . '/StockTestFixtures/multiple_entries.xml', $this->importFile);
+    filesystem(new BlockingDriver());
+    vfsStream::setup();
+    $this->importFile = vfsStream::url('root/stock.xml');
+    $this->producer = new Stock($this->importFile);
+    copy(__DIR__ . '/StockTestFixtures/multiple_entries.xml', $this->importFile);
 
     $this->jobs = [];
     Loop::run(
@@ -132,7 +132,7 @@ public function testShouldProduceMultipleJobsWithMultipleEntriesFile()
             }
         }
     );
-    
+
     $this->assertCount(52, $this->jobs);
     $this->assertEquals(new Job(['sku' => 'SKU-1', 'qty' => 9519.000]), $this->jobs[0]);
     $this->assertEquals(new Job(['sku' => 'SKU-23', 'qty' => 299.000]), $this->jobs[12]);
@@ -146,12 +146,12 @@ Here follows the example of a unit test for the related worker which takes the S
 ```php
 public function testWorksSimpleJob()
 {
-	$this->sessionId = random_int(1, 1000);
+    $this->sessionId = random_int(1, 1000);
     $this->client = $this->prophesize(Client::class);
     $this->clientFactory = $this->prophesize(Factory::class);
     $this->clientFactory->create()->willReturn(new Success($this->client->reveal()));
     $this->worker = new Stock($this->clientFactory->reveal());
-    
+
     $sku = 'SKU-1';
     $qty = 10;
     $this->client
