@@ -13,7 +13,7 @@ use Webgriffe\Esb\Service\WorkerManager;
 
 class Kernel
 {
-    const WORKER_TAG   = 'esb.worker';
+    const WORKER_TAG = 'esb.worker';
     const PRODUCER_TAG = 'esb.producer';
 
     private $container;
@@ -78,11 +78,11 @@ class Kernel
         $logger->critical(
             'An uncaught exception occurred, ESB will be stopped now!',
             [
-                'code'    => $exception->getCode(),
+                'code' => $exception->getCode(),
                 'message' => $exception->getMessage(),
-                'file'    => $exception->getFile(),
-                'line'    => $exception->getLine(),
-                'trace'   => $exception->getTrace()
+                'file' => $exception->getFile(),
+                'line' => $exception->getLine(),
+                'trace' => $exception->getTrace()
             ]
         );
         throw $exception;
