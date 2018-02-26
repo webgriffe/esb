@@ -32,7 +32,7 @@ class Kernel
      * @param string $environment
      * @throws \Exception
      */
-    public function __construct(string $localConfigFilePath, string $environment)
+    public function __construct(string $localConfigFilePath, string $environment = null)
     {
         $this->localConfigFilePath = $localConfigFilePath;
         $this->environment = $environment;
