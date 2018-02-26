@@ -7,7 +7,6 @@ use Amp\Producer;
 use Amp\Promise;
 use Amp\Success;
 use Psr\Http\Message\ServerRequestInterface;
-use React\Http\Response;
 use Webgriffe\Esb\Model\Job;
 
 class DummyHttpRequestProducer implements HttpRequestProducerInterface

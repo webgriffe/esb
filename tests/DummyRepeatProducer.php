@@ -3,10 +3,8 @@
 namespace Webgriffe\Esb;
 
 use Amp\Iterator;
-use Amp\Loop;
 use Amp\Promise;
 use Amp\Success;
-use Webgriffe\Esb\Model\Job;
 
 class DummyRepeatProducer implements RepeatProducerInterface
 {

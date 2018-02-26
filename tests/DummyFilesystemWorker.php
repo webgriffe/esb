@@ -3,8 +3,7 @@
 namespace Webgriffe\Esb;
 
 use function Amp\call;
-use function Amp\File\exists;
-use function Amp\File\put;
+use Amp\File;
 use Amp\Promise;
 use Amp\Success;
 use Webgriffe\Esb\Model\QueuedJob;
@@ -51,11 +50,11 @@ class DummyFilesystemWorker implements WorkerInterface
     {
         return call(function () use ($job) {
             $content = '';
-            if (yield exists($this->filename)) {
+            if (yield File\exists($this->filename)) {
                 $content = yield \Amp\File\get($this->filename);
             }
             $content .= date('c') . ' - ' . serialize($job->getPayloadData()) . PHP_EOL;
-            yield put($this->filename, $content);
+            yield File\put($this->filename, $content);
         });
     }
 

@@ -3,8 +3,7 @@
 namespace Webgriffe\Esb;
 
 use Amp\Deferred;
-use function Amp\File\get;
-use function Amp\File\isdir;
+use Amp\File;
 use Amp\Iterator;
 use Amp\Loop;
 use Amp\Producer;
@@ -62,19 +61,19 @@ class DummyFilesystemRepeatProducer implements RepeatProducerInterface
     public function produce($data = null): Iterator
     {
         return new Producer(function (callable $emit) {
-            if (!(yield isdir($this->directory))) {
-                if (!(yield mkdir($this->directory)) && !(yield isdir($this->directory))) {
+            if (!(yield File\isdir($this->directory))) {
+                if (!(yield File\mkdir($this->directory)) && !(yield File\isdir($this->directory))) {
                     throw new \RuntimeException(sprintf('Directory "%s" was not created', $this->directory));
                 }
             }
-            $files = yield \Amp\File\scandir($this->directory);
+            $files = yield File\scandir($this->directory);
             foreach ($files as $file) {
                 $file = $this->directory . DIRECTORY_SEPARATOR . $file;
-                if (yield isdir($file)) {
+                if (yield File\isdir($file)) {
                     continue;
                 }
                 yield $this->longRunningOperation();
-                yield $emit(new Job(['file' => $file, 'data' => (yield get($file))]));
+                yield $emit(new Job(['file' => $file, 'data' => (yield File\get($file))]));
                 yield \Amp\File\unlink($file);
             }
         });
