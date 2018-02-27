@@ -10,3 +10,5 @@ cache:
 before_script:
   - sudo apt-get install beanstalkd
   - composer install
+  - vendor/bin/phpcs --standard=PSR2 src tests
+  - vendor/bin/phpstan analyse --no-progress -l 6 src tests
