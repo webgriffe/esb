@@ -11,9 +11,12 @@ use org\bovigo\vfs\vfsStream;
 use Webgriffe\Esb\DummyFilesystemWorker;
 use Webgriffe\Esb\DummyHttpRequestProducer;
 use Webgriffe\Esb\KernelTestCase;
+use Webgriffe\Esb\TestUtils;
 
 class HttpRequestProducerAndWorkerTest extends KernelTestCase
 {
+    use TestUtils;
+
     private $workerFile;
     private $httpPort;
 
@@ -82,14 +85,5 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
 
         $this->assertFileNotExists($this->workerFile);
         $this->assertReadyJobsCountInTube(0, DummyFilesystemWorker::TUBE);
-    }
-
-    /**
-     * @param $file
-     * @return array
-     */
-    private function getFileLines($file): array
-    {
-        return array_filter(explode(PHP_EOL, file_get_contents($file)));
     }
 }

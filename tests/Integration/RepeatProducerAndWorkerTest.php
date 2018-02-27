@@ -7,9 +7,12 @@ use org\bovigo\vfs\vfsStream;
 use Webgriffe\Esb\DummyFilesystemRepeatProducer;
 use Webgriffe\Esb\DummyFilesystemWorker;
 use Webgriffe\Esb\KernelTestCase;
+use Webgriffe\Esb\TestUtils;
 
 class RepeatProducerAndWorkerTest extends KernelTestCase
 {
+    use TestUtils;
+
     public function testRepeatProducerAndWorkerTogether()
     {
         $producerDir = vfsStream::url('root/producer_dir');
@@ -74,14 +77,5 @@ class RepeatProducerAndWorkerTest extends KernelTestCase
         $this->assertContains('job1', $workerFileLines[0]);
         $this->assertContains('job2', $workerFileLines[1]);
         $this->assertReadyJobsCountInTube(0, DummyFilesystemWorker::TUBE);
-    }
-
-    /**
-     * @param $file
-     * @return array
-     */
-    private function getFileLines($file): array
-    {
-        return array_filter(explode(PHP_EOL, file_get_contents($file)));
     }
 }

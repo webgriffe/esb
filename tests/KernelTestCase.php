@@ -11,7 +11,7 @@ use function Amp\File\filesystem;
 class KernelTestCase extends BeanstalkTestCase
 {
     /**
-     * @var Kernel
+     * @var Kernel|null
      */
     protected static $kernel;
 
@@ -32,7 +32,7 @@ class KernelTestCase extends BeanstalkTestCase
     }
 
     /**
-     * @param $localConfig
+     * @param array $localConfig
      * @throws \Exception
      */
     protected static function createKernel(array $localConfig)
@@ -51,7 +51,10 @@ class KernelTestCase extends BeanstalkTestCase
      */
     protected function logHandler()
     {
-        return self::$kernel->getContainer()->get(TestHandler::class);
+        /** @noinspection OneTimeUseVariablesInspection */
+        /** @var TestHandler $logHandler */
+        $logHandler = self::$kernel->getContainer()->get(TestHandler::class);
+        return $logHandler;
     }
 
     protected function dumpLog()
