@@ -27,7 +27,7 @@ class DummyRepeatProducer implements RepeatProducerInterface
      * @param string $tube
      * @param int $interval
      */
-    public function __construct(array $jobs = [], string $tube, int $interval)
+    public function __construct(array $jobs, string $tube, int $interval)
     {
         $this->jobs = $jobs;
         $this->tube = $tube;

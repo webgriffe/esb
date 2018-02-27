@@ -44,11 +44,11 @@ class DummyLongInitWorker implements WorkerInterface
      */
     public function init(): Promise
     {
-       return call(function() {
-           $this->logger->info('Starting async job in long init worker...');
-           $this->asyncResult = yield $this->asyncJob();
-           $this->logger->info('Async job done in long init worker, result is: ' . $this->asyncResult);
-       });
+        return call(function () {
+            $this->logger->info('Starting async job in long init worker...');
+            $this->asyncResult = yield $this->asyncJob();
+            $this->logger->info('Async job done in long init worker, result is: ' . $this->asyncResult);
+        });
     }
 
     /**

@@ -3,7 +3,6 @@
 
 namespace Webgriffe\Esb;
 
-
 trait TestUtils
 {
     /**

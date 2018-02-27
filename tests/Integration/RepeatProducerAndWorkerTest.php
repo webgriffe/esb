@@ -32,7 +32,9 @@ class RepeatProducerAndWorkerTest extends KernelTestCase
                     200,
                     function () use ($producerDir) {
                         touch($producerDir . DIRECTORY_SEPARATOR . 'job2');
-                        Loop::delay(200, function () {Loop::stop();});
+                        Loop::delay(200, function () {
+                            Loop::stop();
+                        });
                     }
                 );
             }
@@ -68,7 +70,9 @@ class RepeatProducerAndWorkerTest extends KernelTestCase
         mkdir($producerDir);
         touch($producerDir . DIRECTORY_SEPARATOR . 'job1');
         touch($producerDir . DIRECTORY_SEPARATOR . 'job2');
-        Loop::delay(1000, function () {Loop::stop();});
+        Loop::delay(1000, function () {
+            Loop::stop();
+        });
 
         self::$kernel->boot();
 

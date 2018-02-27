@@ -56,9 +56,9 @@ class ProducerManager implements ContainerAwareInterface
         foreach ($this->producers as $producer) {
             if ($producer instanceof RepeatProducerInterface) {
                 $repeatProducers[] = $producer;
-            } else if ($producer instanceof  HttpRequestProducerInterface) {
+            } elseif ($producer instanceof  HttpRequestProducerInterface) {
                 $httpRequestProducers[] = $producer;
-            } else if ($producer instanceof  CrontabProducerInterface) {
+            } elseif ($producer instanceof  CrontabProducerInterface) {
                 $crontabProducers[] = $producer;
             } else {
                 throw new \RuntimeException(sprintf('Unknown producer type "%s".', \get_class($producer)));

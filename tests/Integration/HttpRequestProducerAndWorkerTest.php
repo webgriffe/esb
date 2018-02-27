@@ -44,7 +44,9 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
             /** @var Response $response */
             $response = yield $client->request($request);
             $this->assertContains('"Successfully scheduled 3 job(s) to be queued."', yield $response->getBody());
-            Loop::delay(200, function () {Loop::stop();});
+            Loop::delay(200, function () {
+                Loop::stop();
+            });
         });
 
         self::$kernel->boot();
@@ -78,7 +80,9 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
             /** @var Response $response */
             $response = yield $client->request($request);
             $this->assertEquals(404, $response->getStatus());
-            Loop::delay(200, function () {Loop::stop();});
+            Loop::delay(200, function () {
+                Loop::stop();
+            });
         });
 
         self::$kernel->boot();

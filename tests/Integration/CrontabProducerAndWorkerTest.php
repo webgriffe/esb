@@ -34,7 +34,9 @@ class CrontabProducerAndWorkerTest extends KernelTestCase
         $producer->setJobs($jobs);
 
         DateTimeBuilderStub::$forcedNow = '2018-02-19 12:45:00';
-        Loop::delay(200, function () {Loop::stop();});
+        Loop::delay(200, function () {
+            Loop::stop();
+        });
 
         self::$kernel->boot();
 
@@ -59,7 +61,9 @@ class CrontabProducerAndWorkerTest extends KernelTestCase
         $producer->setJobs($jobs);
 
         DateTimeBuilderStub::$forcedNow = '2018-02-19 13:00:00';
-        Loop::delay(200, function () {Loop::stop();});
+        Loop::delay(200, function () {
+            Loop::stop();
+        });
 
         self::$kernel->boot();
 

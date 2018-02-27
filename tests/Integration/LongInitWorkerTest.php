@@ -17,7 +17,9 @@ class LongInitWorkerTest extends KernelTestCase
             ]
         ]);
 
-        Loop::delay(500, function () {Loop::stop();});
+        Loop::delay(500, function () {
+            Loop::stop();
+        });
 
         self::$kernel->boot();
 

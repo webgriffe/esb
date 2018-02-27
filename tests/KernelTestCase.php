@@ -60,6 +60,8 @@ class KernelTestCase extends BeanstalkTestCase
     protected function dumpLog()
     {
         $records = $this->logHandler()->getRecords();
-        echo implode('', array_map(function ($entry) {return $entry['formatted'];}, $records));
+        echo implode('', array_map(function ($entry) {
+            return $entry['formatted'];
+        }, $records));
     }
 }

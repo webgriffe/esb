@@ -42,6 +42,4 @@ class ProducerInitializer
             ['producer' => \get_class($this->producer)]
         );
     }
-
-
 }
