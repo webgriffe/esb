@@ -108,7 +108,7 @@ class WorkerManager
                     yield $beanstalkClient->bury($job->getId());
                     $this->logger->critical(
                         'A Job reached maximum work retry limit and has been buried',
-                        $logContext
+                        array_merge($logContext, ['last_error' => $e->getMessage()])
                     );
                     unset($this->workCounts[$job->getId()]);
                     continue;
