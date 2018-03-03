@@ -2,6 +2,7 @@
 
 namespace Webgriffe\Esb\Service;
 
+use Amp\CallableMaker;
 use Amp\Loop;
 use Monolog\Logger;
 use Webgriffe\Esb\Model\QueuedJob;
@@ -10,6 +11,8 @@ use function Amp\call;
 
 class WorkerManager
 {
+    use CallableMaker;
+
     /**
      * @var BeanstalkClientFactory
      */
@@ -51,7 +54,7 @@ class WorkerManager
         foreach ($this->workers as $worker) {
             for ($instanceIndex = 1; $instanceIndex <= $worker->getInstancesCount(); $instanceIndex++) {
                 Loop::defer(function () use ($worker, $instanceIndex) {
-                    yield call([$this, 'bootWorkerInstance'], $worker, $instanceIndex);
+                    yield call($this->callableFromInstanceMethod('bootWorkerInstance'), $worker, $instanceIndex);
                 });
             }
         }
@@ -63,7 +66,7 @@ class WorkerManager
      *
      * @return \Generator
      */
-    public function bootWorkerInstance(WorkerInterface $worker, int $instanceIndex): \Generator
+    private function bootWorkerInstance(WorkerInterface $worker, int $instanceIndex): \Generator
     {
         $beanstalkClient = $this->beanstalkClientFactory->create();
 
