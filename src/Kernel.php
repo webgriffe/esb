@@ -8,6 +8,7 @@ use Symfony\Component\Config\Exception\FileLocatorFileNotFoundException;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
+use Webgriffe\Esb\Service\Console\Server;
 use Webgriffe\Esb\Service\ProducerManager;
 use Webgriffe\Esb\Service\WorkerManager;
 
@@ -55,6 +56,11 @@ class Kernel
         /** @var ProducerManager $producerManager */
         $producerManager = $this->getContainer()->get(ProducerManager::class);
         $producerManager->bootProducers();
+
+        /** @var Server $consoleServer */
+        $consoleServer = $this->getContainer()->get(Server::class);
+        $consoleServer->boot();
+
         Loop::setErrorHandler([$this, 'errorHandler']);
         Loop::run();
     }
