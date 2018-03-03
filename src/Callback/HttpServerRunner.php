@@ -93,13 +93,6 @@ class HttpServerRunner
             $statusCode = 200;
             return new Response($statusCode, [], sprintf('"%s"', $responseMessage));
         }));
-//        $promise = JobsQueuer::queueJobs($beanstalkClient, $this->logger, $producer, $request);
-//        $promise->onResolve(function (\Throwable $error = null, $jobsCount = null) {
-//            $responseMessage = sprintf('Successfully scheduled %s job(s) to be queued.', $jobsCount);
-//            $statusCode = 200;
-//            return new Response($statusCode, [], sprintf('"%s"', $responseMessage));
-//        });
-//        return adapt($promise);
     }
 
     /**
