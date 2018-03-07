@@ -33,7 +33,12 @@ class JobsQueuer
                 $payload = serialize($job->getPayloadData());
 
                 try {
-                    $jobId = yield $beanstalkClient->put($payload);
+                    $jobId = yield $beanstalkClient->put(
+                        $payload,
+                        $job->getTimeout(),
+                        $job->getDelay(),
+                        $job->getPriority()
+                    );
                     $logger->info(
                         'Successfully produced a new Job',
                         [
