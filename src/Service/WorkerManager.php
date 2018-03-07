@@ -96,7 +96,7 @@ class WorkerManager
                 }
                 ++$this->workCounts[$job->getId()];
 
-                yield call([$worker, 'work'], $job);
+                yield $worker->work($job);
                 $this->logger->info('Successfully worked a Job', $logContext);
 
                 yield $beanstalkClient->delete($job->getId());
