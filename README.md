@@ -74,7 +74,7 @@ Producers
 As said, a producer is a class which implements the `ProducerInterface`. Anyway implementing only the `ProducerInterface` is not enough. Every producer must implement also one of the supported *producer type* interfaces. This is because the framework must know when to invoke every producer. At the moment we support 3 producer types:
 
 * `RepeatProducerInterface`: these producers are invoked repeatedly every fixed interval.
-* `CrontabProducerInterface`: these producers are invoked when their [crontab expression](https://en.wikipedia.org/wiki/Cron#CRON_expression) match.
+* `CrontabProducerInterface`: these producers are invoked when their [crontab expression](https://en.wikipedia.org/wiki/Cron#CRON_expression) matches.
 * `HttpRequestProducerInterface`: these producers are invoked when the ESB's HTTP server receives a corresponding HTTP request.
 
 Refer to these interfaces in the source code for more information.
@@ -89,7 +89,7 @@ Workers
 
 Workers are simpler than producers. They implement only the `WorkerInterface` and don't have *worker type* interfaces. This is because every worker is invoked immediatly when a job is available on its tube.
 
-The `work` method of a worker must return an Amp's [Promise](https://amphp.org/amp/promises/) that must resolve when the job is worked succesfully. Otherwise the `work` must throw an exception.
+The `work` method of a worker must return an Amp's [Promise](https://amphp.org/amp/promises/) that must resolve when the job is worked succesfully. Otherwise the `work` method must throw an exception.
 
 When a worker successfully works a job the ESB framwork deletes it from the tube. Instead, when a worker fails to work a job the ESB framework keeps it in the tube for a maximum of 5 times then the job is buried and a critical event is logged.
 
