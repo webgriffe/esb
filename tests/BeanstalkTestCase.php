@@ -44,21 +44,21 @@ class BeanstalkTestCase extends TestCase
                 while ($job = $this->pheanstalk->peekReady($tube)) {
                     $this->pheanstalk->delete($job);
                 }
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 // Continue
             }
             try {
                 while ($job = $this->pheanstalk->peekDelayed($tube)) {
                     $this->pheanstalk->delete($job);
                 }
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 // Continue
             }
             try {
                 while ($job = $this->pheanstalk->peekBuried($tube)) {
                     $this->pheanstalk->delete($job);
                 }
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 // Continue
             }
         }

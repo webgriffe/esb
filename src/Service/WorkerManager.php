@@ -101,7 +101,7 @@ class WorkerManager
 
                 yield $beanstalkClient->delete($job->getId());
                 unset($this->workCounts[$job->getId()]);
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 $this->logger->error(
                     'An error occurred while working a Job.',
                     array_merge($logContext, ['error' => $e->getMessage()])
