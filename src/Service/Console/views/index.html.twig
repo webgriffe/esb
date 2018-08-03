@@ -16,6 +16,21 @@
     <div class="row">
         <div class="col">
             <h1 class="display-4">ESB Management Console</h1>
+
+            <h3>Search</h3>
+            <form method="get">
+                <label for="search">Search</label>
+                <input id="search" type="search" name="search" value="{{ search_query }}" />
+            </form>
+
+            <hr />
+
+            <h3>Status</h3>
+            <ul>
+                {% for tube in tubes %}
+                    <li>{{ tube.name }} (Buried jobs: {{ tube.currentJobsBuried }})</li>
+                {% endfor %}
+            </ul>
         </div>
     </div>
 </div>
