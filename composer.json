@@ -20,7 +20,12 @@
     },
     "autoload": {
         "psr-4": {
-            "Webgriffe\\Esb\\": ["src/", "tests/"]
+            "Webgriffe\\Esb\\": ["src/"]
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Webgriffe\\Esb\\": ["tests/"]
         }
     },
     "bin": [
