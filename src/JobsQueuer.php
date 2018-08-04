@@ -44,7 +44,7 @@ class JobsQueuer
                         [
                             'producer' => \get_class($producer),
                             'job_id' => $jobId,
-                            'payload_data' => $job->getPayloadData()
+                            'payload_data' => NonUtf8Cleaner::clean($job->getPayloadData())
                         ]
                     );
                     $jobsCount++;
@@ -53,7 +53,7 @@ class JobsQueuer
                         'An error occurred producing a job.',
                         [
                             'producer' => \get_class($producer),
-                            'payload_data' => $job->getPayloadData(),
+                            'payload_data' => NonUtf8Cleaner::clean($job->getPayloadData()),
                             'error' => $error->getMessage(),
                         ]
                     );

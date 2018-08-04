@@ -6,6 +6,7 @@ use Amp\CallableMaker;
 use Amp\Loop;
 use Monolog\Logger;
 use Webgriffe\Esb\Model\QueuedJob;
+use Webgriffe\Esb\NonUtf8Cleaner;
 use Webgriffe\Esb\WorkerInterface;
 use function Amp\call;
 
@@ -86,7 +87,7 @@ class WorkerManager
                 'worker' => \get_class($worker),
                 'instance_index' => $instanceIndex,
                 'job_id' => $job->getId(),
-                'payload_data' => $job->getPayloadData()
+                'payload_data' => NonUtf8Cleaner::clean($job->getPayloadData())
             ];
             $this->logger->info('Worker reserved a Job', $logContext);
 
