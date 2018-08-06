@@ -18,6 +18,7 @@ use React\Promise\PromiseInterface;
 use React\Socket\Server as SocketServer;
 use RingCentral\Psr7\Response;
 use Amp\File;
+use Webgriffe\Esb\Console\Controller\TubeController;
 use Webgriffe\Esb\Service\BeanstalkClientFactory;
 use Webgriffe\Esb\Console\Controller\IndexController;
 
@@ -60,17 +61,16 @@ class Server
         return adapt(call(function () use ($request, $beanstalkClient) {
             try {
                 $twig = yield $this->getTwig();
-                $dispatcher = \FastRoute\simpleDispatcher(function(RouteCollector $r) use ($twig, $beanstalkClient) {
-                    $r->addRoute('GET', '/', new IndexController($twig, $beanstalkClient));
-                    // {id} must be a number (\d+)
-                    $r->addRoute('GET', '/tube/{tube}', 'get_user_handler');
-                    // The /{title} suffix is optional
-                    $r->addRoute('GET', '/articles/{id:\d+}[/{title}]', 'get_article_handler');
-                });
+                $dispatcher = \FastRoute\simpleDispatcher(
+                    function (RouteCollector $r) use ($request, $twig, $beanstalkClient) {
+                        $r->addRoute('GET', '/', new IndexController($request, $twig, $beanstalkClient));
+                        $r->addRoute('GET', '/tube/{tube}', new TubeController($request, $twig, $beanstalkClient));
+                    }
+                );
 
                 // Fetch method and URI from somewhere
                 $httpMethod = $request->getMethod();
-                $uri = $request->getUri();
+                $uri = $request->getUri()->getPath();
 
                 $routeInfo = $dispatcher->dispatch($httpMethod, $uri);
                 switch ($routeInfo[0]) {
@@ -101,11 +101,15 @@ class Server
     private function getTwig(): Promise
     {
         return call(function () {
-            $loader = new \Twig_Loader_Array(
-                [
-                    'index' => (yield File\get(__DIR__ . '/views/index.html.twig')),
-                ]
-            );
+            $templates = [];
+            $viewsPath = __DIR__ . '/views';
+            $files = yield File\scandir($viewsPath);
+            foreach ($files as $file) {
+                if (preg_match('/^.*?\.html\.twig$/', $file)) {
+                    $templates[$file] = yield File\get(rtrim($viewsPath, '/') . '/' . $file);
+                }
+            }
+            $loader = new \Twig_Loader_Array($templates);
             return new \Twig_Environment($loader);
         });
     }

@@ -1,0 +1,61 @@
+{% extends '_layout.html.twig' %}
+
+{% block content %}
+    <h3>Tube "{{ tube.name }}"</h3>
+
+    <table class="table">
+        <thead>
+        <tr>
+            <th scope="col">Tube</th>
+            <th scope="col">Urgent Jobs</th>
+            <th scope="col">Ready Jobs</th>
+            <th scope="col">Reserved Jobs</th>
+            <th scope="col">Delayed Jobs</th>
+            <th scope="col">Buried Jobs</th>
+            <th scope="col">Total Jobs</th>
+        </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <th scope="row">{{ tube.name }}</th>
+                <td>{{ tube.currentJobsUrgent }}</td>
+                <td>{{ tube.currentJobsReady }}</td>
+                <td>{{ tube.currentJobsReserved }}</td>
+                <td>{{ tube.currentJobsDelayed }}</td>
+                <td>{{ tube.currentJobsBuried }}</td>
+                <td>{{ tube.totalJobs }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <hr />
+    <h3>Search</h3>
+    <form action="/tube/{{ tube.name }}" method="get">
+        <div class="form-group">
+            <label for="query">Query</label>
+            <input type="search" class="form-control" id="query" aria-describedby="queryHelp" placeholder="Enter a query" name="query">
+            <small id="queryHelp" class="form-text text-muted">Search for jobs in this tube.</small>
+        </div>
+    </form>
+
+    {% if foundJobs|length > 0 %}
+        <table class="table">
+            <thead>
+            <tr>
+                <th scope="col">Job ID</th>
+                <th scope="col">Payload</th>
+                <th scope="col">State</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for jobId, job in foundJobs %}
+                <tr>
+                    <th scope="row">{{ jobId }}</th>
+                    <td><pre>{{ job.payload }}</pre></td>
+                    <td><pre>{{ job.stats.state }}</pre></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+{% endblock %}
