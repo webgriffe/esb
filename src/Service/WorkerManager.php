@@ -6,6 +6,7 @@ use Amp\CallableMaker;
 use Amp\Loop;
 use Monolog\Logger;
 use Webgriffe\Esb\Model\QueuedJob;
+use Webgriffe\Esb\NonUtf8Cleaner;
 use Webgriffe\Esb\WorkerInterface;
 use function Amp\call;
 
@@ -86,7 +87,7 @@ class WorkerManager
                 'worker' => \get_class($worker),
                 'instance_index' => $instanceIndex,
                 'job_id' => $job->getId(),
-                'payload_data' => $job->getPayloadData()
+                'payload_data' => NonUtf8Cleaner::clean($job->getPayloadData())
             ];
             $this->logger->info('Worker reserved a Job', $logContext);
 
@@ -96,12 +97,12 @@ class WorkerManager
                 }
                 ++$this->workCounts[$job->getId()];
 
-                yield call([$worker, 'work'], $job);
+                yield $worker->work($job);
                 $this->logger->info('Successfully worked a Job', $logContext);
 
                 yield $beanstalkClient->delete($job->getId());
                 unset($this->workCounts[$job->getId()]);
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 $this->logger->error(
                     'An error occurred while working a Job.',
                     array_merge($logContext, ['error' => $e->getMessage()])

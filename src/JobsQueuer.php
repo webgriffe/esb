@@ -33,13 +33,18 @@ class JobsQueuer
                 $payload = serialize($job->getPayloadData());
 
                 try {
-                    $jobId = yield $beanstalkClient->put($payload);
+                    $jobId = yield $beanstalkClient->put(
+                        $payload,
+                        $job->getTimeout(),
+                        $job->getDelay(),
+                        $job->getPriority()
+                    );
                     $logger->info(
                         'Successfully produced a new Job',
                         [
                             'producer' => \get_class($producer),
                             'job_id' => $jobId,
-                            'payload_data' => $job->getPayloadData()
+                            'payload_data' => NonUtf8Cleaner::clean($job->getPayloadData())
                         ]
                     );
                     $jobsCount++;
@@ -48,7 +53,7 @@ class JobsQueuer
                         'An error occurred producing a job.',
                         [
                             'producer' => \get_class($producer),
-                            'payload_data' => $job->getPayloadData(),
+                            'payload_data' => NonUtf8Cleaner::clean($job->getPayloadData()),
                             'error' => $error->getMessage(),
                         ]
                     );
