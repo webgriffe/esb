@@ -33,7 +33,8 @@
     <form action="/tube/{{ tube.name }}" method="get">
         <div class="form-group">
             <label for="query">Query</label>
-            <input type="search" class="form-control" id="query" aria-describedby="queryHelp" placeholder="Enter a query" name="query">
+            <input type="search" class="form-control" id="query" aria-describedby="queryHelp"
+                   placeholder="Enter a query" name="query" value="{{ query }}">
             <small id="queryHelp" class="form-text text-muted">Search for jobs in this tube.</small>
         </div>
     </form>
@@ -45,6 +46,7 @@
                 <th scope="col">Job ID</th>
                 <th scope="col">Payload</th>
                 <th scope="col">State</th>
+                <th scope="col">Actions</th>
             </tr>
             </thead>
             <tbody>
@@ -53,6 +55,14 @@
                     <th scope="row">{{ jobId }}</th>
                     <td><pre>{{ job.payload }}</pre></td>
                     <td><pre>{{ job.stats.state }}</pre></td>
+                    <td>
+                        <div class="btn-group btn-group-sm" role="group" aria-label="Basic example">
+                            <a class="btn btn-secondary" href="#">View</a>
+                            {% if job.stats.state == 'buried' %}
+                                <a class="btn btn-secondary" href="/kick/{{ jobId }}">Kick</a>
+                            {% endif %}
+                        </div>
+                    </td>
                 </tr>
             {% endfor %}
             </tbody>

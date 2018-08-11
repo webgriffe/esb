@@ -21,13 +21,15 @@ class TubeController
             $tube = yield $this->beanstalkClient->getTubeStats($tube);
             $queryParams = $this->request->getQueryParams();
             $foundJobs = [];
+            $query = '';
             if (array_key_exists('query', $queryParams)) {
-                $foundJobs = yield $this->findAllTubeJobsByQuery($tube->name, $queryParams['query']);
+                $query = $queryParams['query'];
+                $foundJobs = yield $this->findAllTubeJobsByQuery($tube->name, $query);
             }
             return new Response(
                 200,
                 [],
-                $this->twig->render('tube.html.twig', array('tube' => $tube, 'foundJobs' => $foundJobs))
+                $this->twig->render('tube.html.twig', ['tube' => $tube, 'foundJobs' => $foundJobs, 'query' => $query])
             );
         });
     }
@@ -52,7 +54,7 @@ class TubeController
                         throw new \RuntimeException('Not the right tube, skip.');
                     }
                     $payload = yield $this->beanstalkClient->peek($id);
-                    if (strpos($payload, $query) === false) {
+                    if (stripos($payload, $query) === false) {
                         throw new \RuntimeException('Not matching the query, skip.');
                     }
                     return ['stats' => $stats, 'payload' => $payload];

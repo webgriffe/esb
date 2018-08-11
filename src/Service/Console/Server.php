@@ -18,6 +18,7 @@ use React\Promise\PromiseInterface;
 use React\Socket\Server as SocketServer;
 use RingCentral\Psr7\Response;
 use Amp\File;
+use Webgriffe\Esb\Console\Controller\KickController;
 use Webgriffe\Esb\Console\Controller\TubeController;
 use Webgriffe\Esb\Service\BeanstalkClientFactory;
 use Webgriffe\Esb\Console\Controller\IndexController;
@@ -65,6 +66,7 @@ class Server
                     function (RouteCollector $r) use ($request, $twig, $beanstalkClient) {
                         $r->addRoute('GET', '/', new IndexController($request, $twig, $beanstalkClient));
                         $r->addRoute('GET', '/tube/{tube}', new TubeController($request, $twig, $beanstalkClient));
+                        $r->addRoute('GET', '/kick/{jobId:\d+}', new KickController($request, $twig, $beanstalkClient));
                     }
                 );
 
