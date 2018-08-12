@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Webgriffe\Esb\Console\Controller;
 
+use Amp\Beanstalk\NotFoundException;
 use Amp\Beanstalk\Stats\Job;
 use Amp\Beanstalk\Stats\System;
 use Amp\Beanstalk\Stats\Tube;
@@ -29,7 +30,15 @@ class TubeController
             return new Response(
                 200,
                 [],
-                $this->twig->render('tube.html.twig', ['tube' => $tube, 'foundJobs' => $foundJobs, 'query' => $query])
+                $this->twig->render(
+                    'tube.html.twig',
+                    [
+                        'tube' => $tube,
+                        'foundJobs' => $foundJobs,
+                        'query' => $query,
+                        'peeks' => yield $this->getTubePeeks($tube->name),
+                    ]
+                )
             );
         });
     }
@@ -63,6 +72,35 @@ class TubeController
 
             list(, $jobs) = yield Promise\any($jobs);
             return $jobs;
+        });
+    }
+
+    private function getTubePeeks(string $tube): Promise
+    {
+        return call(function () use ($tube) {
+            yield $this->beanstalkClient->use($tube);
+            try {
+                $peekReady = yield $this->beanstalkClient->peekReady();
+            } catch (NotFoundException $e) {
+                $peekReady = false;
+            }
+            try {
+                $peekDelayed = yield $this->beanstalkClient->peekDelayed();
+            } catch (NotFoundException $e) {
+                $peekDelayed = false;
+            }
+            try {
+                $peekBuried = yield $this->beanstalkClient->peekBuried();
+            } catch (NotFoundException $e) {
+                $peekBuried = false;
+            }
+            $peeks = ['ready' => $peekReady, 'delayed' => $peekDelayed, 'buried' => $peekBuried];
+            foreach ($peeks as $state => $peek) {
+                if ($peek !== false && @unserialize($peek) !== false) {
+                    $peeks[$state] = print_r(unserialize($peek), true);
+                }
+            }
+            return $peeks;
         });
     }
 }

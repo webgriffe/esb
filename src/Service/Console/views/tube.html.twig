@@ -1,46 +1,68 @@
 {% extends '_layout.html.twig' %}
 
 {% block content %}
-    <h3>Tube "{{ tube.name }}"</h3>
+    <h2 class="my-4">Tube <small class="text-muted">{{ tube.name }}</small></h2>
 
-    <table class="table">
-        <thead>
-        <tr>
-            <th scope="col">Tube</th>
-            <th scope="col">Urgent Jobs</th>
-            <th scope="col">Ready Jobs</th>
-            <th scope="col">Reserved Jobs</th>
-            <th scope="col">Delayed Jobs</th>
-            <th scope="col">Buried Jobs</th>
-            <th scope="col">Total Jobs</th>
-        </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <th scope="row">{{ tube.name }}</th>
-                <td>{{ tube.currentJobsUrgent }}</td>
-                <td>{{ tube.currentJobsReady }}</td>
-                <td>{{ tube.currentJobsReserved }}</td>
-                <td>{{ tube.currentJobsDelayed }}</td>
-                <td>{{ tube.currentJobsBuried }}</td>
-                <td>{{ tube.totalJobs }}</td>
-            </tr>
-        </tbody>
-    </table>
+    <div class="row">
+
+        <div class="col-sm">
+            <h4>Tube stats</h4>
+            <table class="table">
+                <tr>
+                    <th scope="row">Urgent Jobs</th>
+                    <td>{{ tube.currentJobsUrgent }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Ready Jobs</th>
+                    <td>{{ tube.currentJobsReady }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Reserved Jobs</th>
+                    <td>{{ tube.currentJobsReserved }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Delayed Jobs</th>
+                    <td>{{ tube.currentJobsDelayed }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Buried Jobs</th>
+                    <td>{{ tube.currentJobsBuried }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Total Jobs</th>
+                    <td>{{ tube.totalJobs }}</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="col-sm">
+            {% for state,payload in peeks %}
+                <h4>Next job in <small class="text-muted">{{ state }}</small> state</h4>
+                {% if payload %}
+                    <pre>
+{{ payload }}
+                    </pre>
+                {% else %}
+                    <p>None</p>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+    </div>
 
     <hr />
-    <h3>Search</h3>
+
+    <h4>Search</h4>
     <form action="/tube/{{ tube.name }}" method="get">
         <div class="form-group">
-            <label for="query">Query</label>
-            <input type="search" class="form-control" id="query" aria-describedby="queryHelp"
+            <input type="search" class="form-control form-control-lg" id="query" aria-describedby="queryHelp"
                    placeholder="Enter a query" name="query" value="{{ query }}">
             <small id="queryHelp" class="form-text text-muted">Search for jobs in this tube.</small>
         </div>
     </form>
 
     {% if foundJobs|length > 0 %}
-        <table class="table">
+        <table class="table table-striped">
             <thead>
             <tr>
                 <th scope="col">Job ID</th>
@@ -57,10 +79,20 @@
                     <td><pre>{{ job.stats.state }}</pre></td>
                     <td>
                         <div class="btn-group btn-group-sm" role="group" aria-label="Basic example">
-                            <a class="btn btn-secondary" href="#">View</a>
+                            <a class="btn btn-secondary" href="#">
+                                <span class="oi oi-eye"></span>
+                                View
+                            </a>
                             {% if job.stats.state == 'buried' %}
-                                <a class="btn btn-secondary" href="/kick/{{ jobId }}">Kick</a>
+                                <a class="btn btn-secondary" href="/kick/{{ jobId }}">
+                                    <span class="oi oi-bolt"></span>
+                                    Kick
+                                </a>
                             {% endif %}
+                            <a class="btn btn-secondary" href="#">
+                                <span class="oi oi-trash"></span>
+                                Delete
+                            </a>
                         </div>
                     </td>
                 </tr>

@@ -61,6 +61,14 @@ class Server
         $beanstalkClient = $this->beanstalkClientFactory->create();
         return adapt(call(function () use ($request, $beanstalkClient) {
             try {
+                // Fetch method and URI from somewhere
+                $httpMethod = $request->getMethod();
+                $uri = $request->getUri()->getPath();
+                $filePath = __DIR__ . '/public/' . ltrim($uri, '/');
+                if ((yield File\exists($filePath)) && (yield File\isfile($filePath))) {
+                    return new Response(200, [], yield File\get($filePath));
+                }
+
                 $twig = yield $this->getTwig();
                 $dispatcher = \FastRoute\simpleDispatcher(
                     function (RouteCollector $r) use ($request, $twig, $beanstalkClient) {
@@ -69,10 +77,6 @@ class Server
                         $r->addRoute('GET', '/kick/{jobId:\d+}', new KickController($request, $twig, $beanstalkClient));
                     }
                 );
-
-                // Fetch method and URI from somewhere
-                $httpMethod = $request->getMethod();
-                $uri = $request->getUri()->getPath();
 
                 $routeInfo = $dispatcher->dispatch($httpMethod, $uri);
                 switch ($routeInfo[0]) {
