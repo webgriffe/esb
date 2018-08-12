@@ -16,7 +16,7 @@ class KickController
         return call(function () use ($jobId) {
             /** @var Job $stats */
             $stats = yield $this->beanstalkClient->getJobStats((int)$jobId);
-            // kick $jobId here
+            yield $this->beanstalkClient->kickJob((int)$jobId);
             return new Response(301, ['Location' => "/tube/{$stats->tube}"]);
         });
     }

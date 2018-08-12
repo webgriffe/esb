@@ -90,7 +90,13 @@ class Server
                     case \FastRoute\Dispatcher::FOUND:
                         $handler = $routeInfo[1];
                         $vars = $routeInfo[2];
-                        return yield \call_user_func_array($handler, $vars);
+                        /** @var Response $response */
+                        $response = yield \call_user_func_array($handler, $vars);
+                        return $response
+                            ->withHeader('Cache-Control', 'no-cache, no-store, must-revalidate')
+                            ->withHeader('Pragma', 'no-cache')
+                            ->withHeader('Expires', '0')
+                        ;
                         break;
                 }
             } catch (\Throwable $exception) {
