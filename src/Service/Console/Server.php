@@ -3,27 +3,27 @@ declare(strict_types=1);
 
 namespace Webgriffe\Esb\Service\Console;
 
-use Amp\Beanstalk\Stats\System;
-use function Amp\call;
+use Amp\Beanstalk\BeanstalkClient;
 use Amp\CallableMaker;
+use Amp\File;
 use Amp\Promise;
 use Amp\ReactAdapter\ReactAdapter;
+use FastRoute\Dispatcher;
 use FastRoute\RouteCollector;
-use function Interop\React\Promise\adapt;
-use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Log\LoggerInterface;
 use React\Http\StreamingServer;
 use React\Promise\PromiseInterface;
 use React\Socket\Server as SocketServer;
 use RingCentral\Psr7\Response;
-use Amp\File;
 use Webgriffe\Esb\Console\Controller\DeleteController;
+use Webgriffe\Esb\Console\Controller\IndexController;
 use Webgriffe\Esb\Console\Controller\JobController;
 use Webgriffe\Esb\Console\Controller\KickController;
 use Webgriffe\Esb\Console\Controller\TubeController;
 use Webgriffe\Esb\Service\BeanstalkClientFactory;
-use Webgriffe\Esb\Console\Controller\IndexController;
+use function Amp\call;
+use function Interop\React\Promise\adapt;
 
 class Server
 {
@@ -72,22 +72,14 @@ class Server
                 }
 
                 $twig = yield $this->getTwig();
-                $dispatcher = \FastRoute\simpleDispatcher(
-                    function (RouteCollector $r) use ($request, $twig, $beanstalkClient) {
-                        $r->addRoute('GET', '/', new IndexController($request, $twig, $beanstalkClient));
-                        $r->addRoute('GET', '/tube/{tube}', new TubeController($request, $twig, $beanstalkClient));
-                        $r->addRoute('GET', '/kick/{jobId:\d+}', new KickController($request, $twig, $beanstalkClient));
-                        $r->addRoute('GET', '/delete/{jobId:\d+}', new DeleteController($request, $twig, $beanstalkClient));
-                        $r->addRoute('GET', '/job/{jobId:\d+}', new JobController($request, $twig, $beanstalkClient));
-                    }
-                );
+                $dispatcher = $this->getDispatcher($request, $twig, $beanstalkClient);
 
                 $routeInfo = $dispatcher->dispatch($httpMethod, $uri);
                 switch ($routeInfo[0]) {
-                    case \FastRoute\Dispatcher::NOT_FOUND:
+                    case Dispatcher::NOT_FOUND:
                         return new Response(404, [], 'Not Found');
                         break;
-                    case \FastRoute\Dispatcher::METHOD_NOT_ALLOWED:
+                    case Dispatcher::METHOD_NOT_ALLOWED:
                         $allowedMethods = $routeInfo[1];
                         return new Response(
                             405,
@@ -95,7 +87,7 @@ class Server
                             'Method Not Allowed. Allowed methods: ' . implode(', ', $allowedMethods)
                         );
                         break;
-                    case \FastRoute\Dispatcher::FOUND:
+                    case Dispatcher::FOUND:
                         $handler = $routeInfo[1];
                         $vars = $routeInfo[2];
                         /** @var Response $response */
@@ -128,5 +120,28 @@ class Server
             $loader = new \Twig_Loader_Array($templates);
             return new \Twig_Environment($loader);
         });
+    }
+
+    /**
+     * @param ServerRequestInterface $request
+     * @param \Twig_Environment $twig
+     * @param BeanstalkClient $beanstalkClient
+     * @return Dispatcher
+     */
+    private function getDispatcher(
+        ServerRequestInterface $request,
+        \Twig_Environment $twig,
+        BeanstalkClient $beanstalkClient
+    ): Dispatcher {
+        $dispatcher = \FastRoute\simpleDispatcher(
+            function (RouteCollector $r) use ($request, $twig, $beanstalkClient) {
+                $r->addRoute('GET', '/', new IndexController($request, $twig, $beanstalkClient));
+                $r->addRoute('GET', '/tube/{tube}', new TubeController($request, $twig, $beanstalkClient));
+                $r->addRoute('GET', '/kick/{jobId:\d+}', new KickController($request, $twig, $beanstalkClient));
+                $r->addRoute('GET', '/delete/{jobId:\d+}', new DeleteController($request, $twig, $beanstalkClient));
+                $r->addRoute('GET', '/job/{jobId:\d+}', new JobController($request, $twig, $beanstalkClient));
+            }
+        );
+        return $dispatcher;
     }
 }
