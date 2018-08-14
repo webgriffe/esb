@@ -3,18 +3,18 @@
 namespace Webgriffe\Esb\Callback;
 
 use Amp\Beanstalk\BeanstalkClient;
-use function Amp\call;
 use Amp\CallableMaker;
-use Amp\ReactAdapter\ReactAdapter;
-use function Interop\React\Promise\adapt;
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\ServerRequestInterface;
+use Amp\Http\Server\Request;
+use Amp\Http\Server\RequestHandler\CallableRequestHandler;
+use Amp\Http\Server\Response;
+use Amp\Http\Status;
+use Amp\Socket;
 use Psr\Log\LoggerInterface;
-use React\Http\Response;
-use React\Promise\PromiseInterface;
+use Psr\Log\NullLogger;
 use Webgriffe\Esb\HttpRequestProducerInterface;
 use Webgriffe\Esb\JobsQueuer;
 use Webgriffe\Esb\Service\BeanstalkClientFactory;
+use function Amp\call;
 
 class HttpServerRunner
 {
@@ -53,6 +53,10 @@ class HttpServerRunner
         $this->logger = $logger;
     }
 
+    /**
+     * @return \Generator
+     * @throws Socket\SocketException
+     */
     public function __invoke()
     {
         foreach ($this->producers as $producer) {
@@ -60,23 +64,31 @@ class HttpServerRunner
             $this->beanstalkClients[\get_class($producer)] = $beanstalkClient;
             yield call(new ProducerInitializer($producer, $beanstalkClient, $this->logger));
         }
-        $server = new \React\Http\Server($this->callableFromInstanceMethod('requestHandler'));
-        $server->listen(new \React\Socket\Server($this->port, ReactAdapter::get()));
+
+        $sockets = [
+            Socket\listen("0.0.0.0:{$this->port}"),
+            Socket\listen("[::]:{$this->port}"),
+        ];
+
+        $server = new \Amp\Http\Server\Server(
+            $sockets,
+            new CallableRequestHandler($this->callableFromInstanceMethod('requestHandler')),
+            new NullLogger()
+        );
+
+        yield $server->start();
     }
 
     /** @noinspection PhpUnusedPrivateMethodInspection */
     /**
-     * @param ServerRequestInterface $request
-     * @return PromiseInterface|ResponseInterface
-     * @throws \Error
-     * @throws \Throwable
-     * @throws \TypeError
+     * @param Request $request
+     * @return Response
      */
-    private function requestHandler(ServerRequestInterface $request)
+    private function requestHandler(Request $request)
     {
         $producer = $this->matchProducer($request);
         if (!$producer) {
-            return new Response(404, [], 'Producer Not Found');
+            return new Response(Status::NOT_FOUND, [], 'Producer Not Found');
         }
 
         $this->logger->info(
@@ -87,19 +99,16 @@ class HttpServerRunner
             ]
         );
         $beanstalkClient = $this->beanstalkClients[\get_class($producer)];
-        return adapt(call(function () use ($beanstalkClient, $producer, $request) {
-            $jobsCount = yield JobsQueuer::queueJobs($beanstalkClient, $this->logger, $producer, $request);
-            $responseMessage = sprintf('Successfully scheduled %s job(s) to be queued.', $jobsCount);
-            $statusCode = 200;
-            return new Response($statusCode, [], sprintf('"%s"', $responseMessage));
-        }));
+        $jobsCount = yield JobsQueuer::queueJobs($beanstalkClient, $this->logger, $producer, $request);
+        $responseMessage = sprintf('Successfully scheduled %s job(s) to be queued.', $jobsCount);
+        return new Response(Status::OK, [], sprintf('"%s"', $responseMessage));
     }
 
     /**
-     * @param ServerRequestInterface $request
+     * @param Request $request
      * @return false|HttpRequestProducerInterface
      */
-    private function matchProducer(ServerRequestInterface $request)
+    private function matchProducer(Request $request)
     {
         foreach ($this->producers as $producer) {
             if ($request->getUri()->getPath() === $producer->getAttachedRequestUri() &&

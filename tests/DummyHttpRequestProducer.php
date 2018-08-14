@@ -2,11 +2,11 @@
 
 namespace Webgriffe\Esb;
 
+use Amp\Http\Server\Request;
 use Amp\Iterator;
 use Amp\Producer;
 use Amp\Promise;
 use Amp\Success;
-use Psr\Http\Message\ServerRequestInterface;
 use Webgriffe\Esb\Model\Job;
 
 class DummyHttpRequestProducer implements HttpRequestProducerInterface
@@ -39,21 +39,21 @@ class DummyHttpRequestProducer implements HttpRequestProducerInterface
     }
 
     /**
-     * @param ServerRequestInterface $data
+     * @param Request $data
      * @return Iterator
      * @throws \InvalidArgumentException
      * @throws \Error
      */
     public function produce($data = null): Iterator
     {
-        if (!$data instanceof ServerRequestInterface) {
-            throw new \InvalidArgumentException(
-                sprintf('Expected "%s" as data for "%s"', ServerRequestInterface::class, __CLASS__)
-            );
-        }
-        $body = json_decode($data->getBody(), true);
-        $jobsData = $body['jobs'];
-        return new Producer(function (callable $emit) use ($jobsData) {
+        return new Producer(function (callable $emit) use ($data) {
+            if (!$data instanceof Request) {
+                throw new \InvalidArgumentException(
+                    sprintf('Expected "%s" as data for "%s"', Request::class, __CLASS__)
+                );
+            }
+            $body = json_decode(yield $data->getBody()->read(), true);
+            $jobsData = $body['jobs'];
             foreach ($jobsData as $jobData) {
                 yield $emit(new Job([$jobData]));
             }
