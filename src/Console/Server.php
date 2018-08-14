@@ -36,20 +36,25 @@ class Server
      */
     private $beanstalkClientFactory;
     /**
+     * @var array
+     */
+    private $config;
+    /**
      * @var LoggerInterface
      */
     private $logger;
 
-    public function __construct(BeanstalkClientFactory $beanstalkClientFactory, LoggerInterface $logger)
+    public function __construct(BeanstalkClientFactory $beanstalkClientFactory, array $config, LoggerInterface $logger)
     {
         $this->beanstalkClientFactory = $beanstalkClientFactory;
         $this->logger = $logger;
+        $this->config = $config;
     }
 
     public function boot()
     {
         Loop::defer(function () {
-            $port = self::PORT;
+            $port = $this->config['port'];
             $sockets = [
                 Socket\listen("0.0.0.0:$port"),
                 Socket\listen("[::]:$port"),
@@ -74,6 +79,9 @@ class Server
      */
     private function requestHandler(Request $request): \Generator
     {
+        if (!$this->isAuthorized($request)) {
+            return new Response(Status::UNAUTHORIZED, ['WWW-Authenticate' => 'Basic realm="ESB Console"']);
+        }
         $beanstalkClient = $this->beanstalkClientFactory->create();
         // Fetch method and URI from somewhere
         $httpMethod = $request->getMethod();
@@ -148,5 +156,21 @@ class Server
                 $r->addRoute('GET', '/job/{jobId:\d+}', new JobController($request, $twig, $beanstalkClient));
             }
         );
+    }
+
+    /**
+     * @param Request $request
+     * @return bool
+     */
+    private function isAuthorized(Request $request): bool
+    {
+        $authorization = $request->getHeader('Authorization');
+        if (!$authorization) {
+            return false;
+        }
+        $authorization = str_ireplace('Basic ', '', $authorization);
+        $authorization = base64_decode($authorization);
+        [$username, $password] = explode(':', $authorization);
+        return $username === $this->config['username'] && $password === $this->config['password'];
     }
 }
