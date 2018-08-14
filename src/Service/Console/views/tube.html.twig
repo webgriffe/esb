@@ -1,11 +1,14 @@
 {% extends '_layout.html.twig' %}
 
 {% block content %}
-    <h2 class="my-4">Tube <small class="text-muted">{{ tube.name }}</small></h2>
+    <h2 class="my-4">
+        Tube <small class="text-muted">{{ tube.name }}</small>
+        <a class="btn btn-secondary btn-sm float-right" role="button" href="/">&laquo; Back</a>
+    </h2>
 
     <div class="row">
 
-        <div class="col-sm">
+        <div class="col-sm-6">
             <h4>Tube stats</h4>
             <table class="table">
                 <tr>
@@ -35,13 +38,15 @@
             </table>
         </div>
 
-        <div class="col-sm">
+        <div class="col-sm-6">
             {% for state,payload in peeks %}
                 <h4>Next job in <small class="text-muted">{{ state }}</small> state</h4>
                 {% if payload %}
-                    <pre>
-{{ payload }}
-                    </pre>
+                    <div class="card bg-light my-3">
+                        <div class="card-body">
+                            <pre class="mb-0">{{ payload }}</pre>
+                        </div>
+                    </div>
                 {% else %}
                     <p>None</p>
                 {% endif %}
@@ -78,8 +83,8 @@
                     <td><pre>{{ job.payload }}</pre></td>
                     <td><pre>{{ job.stats.state }}</pre></td>
                     <td>
-                        <div class="btn-group btn-group-sm" role="group" aria-label="Basic example">
-                            <a class="btn btn-secondary" href="#">
+                        <div class="btn-group btn-group-sm" role="group" aria-label="Actions">
+                            <a class="btn btn-secondary" href="/job/{{ jobId }}">
                                 <span class="oi oi-eye"></span>
                                 View
                             </a>
