@@ -18,7 +18,8 @@
         "dragonmantank/cron-expression": "^2.0",
         "umbri/amp-react-interop": "^0.0.1",
         "twig/twig": "^2.5",
-        "nikic/fast-route": "^1.3"
+        "nikic/fast-route": "^1.3",
+        "amphp/http-server": "^0.8.2"
     },
     "autoload": {
         "psr-4": {

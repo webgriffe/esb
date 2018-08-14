@@ -5,7 +5,8 @@ namespace Webgriffe\Esb\Console\Controller;
 
 use Amp\Beanstalk\Stats\Job;
 use function Amp\call;
-use RingCentral\Psr7\Response;
+use Amp\Http\Server\Response;
+use Amp\Http\Status;
 
 class JobController
 {
@@ -21,7 +22,7 @@ class JobController
                 $payload = print_r(unserialize($payload), true);
             }
             return new Response(
-                200,
+                Status::OK,
                 [],
                 $this->twig->render('job.html.twig', ['stats' => $stats, 'payload' => $payload])
             );

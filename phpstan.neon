@@ -1,0 +1,3 @@
+parameters:
+	ignoreErrors:
+		- '/Parameter #2 \$headers of class Amp\\Http\\Server\\Response constructor expects array<array<string>>, array<string, string> given\./'

@@ -8,8 +8,9 @@ use Amp\Beanstalk\Stats\Job;
 use Amp\Beanstalk\Stats\System;
 use Amp\Beanstalk\Stats\Tube;
 use function Amp\call;
+use Amp\Http\Server\Response;
+use Amp\Http\Status;
 use Amp\Promise;
-use RingCentral\Psr7\Response;
 
 class TubeController
 {
@@ -20,7 +21,8 @@ class TubeController
         return call(function () use ($tube) {
             /** @var Tube $tube */
             $tube = yield $this->beanstalkClient->getTubeStats($tube);
-            $queryParams = $this->request->getQueryParams();
+            $queryParams = [];
+            parse_str($this->request->getUri()->getQuery(), $queryParams);
             $foundJobs = [];
             $query = '';
             if (array_key_exists('query', $queryParams)) {
@@ -28,7 +30,7 @@ class TubeController
                 $foundJobs = yield $this->findAllTubeJobsByQuery($tube->name, $query);
             }
             return new Response(
-                200,
+                Status::OK,
                 [],
                 $this->twig->render(
                     'tube.html.twig',

@@ -4,12 +4,12 @@ declare(strict_types=1);
 namespace Webgriffe\Esb\Console\Controller;
 
 use Amp\Beanstalk\BeanstalkClient;
-use Psr\Http\Message\ServerRequestInterface;
+use Amp\Http\Server\Request;
 
 trait ControllerTrait
 {
     /**
-     * @var ServerRequestInterface
+     * @var Request
      */
     private $request;
     /**
@@ -22,7 +22,7 @@ trait ControllerTrait
     private $beanstalkClient;
 
     public function __construct(
-        ServerRequestInterface $request,
+        Request $request,
         \Twig_Environment $twig,
         BeanstalkClient $beanstalkClient
     ) {

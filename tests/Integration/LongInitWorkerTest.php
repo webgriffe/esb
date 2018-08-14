@@ -26,8 +26,8 @@ class LongInitWorkerTest extends KernelTestCase
         $logEntries = $this->logHandler()->getRecords();
         $this->assertCount(5, $logEntries);
         $this->assertContains('No producer to start', $logEntries[0]['formatted']);
-        $this->assertContains('Web console server started.', $logEntries[1]['formatted']);
-        $this->assertContains('Starting async job in long init worker...', $logEntries[2]['formatted']);
+        $this->assertContains('Starting async job in long init worker...', $logEntries[1]['formatted']);
+        $this->assertContains('Web console server started.', $logEntries[2]['formatted']);
         $this->assertContains('Async job done in long init worker, result is: done', $logEntries[3]['formatted']);
         $this->assertContains('A Worker has been successfully initialized', $logEntries[4]['formatted']);
         $this->assertContains('DummyLongInitWorker', $logEntries[4]['formatted']);

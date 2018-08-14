@@ -5,7 +5,8 @@ namespace Webgriffe\Esb\Console\Controller;
 
 use Amp\Beanstalk\Stats\Job;
 use function Amp\call;
-use RingCentral\Psr7\Response;
+use Amp\Http\Server\Response;
+use Amp\Http\Status;
 
 class DeleteController
 {
@@ -17,7 +18,7 @@ class DeleteController
             /** @var Job $stats */
             $stats = yield $this->beanstalkClient->getJobStats((int)$jobId);
             yield $this->beanstalkClient->delete((int)$jobId);
-            return new Response(301, ['Location' => "/tube/{$stats->tube}"]);
+            return new Response(Status::MOVED_PERMANENTLY, ['Location' => "/tube/{$stats->tube}"]);
         });
     }
 }
