@@ -27,8 +27,6 @@ use function Amp\call;
 
 class Server
 {
-    const PORT = 8080;
-
     use CallableMaker;
 
     /**
@@ -68,7 +66,7 @@ class Server
 
             yield $server->start();
 
-            $this->logger->info('Web console server started.', ['port' => self::PORT ]);
+            $this->logger->info('Web console server started.', ['port' => $port ]);
         });
     }
 
