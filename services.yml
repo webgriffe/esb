@@ -39,3 +39,6 @@ services:
 
   Webgriffe\Esb\DateTimeBuilderInterface:
     class: \Webgriffe\Esb\DateTimeBuilder
+
+  Webgriffe\Esb\Console\Server:
+    class: \Webgriffe\Esb\Console\Server

@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace Webgriffe\Esb\Service\Console;
+namespace Webgriffe\Esb\Console;
 
 use Amp\Beanstalk\BeanstalkClient;
 use Amp\CallableMaker;

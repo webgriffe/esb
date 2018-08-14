@@ -6,5 +6,5 @@
 
     <file>./src</file>
     <file>./tests</file>
-    <exclude-pattern>./src/Service/Console/public/*</exclude-pattern>
+    <exclude-pattern>./src/Console/public/*</exclude-pattern>
 </ruleset>
