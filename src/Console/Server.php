@@ -168,7 +168,7 @@ class Server
         }
         $authorization = str_ireplace('Basic ', '', $authorization);
         $authorization = base64_decode($authorization);
-        [$username, $password] = explode(':', $authorization);
+        list($username, $password) = explode(':', $authorization);
         return $username === $this->config['username'] && $password === $this->config['password'];
     }
 }
