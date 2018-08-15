@@ -174,6 +174,32 @@ public function testWorksSimpleJob()
 }
 ```
 
+Web Console
+-----------
+
+A web console UI is available and allows to inspect tubes and jobs; is it also possible to search jobs and kick or delete them. The web console is currentyl only available under HTTP (not HTTPS) and must be configured using the following parameters:
+
+```yaml
+# esb.yml
+parameters:
+  # ...
+  console_port: 8080         # Web console port
+  console_username: admin    # Web console username
+  console_password: password # Web console password
+
+# ...
+```
+
+For example, given the configuration above, you can access to the web console at the URL `http://<ip_or_hostname>:8080/` using `admin` as username and `password` as password.
+
+The web console HTTP server must be set on a different port then the one used by the `HttpRequestProducerInterface` producers (and identified by the `http_server_port` parameter).
+
+![Web Console 1](web-console-1.png)
+
+![Web Console 2](web-console-2.png)
+
+![Web Console 3](web-console-3.png)
+
 Deployment
 ----------
 As said all workers and producers are managed by a single PHP binary. This binary is located at `vendor/bin/esb`. So to deploy and run your ESB application all you have to do is to deploy your application as any other PHP application (for example using [Deployer](https://deployer.org/)) and make sure that `vendor/bin/esb` is always running (we suggest to use [Supervisord](http://supervisord.org/) for this purpose).
