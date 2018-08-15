@@ -6,6 +6,7 @@ use Amp\Loop;
 use org\bovigo\vfs\vfsStream;
 use Webgriffe\Esb\DummyFilesystemRepeatProducer;
 use Webgriffe\Esb\DummyFilesystemWorker;
+use Webgriffe\Esb\DummyFlow;
 use Webgriffe\Esb\KernelTestCase;
 use Webgriffe\Esb\TestUtils;
 
@@ -20,7 +21,14 @@ class RepeatProducerAndWorkerTest extends KernelTestCase
         self::createKernel([
             'services' => [
                 DummyFilesystemRepeatProducer::class => ['arguments' => [$producerDir]],
-                DummyFilesystemWorker::class => ['arguments' => [$workerFile]]
+                DummyFilesystemWorker::class => ['arguments' => [$workerFile]],
+                DummyFlow::class => [
+                    'arguments' => [
+                        '@' . DummyFilesystemRepeatProducer::class,
+                        '@' . DummyFilesystemWorker::class,
+                        'sample_tube'
+                    ]
+                ]
             ]
         ]);
         mkdir($producerDir);
@@ -64,7 +72,14 @@ class RepeatProducerAndWorkerTest extends KernelTestCase
                         $produceDelay
                     ]
                 ],
-                DummyFilesystemWorker::class => ['arguments' => [$workerFile]]
+                DummyFilesystemWorker::class => ['arguments' => [$workerFile]],
+                DummyFlow::class => [
+                    'arguments' => [
+                        '@' . DummyFilesystemRepeatProducer::class,
+                        '@' . DummyFilesystemWorker::class,
+                        'sample_tube'
+                    ]
+                ]
             ]
         ]);
         mkdir($producerDir);

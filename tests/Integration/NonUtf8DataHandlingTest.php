@@ -7,6 +7,7 @@ use Amp\Loop;
 use org\bovigo\vfs\vfsStream;
 use Webgriffe\Esb\DummyFilesystemRepeatProducer;
 use Webgriffe\Esb\DummyFilesystemWorker;
+use Webgriffe\Esb\DummyFlow;
 use Webgriffe\Esb\DummyRepeatProducer;
 use Webgriffe\Esb\KernelTestCase;
 use Webgriffe\Esb\Model\Job;
@@ -25,7 +26,14 @@ class NonUtf8DataHandlingTest extends KernelTestCase
         self::createKernel([
             'services' => [
                 DummyFilesystemRepeatProducer::class => ['arguments' => [$producerDir]],
-                DummyFilesystemWorker::class => ['arguments' => ['/dev/null']]
+                DummyFilesystemWorker::class => ['arguments' => ['/dev/null']],
+                DummyFlow::class => [
+                    'arguments' => [
+                        '@' . DummyFilesystemRepeatProducer::class,
+                        '@' . DummyFilesystemWorker::class,
+                        'sample_tube'
+                    ]
+                ]
             ]
         ]);
 

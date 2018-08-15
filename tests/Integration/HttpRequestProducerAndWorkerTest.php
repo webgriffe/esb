@@ -9,6 +9,7 @@ use Amp\Artax\DefaultClient;
 use Monolog\Logger;
 use org\bovigo\vfs\vfsStream;
 use Webgriffe\Esb\DummyFilesystemWorker;
+use Webgriffe\Esb\DummyFlow;
 use Webgriffe\Esb\DummyHttpRequestProducer;
 use Webgriffe\Esb\KernelTestCase;
 use Webgriffe\Esb\TestUtils;
@@ -28,7 +29,14 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
             [
                 'services' => [
                     DummyHttpRequestProducer::class => ['arguments' => []],
-                    DummyFilesystemWorker::class => ['arguments' => [$this->workerFile]]
+                    DummyFilesystemWorker::class => ['arguments' => [$this->workerFile]],
+                    DummyFlow::class => [
+                        'arguments' => [
+                            '@' . DummyHttpRequestProducer::class,
+                            '@' . DummyFilesystemWorker::class,
+                            'sample_tube'
+                        ]
+                    ]
                 ]
             ]
         );

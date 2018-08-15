@@ -8,6 +8,7 @@ use Webgriffe\Esb\DateTimeBuilderInterface;
 use Webgriffe\Esb\DateTimeBuilderStub;
 use Webgriffe\Esb\DummyCrontabProducer;
 use Webgriffe\Esb\DummyFilesystemWorker;
+use Webgriffe\Esb\DummyFlow;
 use Webgriffe\Esb\KernelTestCase;
 use Webgriffe\Esb\Model\Job;
 use Webgriffe\Esb\TestUtils;
@@ -24,7 +25,14 @@ class CrontabProducerAndWorkerTest extends KernelTestCase
             'services' => [
                 DateTimeBuilderInterface::class => ['class' => DateTimeBuilderStub::class],
                 DummyCrontabProducer::class => ['arguments' => [DummyFilesystemWorker::TUBE]],
-                DummyFilesystemWorker::class => ['arguments' => [$workerFile]]
+                DummyFilesystemWorker::class => ['arguments' => [$workerFile]],
+                DummyFlow::class => [
+                    'arguments' => [
+                        '@' . DummyCrontabProducer::class,
+                        '@' . DummyFilesystemWorker::class,
+                        'sample_tube'
+                    ]
+                ]
             ]
         ]);
 
@@ -51,7 +59,14 @@ class CrontabProducerAndWorkerTest extends KernelTestCase
             'services' => [
                 DateTimeBuilderInterface::class => ['class' => DateTimeBuilderStub::class],
                 DummyCrontabProducer::class => ['arguments' => [DummyFilesystemWorker::TUBE]],
-                DummyFilesystemWorker::class => ['arguments' => [$workerFile]]
+                DummyFilesystemWorker::class => ['arguments' => [$workerFile]],
+                DummyFlow::class => [
+                    'arguments' => [
+                        '@' . DummyCrontabProducer::class,
+                        '@' . DummyFilesystemWorker::class,
+                        'sample_tube'
+                    ]
+                ]
             ]
         ]);
 

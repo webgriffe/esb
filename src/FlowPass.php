@@ -5,9 +5,9 @@ namespace Webgriffe\Esb;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
-use Webgriffe\Esb\Service\WorkerManager;
+use Webgriffe\Esb\Service\FlowManager;
 
-class WorkerPass implements CompilerPassInterface
+class FlowPass implements CompilerPassInterface
 {
     /**
      * You can modify the container here before it is dumped to PHP code.
@@ -17,18 +17,18 @@ class WorkerPass implements CompilerPassInterface
      */
     public function process(ContainerBuilder $container)
     {
-        if (!$container->has(WorkerManager::class)) {
+        if (!$container->has(FlowManager::class)) {
             return;
         }
 
-        $definition = $container->findDefinition(WorkerManager::class);
+        $definition = $container->findDefinition(FlowManager::class);
 
         // find all service IDs with the app.mail_transport tag
-        $taggedServices = $container->findTaggedServiceIds(Kernel::WORKER_TAG);
+        $taggedServices = $container->findTaggedServiceIds(Kernel::FLOW_TAG);
 
         foreach ($taggedServices as $id => $tags) {
             // add the transport service to the ChainTransport service
-            $definition->addMethodCall('addWorker', array(new Reference($id)));
+            $definition->addMethodCall('addFlow', array(new Reference($id)));
         }
     }
 }

@@ -17,9 +17,9 @@ services:
     class: \Webgriffe\Esb\Service\BeanstalkClientFactory
     arguments: [ '%beanstalkd%' ]
 
-  Webgriffe\Esb\Service\ProducerManager:
-    calls:
-      - [setContainer, [ '@service_container' ]]
+  Webgriffe\Esb\Service\FlowManager:
+    arguments:
+      $httpServerPort: '%http_server_port%'
 
   Monolog\Handler\StreamHandler:
     class: \Monolog\Handler\StreamHandler
