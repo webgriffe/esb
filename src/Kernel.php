@@ -16,6 +16,9 @@ class Kernel
 {
     const FLOW_TAG = 'esb.flow';
 
+    /**
+     * @var ContainerBuilder
+     */
     private $container;
     /**
      * @var string
@@ -50,15 +53,13 @@ class Kernel
      */
     public function boot()
     {
-        /** @var FlowManager $workerManager */
-        $workerManager = $this->getContainer()->get(FlowManager::class);
-        $workerManager->bootFlows();
-
+        Loop::setErrorHandler([$this, 'errorHandler']);
+        /** @var FlowManager $flowManager */
+        $flowManager = $this->getContainer()->get(FlowManager::class);
+        $flowManager->bootFlows();
         /** @var Server $consoleServer */
         $consoleServer = $this->getContainer()->get(Server::class);
         $consoleServer->boot();
-
-        Loop::setErrorHandler([$this, 'errorHandler']);
         Loop::run();
     }
 

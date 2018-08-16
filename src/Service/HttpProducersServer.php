@@ -1,82 +1,95 @@
 <?php
+declare(strict_types=1);
 
-namespace Webgriffe\Esb\Callback;
+namespace Webgriffe\Esb\Service;
 
 use Amp\Beanstalk\BeanstalkClient;
 use Amp\CallableMaker;
 use Amp\Http\Server\Request;
 use Amp\Http\Server\RequestHandler\CallableRequestHandler;
 use Amp\Http\Server\Response;
+use Amp\Http\Server\Server;
 use Amp\Http\Status;
+use Amp\Promise;
 use Amp\Socket;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Webgriffe\Esb\HttpRequestProducerInterface;
 use Webgriffe\Esb\JobsQueuer;
-use Webgriffe\Esb\Service\BeanstalkClientFactory;
 use function Amp\call;
 
-class HttpServerRunner
+class HttpProducersServer
 {
     use CallableMaker;
 
-    /**
-     * @var HttpRequestProducerInterface[]
-     */
-    private $producers;
     /**
      * @var int
      */
     private $port;
     /**
-     * @var BeanstalkClientFactory
-     */
-    private $beanstalkClientFactory;
-    /**
      * @var LoggerInterface
      */
     private $logger;
     /**
+     * @var HttpRequestProducerInterface[]
+     */
+    private $producers = [];
+    /**
      * @var BeanstalkClient[]
      */
     private $beanstalkClients = [];
+    /**
+     * @var Server
+     */
+    private $httpServer;
 
-    public function __construct(
-        array $producers,
-        int $port,
-        BeanstalkClientFactory $beanstalkClientFactory,
-        LoggerInterface $logger
-    ) {
-        $this->producers = $producers;
+    public function __construct(int $port, LoggerInterface $logger)
+    {
         $this->port = $port;
-        $this->beanstalkClientFactory = $beanstalkClientFactory;
         $this->logger = $logger;
     }
 
     /**
-     * @return \Generator
-     * @throws Socket\SocketException
+     * @return Promise
      */
-    public function __invoke()
+    public function start(): Promise
     {
-        foreach ($this->producers as $producer) {
-            $beanstalkClient = $this->beanstalkClientFactory->create();
-            $this->beanstalkClients[\get_class($producer)] = $beanstalkClient;
-            yield call(new ProducerInitializer($producer, $beanstalkClient, $this->logger));
+        return call(function () {
+            $sockets = [
+                Socket\listen("0.0.0.0:{$this->port}"),
+                Socket\listen("[::]:{$this->port}"),
+            ];
+
+            $this->httpServer = new \Amp\Http\Server\Server(
+                $sockets,
+                new CallableRequestHandler($this->callableFromInstanceMethod('requestHandler')),
+                new NullLogger()
+            );
+
+            yield $this->httpServer->start();
+        });
+    }
+
+    /**
+     * @return bool
+     */
+    public function isStarted(): bool
+    {
+        if (!$this->httpServer) {
+            return false;
         }
+        $state = $this->httpServer->getState();
+        return ($state === Server::STARTING || $state === Server::STARTED);
+    }
 
-        $sockets = [
-            Socket\listen("0.0.0.0:{$this->port}"),
-            Socket\listen("[::]:{$this->port}"),
-        ];
-
-        $server = new \Amp\Http\Server\Server(
-            $sockets,
-            new CallableRequestHandler($this->callableFromInstanceMethod('requestHandler')),
-            new NullLogger()
-        );
-
-        yield $server->start();
+    /**
+     * @param HttpRequestProducerInterface $producer
+     * @param BeanstalkClient $beanstalkClient
+     */
+    public function addProducer(HttpRequestProducerInterface $producer, BeanstalkClient $beanstalkClient)
+    {
+        $this->producers[] = $producer;
+        $this->beanstalkClients[\get_class($producer)] = $beanstalkClient;
     }
 
     /** @noinspection PhpUnusedPrivateMethodInspection */

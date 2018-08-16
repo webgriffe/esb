@@ -3,25 +3,26 @@ declare(strict_types=1);
 
 namespace Webgriffe\Esb\Service;
 
+use Amp\Beanstalk\BeanstalkClient;
 use Amp\CallableMaker;
 use Amp\Loop;
+use Cron\CronExpression;
 use Monolog\Logger;
-use Webgriffe\Esb\Callback\CrontabProducersRunner;
-use Webgriffe\Esb\Callback\HttpServerRunner;
-use Webgriffe\Esb\Callback\RepeatProducersRunner;
 use Webgriffe\Esb\CrontabProducerInterface;
 use Webgriffe\Esb\DateTimeBuilderInterface;
 use Webgriffe\Esb\FlowInterface;
 use Webgriffe\Esb\HttpRequestProducerInterface;
+use Webgriffe\Esb\JobsQueuer;
 use Webgriffe\Esb\Model\QueuedJob;
 use Webgriffe\Esb\NonUtf8Cleaner;
 use Webgriffe\Esb\ProducerInterface;
 use Webgriffe\Esb\RepeatProducerInterface;
 use Webgriffe\Esb\WorkerInterface;
-use function Amp\call;
 
 class FlowManager
 {
+    const CRON_TICK_SECONDS = 60;
+
     use CallableMaker;
 
     /**
@@ -50,52 +51,47 @@ class FlowManager
     private $dateTimeBuilder;
 
     /**
-     * @var int
+     * @var HttpProducersServer
      */
-    private $httpServerPort;
-
-    /**
-     * @var ProducerInterface[]
-     */
-    private $producers = [];
+    private $httpProducersServer;
 
     /**
      * FlowManager constructor.
      * @param BeanstalkClientFactory $beanstalkClientFactory
      * @param Logger $logger
+     * @param HttpProducersServer $httpProducersServer
      * @param DateTimeBuilderInterface $dateTimeBuilder
-     * @param int $httpServerPort
      */
     public function __construct(
         BeanstalkClientFactory $beanstalkClientFactory,
         Logger $logger,
-        DateTimeBuilderInterface $dateTimeBuilder,
-        int $httpServerPort
+        HttpProducersServer $httpProducersServer,
+        DateTimeBuilderInterface $dateTimeBuilder
     ) {
         $this->beanstalkClientFactory = $beanstalkClientFactory;
         $this->logger = $logger;
         $this->dateTimeBuilder = $dateTimeBuilder;
-        $this->httpServerPort = $httpServerPort;
+        $this->httpProducersServer = $httpProducersServer;
     }
 
     public function bootFlows()
     {
-        if (!\count($this->flows)) {
-            $this->logger->notice('No flow to start.');
-            return;
-        }
-
-        foreach ($this->flows as $flow) {
-            $worker = $flow->getWorker();
-            $this->producers[] = $flow->getProducer();
-            for ($instanceIndex = 1; $instanceIndex <= $worker->getInstancesCount(); $instanceIndex++) {
-                Loop::defer(function () use ($worker, $instanceIndex) {
-                    yield call($this->callableFromInstanceMethod('bootWorkerInstance'), $worker, $instanceIndex);
-                });
+        Loop::defer(function () {
+            if (!\count($this->flows)) {
+                $this->logger->notice('No flow to start.');
+                return;
             }
-        }
 
-        $this->bootProducers();
+            foreach ($this->flows as $flow) {
+                yield from $this->bootProducer($flow->getProducer());
+                $worker = $flow->getWorker();
+                for ($instanceId = 1; $instanceId <= $worker->getInstancesCount(); $instanceId++) {
+                    Loop::defer(function () use ($worker, $instanceId) {
+                        yield from $this->bootWorkerInstance($worker, $instanceId);
+                    });
+                }
+            }
+        });
     }
 
     /**
@@ -106,14 +102,12 @@ class FlowManager
         $this->flows[] = $flow;
     }
 
-    /** @noinspection PhpUnusedPrivateMethodInspection */
     /**
      * @param WorkerInterface $worker
-     * @param int             $instanceIndex
-     *
+     * @param int $instanceId
      * @return \Generator
      */
-    private function bootWorkerInstance(WorkerInterface $worker, int $instanceIndex): \Generator
+    private function bootWorkerInstance(WorkerInterface $worker, int $instanceId): \Generator
     {
         $beanstalkClient = $this->beanstalkClientFactory->create();
 
@@ -122,8 +116,8 @@ class FlowManager
         yield $beanstalkClient->ignore('default');
 
         $this->logger->info(
-            'A Worker has been successfully initialized',
-            ['worker' => \get_class($worker), 'instance_index' => $instanceIndex]
+            'A Worker instance has been successfully initialized',
+            ['worker' => \get_class($worker), 'instance_id' => $instanceId]
         );
 
         while ($rawJob = yield $beanstalkClient->reserve()) {
@@ -131,7 +125,7 @@ class FlowManager
 
             $logContext = [
                 'worker' => \get_class($worker),
-                'instance_index' => $instanceIndex,
+                'instance_id' => $instanceId,
                 'job_id' => $job->getId(),
                 'payload_data' => NonUtf8Cleaner::clean($job->getPayloadData())
             ];
@@ -170,57 +164,54 @@ class FlowManager
         }
     }
 
-    private function bootProducers()
+    private function bootProducer(ProducerInterface $producer): \Generator
     {
-        /** @var BeanstalkClientFactory $beanstalkClientFactory */
-        $beanstalkClientFactory = $this->beanstalkClientFactory;
-        /** @var Logger $logger */
-        $logger = $this->logger;
-
-        if (!\count($this->producers)) {
-            $logger->notice('No producer to start.');
-            return;
-        }
-
-        /** @var RepeatProducerInterface[] $repeatProducers */
-        $repeatProducers = [];
-        /** @var HttpRequestProducerInterface[] $httpRequestProducers */
-        $httpRequestProducers = [];
-        /** @var CrontabProducerInterface[] $crontabProducers */
-        $crontabProducers = [];
-        foreach ($this->producers as $producer) {
-            if ($producer instanceof RepeatProducerInterface) {
-                $repeatProducers[] = $producer;
-            } elseif ($producer instanceof  HttpRequestProducerInterface) {
-                $httpRequestProducers[] = $producer;
-            } elseif ($producer instanceof  CrontabProducerInterface) {
-                $crontabProducers[] = $producer;
-            } else {
-                throw new \RuntimeException(sprintf('Unknown producer type "%s".', \get_class($producer)));
+        $beanstalkClient = $this->beanstalkClientFactory->create();
+        yield $producer->init();
+        yield $beanstalkClient->use($producer->getTube());
+        $this->logger->info(
+            'A Producer has been successfully initialized',
+            ['producer' => \get_class($producer)]
+        );
+        if ($producer instanceof RepeatProducerInterface) {
+            Loop::repeat(
+                $producer->getInterval(),
+                function ($watcherId) use ($producer, $beanstalkClient) {
+                    Loop::disable($watcherId);
+                    yield JobsQueuer::queueJobs($beanstalkClient, $this->logger, $producer);
+                    Loop::enable($watcherId);
+                }
+            );
+        } elseif ($producer instanceof  HttpRequestProducerInterface) {
+            if (!$this->httpProducersServer->isStarted()) {
+                yield $this->httpProducersServer->start();
             }
+            $this->httpProducersServer->addProducer($producer, $beanstalkClient);
+        } elseif ($producer instanceof  CrontabProducerInterface) {
+            yield from $this->cronTick($producer, $beanstalkClient);
+            Loop::repeat(self::CRON_TICK_SECONDS * 1000, function () use ($producer, $beanstalkClient) {
+                yield from $this->cronTick($producer, $beanstalkClient);
+            });
+        } else {
+            throw new \RuntimeException(sprintf('Unknown producer type "%s".', \get_class($producer)));
         }
+    }
 
-        if (\count($repeatProducers)) {
-            Loop::defer(
-                new RepeatProducersRunner($repeatProducers, $beanstalkClientFactory, $logger)
+    private function cronTick(CrontabProducerInterface $producer, BeanstalkClient $beanstalkClient): \Generator
+    {
+        $cronExpression = CronExpression::factory($producer->getCrontab());
+        /** @var DateTimeBuilderInterface $dateTimeBuilder */
+        $now = $this->dateTimeBuilder->build();
+        if ($cronExpression->isDue($now)) {
+            $this->logger->info(
+                'Matched cron expression for a crontab producer.',
+                [
+                    'producer' => \get_class($producer),
+                    'now_date' => $now->format('c'),
+                    'cron_expression' => $producer->getCrontab()
+                ]
             );
-        }
-
-        if (\count($httpRequestProducers)) {
-            Loop::defer(
-                new HttpServerRunner($httpRequestProducers, $this->httpServerPort, $beanstalkClientFactory, $logger)
-            );
-        }
-
-        if (\count($crontabProducers)) {
-            Loop::defer(
-                new CrontabProducersRunner(
-                    $crontabProducers,
-                    $beanstalkClientFactory,
-                    $this->dateTimeBuilder,
-                    $logger
-                )
-            );
+            yield JobsQueuer::queueJobs($beanstalkClient, $this->logger, $producer);
         }
     }
 }
