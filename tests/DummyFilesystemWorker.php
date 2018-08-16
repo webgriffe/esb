@@ -13,8 +13,6 @@ use function Amp\call;
  */
 class DummyFilesystemWorker implements WorkerInterface
 {
-    const TUBE = 'sample_tube';
-
     /**
      * @var string
      */
@@ -23,14 +21,6 @@ class DummyFilesystemWorker implements WorkerInterface
     public function __construct(string $filename)
     {
         $this->filename = $filename;
-    }
-
-    /**
-     * @return string
-     */
-    public function getTube(): string
-    {
-        return self::TUBE;
     }
 
     /**

@@ -21,6 +21,8 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
     private $workerFile;
     private $httpPort;
 
+    const TUBE = 'sample_tube';
+
     public function setUp()
     {
         parent::setUp();
@@ -34,7 +36,7 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
                         'arguments' => [
                             '@' . DummyHttpRequestProducer::class,
                             '@' . DummyFilesystemWorker::class,
-                            'sample_tube'
+                            self::TUBE
                         ]
                     ]
                 ]
@@ -76,7 +78,7 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
             '/Successfully produced a new Job .*? "payload_data":["job3"]/',
             Logger::INFO
         );
-        $this->assertReadyJobsCountInTube(0, DummyFilesystemWorker::TUBE);
+        $this->assertReadyJobsCountInTube(0, self::TUBE);
     }
 
     public function testHttpRequestProducerWithWrongUriShouldReturn404()
@@ -96,6 +98,6 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
         self::$kernel->boot();
 
         $this->assertFileNotExists($this->workerFile);
-        $this->assertReadyJobsCountInTube(0, DummyFilesystemWorker::TUBE);
+        $this->assertReadyJobsCountInTube(0, self::TUBE);
     }
 }

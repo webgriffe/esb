@@ -12,6 +12,8 @@ use Webgriffe\Esb\TestUtils;
 
 class RepeatProducerAndWorkerTest extends KernelTestCase
 {
+    const TUBE = 'sample_tube';
+
     use TestUtils;
 
     public function testRepeatProducerAndWorkerTogether()
@@ -26,7 +28,7 @@ class RepeatProducerAndWorkerTest extends KernelTestCase
                     'arguments' => [
                         '@' . DummyFilesystemRepeatProducer::class,
                         '@' . DummyFilesystemWorker::class,
-                        'sample_tube'
+                        self::TUBE
                     ]
                 ]
             ]
@@ -54,7 +56,7 @@ class RepeatProducerAndWorkerTest extends KernelTestCase
         $this->assertCount(2, $workerFileLines);
         $this->assertContains('job1', $workerFileLines[0]);
         $this->assertContains('job2', $workerFileLines[1]);
-        $this->assertReadyJobsCountInTube(0, DummyFilesystemWorker::TUBE);
+        $this->assertReadyJobsCountInTube(0, self::TUBE);
     }
 
     public function testLongProduceRepeatProducerDoesNotOverlapProduceInvokations()
@@ -77,7 +79,7 @@ class RepeatProducerAndWorkerTest extends KernelTestCase
                     'arguments' => [
                         '@' . DummyFilesystemRepeatProducer::class,
                         '@' . DummyFilesystemWorker::class,
-                        'sample_tube'
+                        self::TUBE
                     ]
                 ]
             ]
@@ -95,6 +97,6 @@ class RepeatProducerAndWorkerTest extends KernelTestCase
         $this->assertCount(2, $workerFileLines);
         $this->assertContains('job1', $workerFileLines[0]);
         $this->assertContains('job2', $workerFileLines[1]);
-        $this->assertReadyJobsCountInTube(0, DummyFilesystemWorker::TUBE);
+        $this->assertReadyJobsCountInTube(0, self::TUBE);
     }
 }

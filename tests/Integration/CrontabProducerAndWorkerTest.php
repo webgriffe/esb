@@ -15,6 +15,8 @@ use Webgriffe\Esb\TestUtils;
 
 class CrontabProducerAndWorkerTest extends KernelTestCase
 {
+    const TUBE = 'sample_tube';
+
     use TestUtils;
 
     public function testCrontabProducerAndWorkerDoesNotProduceIfIsNotTheRightTime()
@@ -24,13 +26,13 @@ class CrontabProducerAndWorkerTest extends KernelTestCase
         self::createKernel([
             'services' => [
                 DateTimeBuilderInterface::class => ['class' => DateTimeBuilderStub::class],
-                DummyCrontabProducer::class => ['arguments' => [DummyFilesystemWorker::TUBE]],
+                DummyCrontabProducer::class => ['arguments' => []],
                 DummyFilesystemWorker::class => ['arguments' => [$workerFile]],
                 DummyFlow::class => [
                     'arguments' => [
                         '@' . DummyCrontabProducer::class,
                         '@' . DummyFilesystemWorker::class,
-                        'sample_tube'
+                        self::TUBE
                     ]
                 ]
             ]
@@ -58,13 +60,13 @@ class CrontabProducerAndWorkerTest extends KernelTestCase
         self::createKernel([
             'services' => [
                 DateTimeBuilderInterface::class => ['class' => DateTimeBuilderStub::class],
-                DummyCrontabProducer::class => ['arguments' => [DummyFilesystemWorker::TUBE]],
+                DummyCrontabProducer::class => ['arguments' => []],
                 DummyFilesystemWorker::class => ['arguments' => [$workerFile]],
                 DummyFlow::class => [
                     'arguments' => [
                         '@' . DummyCrontabProducer::class,
                         '@' . DummyFilesystemWorker::class,
-                        'sample_tube'
+                        self::TUBE
                     ]
                 ]
             ]
@@ -87,6 +89,6 @@ class CrontabProducerAndWorkerTest extends KernelTestCase
         $this->assertCount(2, $workerFileLines);
         $this->assertContains('job1', $workerFileLines[0]);
         $this->assertContains('job2', $workerFileLines[1]);
-        $this->assertReadyJobsCountInTube(0, DummyFilesystemWorker::TUBE);
+        $this->assertReadyJobsCountInTube(0, self::TUBE);
     }
 }

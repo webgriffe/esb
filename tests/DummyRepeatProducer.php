@@ -13,10 +13,6 @@ class DummyRepeatProducer implements RepeatProducerInterface
      */
     private $jobs;
     /**
-     * @var string
-     */
-    private $tube;
-    /**
      * @var int
      */
     private $interval;
@@ -24,22 +20,12 @@ class DummyRepeatProducer implements RepeatProducerInterface
     /**
      * DummyRepeatProducer constructor.
      * @param array $jobs
-     * @param string $tube
      * @param int $interval
      */
-    public function __construct(array $jobs, string $tube, int $interval)
+    public function __construct(array $jobs, int $interval)
     {
         $this->jobs = $jobs;
-        $this->tube = $tube;
         $this->interval = $interval;
-    }
-
-    /**
-     * @return string
-     */
-    public function getTube(): string
-    {
-        return $this->tube;
     }
 
     /**

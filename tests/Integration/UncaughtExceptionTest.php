@@ -17,7 +17,7 @@ class UncaughtExceptionTest extends KernelTestCase
         self::createKernel([
             'parameters' => ['beanstalkd' => 'tcp://invalid-host:11300'],
             'services' => [
-                DummyRepeatProducer::class => ['class' => DummyRepeatProducer::class, 'arguments' => [[], 'test', 1]],
+                DummyRepeatProducer::class => ['class' => DummyRepeatProducer::class, 'arguments' => [[], 1]],
                 DummyFilesystemWorker::class => ['arguments' => ['/dev/null']],
                 DummyFlow::class => [
                     'arguments' => [

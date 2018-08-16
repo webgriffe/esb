@@ -83,13 +83,8 @@ class FlowManager
             }
 
             foreach ($this->flows as $flow) {
-                yield from $this->bootProducer($flow->getProducer());
-                $worker = $flow->getWorker();
-                for ($instanceId = 1; $instanceId <= $worker->getInstancesCount(); $instanceId++) {
-                    Loop::defer(function () use ($worker, $instanceId) {
-                        yield from $this->bootWorkerInstance($worker, $instanceId);
-                    });
-                }
+                yield from $this->bootFlowProducer($flow);
+                $this->bootFlowWorkerInstances($flow);
             }
         });
     }
@@ -102,73 +97,74 @@ class FlowManager
         $this->flows[] = $flow;
     }
 
-    /**
-     * @param WorkerInterface $worker
-     * @param int $instanceId
-     * @return \Generator
-     */
-    private function bootWorkerInstance(WorkerInterface $worker, int $instanceId): \Generator
+    private function bootFlowWorkerInstances(FlowInterface $flow)
     {
-        $beanstalkClient = $this->beanstalkClientFactory->create();
+        for ($instanceId = 1; $instanceId <= $flow->getWorker()->getInstancesCount(); $instanceId++) {
+            Loop::defer(function () use ($flow, $instanceId) {
+                $beanstalkClient = $this->beanstalkClientFactory->create();
+                $worker = $flow->getWorker();
 
-        yield $worker->init();
-        yield $beanstalkClient->watch($worker->getTube());
-        yield $beanstalkClient->ignore('default');
+                yield $worker->init();
+                yield $beanstalkClient->watch($flow->getTube());
+                yield $beanstalkClient->ignore('default');
 
-        $this->logger->info(
-            'A Worker instance has been successfully initialized',
-            ['worker' => \get_class($worker), 'instance_id' => $instanceId]
-        );
-
-        while ($rawJob = yield $beanstalkClient->reserve()) {
-            $job = new QueuedJob($rawJob[0], unserialize($rawJob[1], ['allowed_classes' => false]));
-
-            $logContext = [
-                'worker' => \get_class($worker),
-                'instance_id' => $instanceId,
-                'job_id' => $job->getId(),
-                'payload_data' => NonUtf8Cleaner::clean($job->getPayloadData())
-            ];
-            $this->logger->info('Worker reserved a Job', $logContext);
-
-            try {
-                if (!array_key_exists($job->getId(), $this->workCounts)) {
-                    $this->workCounts[$job->getId()] = 0;
-                }
-                ++$this->workCounts[$job->getId()];
-
-                yield $worker->work($job);
-                $this->logger->info('Successfully worked a Job', $logContext);
-
-                yield $beanstalkClient->delete($job->getId());
-                unset($this->workCounts[$job->getId()]);
-            } catch (\Throwable $e) {
-                $this->logger->error(
-                    'An error occurred while working a Job.',
-                    array_merge($logContext, ['error' => $e->getMessage()])
+                $this->logger->info(
+                    'A Worker instance has been successfully initialized',
+                    ['worker' => \get_class($worker), 'instance_id' => $instanceId]
                 );
 
-                if ($this->workCounts[$job->getId()] >= 5) {
-                    yield $beanstalkClient->bury($job->getId());
-                    $this->logger->critical(
-                        'A Job reached maximum work retry limit and has been buried',
-                        array_merge($logContext, ['last_error' => $e->getMessage()])
-                    );
-                    unset($this->workCounts[$job->getId()]);
-                    continue;
-                }
+                while ($rawJob = yield $beanstalkClient->reserve()) {
+                    $job = new QueuedJob($rawJob[0], unserialize($rawJob[1], ['allowed_classes' => false]));
 
-                yield $beanstalkClient->release($job->getId(), $worker->getReleaseDelay());
-                $this->logger->info('Worker released a Job', $logContext);
-            }
+                    $logContext = [
+                        'worker' => \get_class($worker),
+                        'instance_id' => $instanceId,
+                        'job_id' => $job->getId(),
+                        'payload_data' => NonUtf8Cleaner::clean($job->getPayloadData())
+                    ];
+                    $this->logger->info('Worker reserved a Job', $logContext);
+
+                    try {
+                        if (!array_key_exists($job->getId(), $this->workCounts)) {
+                            $this->workCounts[$job->getId()] = 0;
+                        }
+                        ++$this->workCounts[$job->getId()];
+
+                        yield $worker->work($job);
+                        $this->logger->info('Successfully worked a Job', $logContext);
+
+                        yield $beanstalkClient->delete($job->getId());
+                        unset($this->workCounts[$job->getId()]);
+                    } catch (\Throwable $e) {
+                        $this->logger->error(
+                            'An error occurred while working a Job.',
+                            array_merge($logContext, ['error' => $e->getMessage()])
+                        );
+
+                        if ($this->workCounts[$job->getId()] >= 5) {
+                            yield $beanstalkClient->bury($job->getId());
+                            $this->logger->critical(
+                                'A Job reached maximum work retry limit and has been buried',
+                                array_merge($logContext, ['last_error' => $e->getMessage()])
+                            );
+                            unset($this->workCounts[$job->getId()]);
+                            continue;
+                        }
+
+                        yield $beanstalkClient->release($job->getId(), $worker->getReleaseDelay());
+                        $this->logger->info('Worker released a Job', $logContext);
+                    }
+                }
+            });
         }
     }
 
-    private function bootProducer(ProducerInterface $producer): \Generator
+    private function bootFlowProducer(FlowInterface $flow): \Generator
     {
         $beanstalkClient = $this->beanstalkClientFactory->create();
+        $producer = $flow->getProducer();
         yield $producer->init();
-        yield $beanstalkClient->use($producer->getTube());
+        yield $beanstalkClient->use($flow->getTube());
         $this->logger->info(
             'A Producer has been successfully initialized',
             ['producer' => \get_class($producer)]

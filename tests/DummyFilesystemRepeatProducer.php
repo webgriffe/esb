@@ -37,14 +37,6 @@ class DummyFilesystemRepeatProducer implements RepeatProducerInterface
     }
 
     /**
-     * @return string
-     */
-    public function getTube(): string
-    {
-        return DummyFilesystemWorker::TUBE;
-    }
-
-    /**
      * @return Promise
      * @throws \Error
      */
