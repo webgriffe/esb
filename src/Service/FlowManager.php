@@ -15,9 +15,7 @@ use Webgriffe\Esb\HttpRequestProducerInterface;
 use Webgriffe\Esb\JobsQueuer;
 use Webgriffe\Esb\Model\QueuedJob;
 use Webgriffe\Esb\NonUtf8Cleaner;
-use Webgriffe\Esb\ProducerInterface;
 use Webgriffe\Esb\RepeatProducerInterface;
-use Webgriffe\Esb\WorkerInterface;
 
 class FlowManager
 {
@@ -110,13 +108,14 @@ class FlowManager
 
                 $this->logger->info(
                     'A Worker instance has been successfully initialized',
-                    ['worker' => \get_class($worker), 'instance_id' => $instanceId]
+                    ['flow' => \get_class($flow), 'worker' => \get_class($worker), 'instance_id' => $instanceId]
                 );
 
                 while ($rawJob = yield $beanstalkClient->reserve()) {
                     $job = new QueuedJob($rawJob[0], unserialize($rawJob[1], ['allowed_classes' => false]));
 
                     $logContext = [
+                        'flow' => \get_class($flow),
                         'worker' => \get_class($worker),
                         'instance_id' => $instanceId,
                         'job_id' => $job->getId(),
@@ -167,7 +166,7 @@ class FlowManager
         yield $beanstalkClient->use($flow->getTube());
         $this->logger->info(
             'A Producer has been successfully initialized',
-            ['producer' => \get_class($producer)]
+            ['flow' => \get_class($flow), 'producer' => \get_class($producer)]
         );
         if ($producer instanceof RepeatProducerInterface) {
             Loop::repeat(
@@ -189,7 +188,9 @@ class FlowManager
                 yield from $this->cronTick($producer, $beanstalkClient);
             });
         } else {
-            throw new \RuntimeException(sprintf('Unknown producer type "%s".', \get_class($producer)));
+            throw new \RuntimeException(
+                sprintf('Unknown producer type "%s" for flow "%s".', \get_class($producer), \get_class($flow))
+            );
         }
     }
 
