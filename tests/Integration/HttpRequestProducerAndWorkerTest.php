@@ -2,14 +2,13 @@
 
 namespace Webgriffe\Esb\Integration;
 
-use Amp\Loop;
+use Amp\Artax\DefaultClient;
 use Amp\Artax\Request;
 use Amp\Artax\Response;
-use Amp\Artax\DefaultClient;
+use Amp\Loop;
 use Monolog\Logger;
 use org\bovigo\vfs\vfsStream;
 use Webgriffe\Esb\DummyFilesystemWorker;
-use Webgriffe\Esb\DummyFlow;
 use Webgriffe\Esb\DummyHttpRequestProducer;
 use Webgriffe\Esb\KernelTestCase;
 use Webgriffe\Esb\TestUtils;
@@ -32,12 +31,14 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
                 'services' => [
                     DummyHttpRequestProducer::class => ['arguments' => []],
                     DummyFilesystemWorker::class => ['arguments' => [$this->workerFile]],
-                    DummyFlow::class => [
-                        'arguments' => [
-                            '@' . DummyHttpRequestProducer::class,
-                            '@' . DummyFilesystemWorker::class,
-                            self::TUBE
-                        ]
+                ],
+                'flows' => [
+                    [
+                        'name' => 'DummyFlow',
+                        'tube' => self::TUBE,
+                        'producer' => DummyHttpRequestProducer::class,
+                        'worker' => DummyFilesystemWorker::class,
+                        'workerInstances' => 1
                     ]
                 ]
             ]

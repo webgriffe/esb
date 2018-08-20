@@ -55,12 +55,4 @@ class DummyFilesystemWorker implements WorkerInterface
     {
         return 0;
     }
-
-    /**
-     * @return int
-     */
-    public function getInstancesCount(): int
-    {
-        return 1;
-    }
 }

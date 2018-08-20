@@ -3,7 +3,6 @@
 namespace Webgriffe\Esb\Integration;
 
 use Webgriffe\Esb\DummyFilesystemWorker;
-use Webgriffe\Esb\DummyFlow;
 use Webgriffe\Esb\DummyRepeatProducer;
 use Webgriffe\Esb\KernelTestCase;
 
@@ -19,12 +18,14 @@ class UncaughtExceptionTest extends KernelTestCase
             'services' => [
                 DummyRepeatProducer::class => ['class' => DummyRepeatProducer::class, 'arguments' => [[], 1]],
                 DummyFilesystemWorker::class => ['arguments' => ['/dev/null']],
-                DummyFlow::class => [
-                    'arguments' => [
-                        '@' . DummyRepeatProducer::class,
-                        '@' . DummyFilesystemWorker::class,
-                        'sample_tube'
-                    ]
+            ],
+            'flows' => [
+                [
+                    'name' => 'DummyFlow',
+                    'tube' => 'sample_tube',
+                    'producer' => DummyRepeatProducer::class,
+                    'worker' => DummyFilesystemWorker::class,
+                    'workerInstances' => 1
                 ]
             ]
         ]);

@@ -14,8 +14,6 @@ use Webgriffe\Esb\Service\FlowManager;
 
 class Kernel
 {
-    const FLOW_TAG = 'esb.flow';
-
     /**
      * @var ContainerBuilder
      */
@@ -40,10 +38,9 @@ class Kernel
         $this->localConfigFilePath = $localConfigFilePath;
         $this->environment = $environment;
         $this->container = new ContainerBuilder();
-        $this->container->registerForAutoconfiguration(FlowInterface::class)->addTag(self::FLOW_TAG);
-        $this->container->addCompilerPass(new FlowPass());
         $loader = new YamlFileLoader($this->container, new FileLocator(dirname(__DIR__)));
         $this->loadSystemConfiguration($loader);
+        $this->container->registerExtension(new FlowExtension());
         $this->loadLocalConfiguration($loader);
         $this->container->compile(true);
     }

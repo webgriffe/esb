@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Webgriffe\Esb\Service;
 
-use Amp\Beanstalk\BeanstalkClient;
 use Amp\CallableMaker;
 use Amp\Http\Server\Request;
 use Amp\Http\Server\RequestHandler\CallableRequestHandler;
@@ -15,7 +14,7 @@ use Amp\Socket;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Webgriffe\Esb\HttpRequestProducerInterface;
-use Webgriffe\Esb\JobsQueuer;
+use Webgriffe\Esb\ProducerInstance;
 use function Amp\call;
 
 class HttpProducersServer
@@ -31,13 +30,9 @@ class HttpProducersServer
      */
     private $logger;
     /**
-     * @var HttpRequestProducerInterface[]
+     * @var ProducerInstance[]
      */
-    private $producers = [];
-    /**
-     * @var BeanstalkClient[]
-     */
-    private $beanstalkClients = [];
+    private $producerInstances = [];
     /**
      * @var Server
      */
@@ -82,14 +77,9 @@ class HttpProducersServer
         return ($state === Server::STARTING || $state === Server::STARTED);
     }
 
-    /**
-     * @param HttpRequestProducerInterface $producer
-     * @param BeanstalkClient $beanstalkClient
-     */
-    public function addProducer(HttpRequestProducerInterface $producer, BeanstalkClient $beanstalkClient)
+    public function addProducerInstance(ProducerInstance $producerInstance)
     {
-        $this->producers[] = $producer;
-        $this->beanstalkClients[\get_class($producer)] = $beanstalkClient;
+        $this->producerInstances[] = $producerInstance;
     }
 
     /** @noinspection PhpUnusedPrivateMethodInspection */
@@ -99,34 +89,38 @@ class HttpProducersServer
      */
     private function requestHandler(Request $request)
     {
-        $producer = $this->matchProducer($request);
-        if (!$producer) {
+        $producerInstance = $this->matchProducerInstance($request);
+        if (!$producerInstance) {
             return new Response(Status::NOT_FOUND, [], 'Producer Not Found');
         }
 
         $this->logger->info(
             'Matched an HTTP Producer for an incoming HTTP request.',
             [
-                'producer' => \get_class($producer),
+                'producer' => \get_class($producerInstance->getProducer()),
                 'request' => sprintf('%s %s', strtoupper($request->getMethod()), $request->getUri())
             ]
         );
-        $beanstalkClient = $this->beanstalkClients[\get_class($producer)];
-        $jobsCount = yield JobsQueuer::queueJobs($beanstalkClient, $this->logger, $producer, $request);
+        $jobsCount = yield $producerInstance->produceAndQueueJobs($request);
         $responseMessage = sprintf('Successfully scheduled %s job(s) to be queued.', $jobsCount);
         return new Response(Status::OK, [], sprintf('"%s"', $responseMessage));
     }
 
     /**
      * @param Request $request
-     * @return false|HttpRequestProducerInterface
+     * @return false|ProducerInstance
      */
-    private function matchProducer(Request $request)
+    private function matchProducerInstance(Request $request)
     {
-        foreach ($this->producers as $producer) {
+        foreach ($this->producerInstances as $producerInstance) {
+            $producer = $producerInstance->getProducer();
+            if (!$producer instanceof HttpRequestProducerInterface) {
+                // This should never happen but maybe we should add a warning here?
+                continue;
+            }
             if ($request->getUri()->getPath() === $producer->getAttachedRequestUri() &&
                 $producer->getAttachedRequestMethod() === $request->getMethod()) {
-                return $producer;
+                return $producerInstance;
             }
         }
         return false;

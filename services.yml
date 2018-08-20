@@ -1,21 +1,19 @@
 services:
   _defaults:
-    # automatically injects dependencies in your services
     autowire: true
-    # automatically registers your services as commands, event subscribers, etc.
     autoconfigure: true
-    # this means you cannot fetch services directly from the container via $container->get()
-    # if you need to do this, you can override this setting on individual services
     public: true
 
-  # makes classes in src/Service available to be used as services
-  # this creates a service per class whose id is the fully-qualified class name
   Webgriffe\Esb\Service\:
     resource: 'src/Service/*'
 
   Webgriffe\Esb\Service\BeanstalkClientFactory:
     class: \Webgriffe\Esb\Service\BeanstalkClientFactory
     arguments: [ '%beanstalkd%' ]
+
+  Amp\Beanstalk\BeanstalkClient:
+    arguments: [ '%beanstalkd%' ]
+    shared: false
 
   Webgriffe\Esb\Service\HttpProducersServer:
     arguments:

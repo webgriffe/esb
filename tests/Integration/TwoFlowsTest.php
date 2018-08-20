@@ -7,13 +7,13 @@ use Amp\Loop;
 use org\bovigo\vfs\vfsStream;
 use Webgriffe\Esb\DummyFilesystemRepeatProducer;
 use Webgriffe\Esb\DummyFilesystemWorker;
-use Webgriffe\Esb\DummyFlow;
 use Webgriffe\Esb\KernelTestCase;
 use Webgriffe\Esb\TestUtils;
 
 class TwoFlowsTest extends KernelTestCase
 {
     const TUBE1 = 'flow1';
+    const TUBE2 = 'flow2';
 
     use TestUtils;
 
@@ -27,11 +27,25 @@ class TwoFlowsTest extends KernelTestCase
             'services' => [
                 'producer1' => ['class' => DummyFilesystemRepeatProducer::class, 'arguments' => [$producerDir1]],
                 'worker1' => ['class' => DummyFilesystemWorker::class,'arguments' => [$workerFile1]],
-                'flow1' => ['class' => DummyFlow::class, 'arguments' => ['@producer1', '@worker1', self::TUBE1]],
 
                 'producer2' => ['class' => DummyFilesystemRepeatProducer::class, 'arguments' => [$producerDir2]],
                 'worker2' => ['class' => DummyFilesystemWorker::class,'arguments' => [$workerFile2]],
-                'flow2' => ['class' => DummyFlow::class, 'arguments' => ['@producer2', '@worker2', self::TUBE1]]
+            ],
+            'flows' => [
+                [
+                    'name' => 'Flow 1',
+                    'tube' => self::TUBE1,
+                    'producer' => 'producer1',
+                    'worker' => 'worker1',
+                    'workerInstances' => 1
+                ],
+                [
+                    'name' => 'Flow 2',
+                    'tube' => self::TUBE2,
+                    'producer' => 'producer2',
+                    'worker' => 'worker2',
+                    'workerInstances' => 1
+                ]
             ]
         ]);
 

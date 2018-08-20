@@ -8,7 +8,6 @@ use Webgriffe\Esb\DateTimeBuilderInterface;
 use Webgriffe\Esb\DateTimeBuilderStub;
 use Webgriffe\Esb\DummyCrontabProducer;
 use Webgriffe\Esb\DummyFilesystemWorker;
-use Webgriffe\Esb\DummyFlow;
 use Webgriffe\Esb\KernelTestCase;
 use Webgriffe\Esb\Model\Job;
 use Webgriffe\Esb\TestUtils;
@@ -22,26 +21,24 @@ class CrontabProducerAndWorkerTest extends KernelTestCase
     public function testCrontabProducerAndWorkerDoesNotProduceIfIsNotTheRightTime()
     {
         vfsStream::setup();
+        DummyCrontabProducer::$jobs = [new Job(['job1']), new Job(['job2'])];
         $workerFile = vfsStream::url('root/worker.data');
         self::createKernel([
             'services' => [
                 DateTimeBuilderInterface::class => ['class' => DateTimeBuilderStub::class],
                 DummyCrontabProducer::class => ['arguments' => []],
                 DummyFilesystemWorker::class => ['arguments' => [$workerFile]],
-                DummyFlow::class => [
-                    'arguments' => [
-                        '@' . DummyCrontabProducer::class,
-                        '@' . DummyFilesystemWorker::class,
-                        self::TUBE
-                    ]
+            ],
+            'flows' => [
+                [
+                    'name' => 'DummyFlow',
+                    'tube' => self::TUBE,
+                    'producer' => DummyCrontabProducer::class,
+                    'worker' => DummyFilesystemWorker::class,
+                    'workerInstances' => 1
                 ]
             ]
         ]);
-
-        $jobs = [new Job(['job1']), new Job(['job2'])];
-        /** @var DummyCrontabProducer $producer */
-        $producer = self::$kernel->getContainer()->get(DummyCrontabProducer::class);
-        $producer->setJobs($jobs);
 
         DateTimeBuilderStub::$forcedNow = '2018-02-19 12:45:00';
         Loop::delay(200, function () {
@@ -56,26 +53,24 @@ class CrontabProducerAndWorkerTest extends KernelTestCase
     public function testCrontabProducerAndWorkerProducesIfItsTheRightTime()
     {
         vfsStream::setup();
+        DummyCrontabProducer::$jobs = [new Job(['job1']), new Job(['job2'])];
         $workerFile = vfsStream::url('root/worker.data');
         self::createKernel([
             'services' => [
                 DateTimeBuilderInterface::class => ['class' => DateTimeBuilderStub::class],
                 DummyCrontabProducer::class => ['arguments' => []],
                 DummyFilesystemWorker::class => ['arguments' => [$workerFile]],
-                DummyFlow::class => [
-                    'arguments' => [
-                        '@' . DummyCrontabProducer::class,
-                        '@' . DummyFilesystemWorker::class,
-                        self::TUBE
-                    ]
+            ],
+            'flows' => [
+                [
+                    'name' => 'DummyFlow',
+                    'tube' => self::TUBE,
+                    'producer' => DummyCrontabProducer::class,
+                    'worker' => DummyFilesystemWorker::class,
+                    'workerInstances' => 1
                 ]
             ]
         ]);
-
-        $jobs = [new Job(['job1']), new Job(['job2'])];
-        /** @var DummyCrontabProducer $producer */
-        $producer = self::$kernel->getContainer()->get(DummyCrontabProducer::class);
-        $producer->setJobs($jobs);
 
         DateTimeBuilderStub::$forcedNow = '2018-02-19 13:00:00';
         Loop::delay(200, function () {

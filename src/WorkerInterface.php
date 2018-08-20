@@ -23,9 +23,4 @@ interface WorkerInterface
      * @return int
      */
     public function getReleaseDelay(): int;
-
-    /**
-     * @return int
-     */
-    public function getInstancesCount(): int;
 }

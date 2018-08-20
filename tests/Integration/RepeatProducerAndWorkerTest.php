@@ -6,7 +6,6 @@ use Amp\Loop;
 use org\bovigo\vfs\vfsStream;
 use Webgriffe\Esb\DummyFilesystemRepeatProducer;
 use Webgriffe\Esb\DummyFilesystemWorker;
-use Webgriffe\Esb\DummyFlow;
 use Webgriffe\Esb\KernelTestCase;
 use Webgriffe\Esb\TestUtils;
 
@@ -24,12 +23,14 @@ class RepeatProducerAndWorkerTest extends KernelTestCase
             'services' => [
                 DummyFilesystemRepeatProducer::class => ['arguments' => [$producerDir]],
                 DummyFilesystemWorker::class => ['arguments' => [$workerFile]],
-                DummyFlow::class => [
-                    'arguments' => [
-                        '@' . DummyFilesystemRepeatProducer::class,
-                        '@' . DummyFilesystemWorker::class,
-                        self::TUBE
-                    ]
+            ],
+            'flows' => [
+                [
+                    'name' => 'DummyFlow',
+                    'tube' => self::TUBE,
+                    'producer' => DummyFilesystemRepeatProducer::class,
+                    'worker' => DummyFilesystemWorker::class,
+                    'workerInstances' => 1
                 ]
             ]
         ]);
@@ -75,12 +76,14 @@ class RepeatProducerAndWorkerTest extends KernelTestCase
                     ]
                 ],
                 DummyFilesystemWorker::class => ['arguments' => [$workerFile]],
-                DummyFlow::class => [
-                    'arguments' => [
-                        '@' . DummyFilesystemRepeatProducer::class,
-                        '@' . DummyFilesystemWorker::class,
-                        self::TUBE
-                    ]
+            ],
+            'flows' => [
+                [
+                    'name' => 'DummyFlow',
+                    'tube' => self::TUBE,
+                    'producer' => DummyFilesystemRepeatProducer::class,
+                    'worker' => DummyFilesystemWorker::class,
+                    'workerInstances' => 1
                 ]
             ]
         ]);
