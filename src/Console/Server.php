@@ -7,8 +7,8 @@ use Amp\Beanstalk\BeanstalkClient;
 use Amp\CallableMaker;
 use Amp\File;
 use Amp\Http\Server\Request;
-use Amp\Http\Server\Response;
 use Amp\Http\Server\RequestHandler\CallableRequestHandler;
+use Amp\Http\Server\Response;
 use Amp\Http\Status;
 use Amp\Loop;
 use Amp\Promise;
@@ -22,7 +22,6 @@ use Webgriffe\Esb\Console\Controller\IndexController;
 use Webgriffe\Esb\Console\Controller\JobController;
 use Webgriffe\Esb\Console\Controller\KickController;
 use Webgriffe\Esb\Console\Controller\TubeController;
-use Webgriffe\Esb\Service\BeanstalkClientFactory;
 use function Amp\call;
 
 class Server
@@ -30,9 +29,9 @@ class Server
     use CallableMaker;
 
     /**
-     * @var BeanstalkClientFactory
+     * @var BeanstalkClient
      */
-    private $beanstalkClientFactory;
+    private $beanstalkClient;
     /**
      * @var array
      */
@@ -42,9 +41,9 @@ class Server
      */
     private $logger;
 
-    public function __construct(BeanstalkClientFactory $beanstalkClientFactory, array $config, LoggerInterface $logger)
+    public function __construct(BeanstalkClient $beanstalkClient, array $config, LoggerInterface $logger)
     {
-        $this->beanstalkClientFactory = $beanstalkClientFactory;
+        $this->beanstalkClient = $beanstalkClient;
         $this->logger = $logger;
         $this->config = $config;
     }
@@ -80,7 +79,6 @@ class Server
         if (!$this->isAuthorized($request)) {
             return new Response(Status::UNAUTHORIZED, ['WWW-Authenticate' => 'Basic realm="ESB Console"']);
         }
-        $beanstalkClient = $this->beanstalkClientFactory->create();
         // Fetch method and URI from somewhere
         $httpMethod = $request->getMethod();
         $uri = $request->getUri()->getPath();
@@ -90,7 +88,7 @@ class Server
         }
 
         $twig = yield $this->getTwig();
-        $dispatcher = $this->getDispatcher($request, $twig, $beanstalkClient);
+        $dispatcher = $this->getDispatcher($request, $twig, $this->beanstalkClient);
 
         $routeInfo = $dispatcher->dispatch($httpMethod, $uri);
         switch ($routeInfo[0]) {

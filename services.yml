@@ -7,10 +7,6 @@ services:
   Webgriffe\Esb\Service\:
     resource: 'src/Service/*'
 
-  Webgriffe\Esb\Service\BeanstalkClientFactory:
-    class: \Webgriffe\Esb\Service\BeanstalkClientFactory
-    arguments: [ '%beanstalkd%' ]
-
   Amp\Beanstalk\BeanstalkClient:
     arguments: [ '%beanstalkd%' ]
     shared: false
@@ -41,7 +37,7 @@ services:
   Webgriffe\Esb\Console\Server:
     class: \Webgriffe\Esb\Console\Server
     arguments:
-      - '@Webgriffe\Esb\Service\BeanstalkClientFactory'
+      - '@Amp\Beanstalk\BeanstalkClient'
       -
         port: '%console_port%'
         username: '%console_username%'
