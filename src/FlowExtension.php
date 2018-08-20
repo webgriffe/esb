@@ -13,8 +13,6 @@ use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
 use Symfony\Component\DependencyInjection\Reference;
-use Webgriffe\Esb\Flow;
-use Webgriffe\Esb\Service\FlowManager;
 
 class FlowExtension implements ExtensionInterface, CompilerPassInterface
 {

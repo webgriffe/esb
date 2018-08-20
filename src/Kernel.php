@@ -10,7 +10,7 @@ use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use Webgriffe\Esb\Console\Server;
-use Webgriffe\Esb\Service\FlowManager;
+use Webgriffe\Esb\FlowManager;
 
 class Kernel
 {

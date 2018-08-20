@@ -16,8 +16,6 @@ parameters:
 services:
   _defaults:
     autowire: true
-    autoconfigure: true
-    public: true
 
   Monolog\Handler\TestHandler:
     class: \Monolog\Handler\TestHandler

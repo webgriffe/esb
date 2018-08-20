@@ -1,11 +1,10 @@
 <?php
 declare(strict_types=1);
 
-namespace Webgriffe\Esb\Service;
+namespace Webgriffe\Esb;
 
 use Amp\Loop;
 use Monolog\Logger;
-use Webgriffe\Esb\Flow;
 
 class FlowManager
 {

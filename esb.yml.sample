@@ -10,8 +10,17 @@ parameters:
 services:
   _defaults:
     autowire: true
-    autoconfigure: true
-    public: true
 
-  My\Esb\Namespace\:
-    resource: 'src/*'
+  My\Esb\Worker:
+    arguments: []
+
+  My\Esb\Producer:
+      arguments: []
+
+flows:
+  sample_flow:
+    name: Sample Flow
+    tube: sample_flow
+    producer: My\Esb\Producer
+    worker: My\Esb\Worker
+    workerInstances: 1

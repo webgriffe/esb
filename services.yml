@@ -1,11 +1,12 @@
 services:
   _defaults:
     autowire: true
-    autoconfigure: true
-    public: true
 
   Webgriffe\Esb\Service\:
     resource: 'src/Service/*'
+
+  Webgriffe\Esb\FlowManager:
+    public: true
 
   Amp\Beanstalk\BeanstalkClient:
     arguments: [ '%beanstalkd%' ]
@@ -43,3 +44,4 @@ services:
         username: '%console_username%'
         password: '%console_password%'
       - '@Monolog\Logger'
+    public: true
