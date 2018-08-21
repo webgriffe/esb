@@ -47,12 +47,4 @@ class DummyFilesystemWorker implements WorkerInterface
             yield File\put($this->filename, $content);
         });
     }
-
-    /**
-     * @return int
-     */
-    public function getReleaseDelay(): int
-    {
-        return 0;
-    }
 }

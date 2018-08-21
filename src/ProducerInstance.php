@@ -7,6 +7,7 @@ use Amp\Beanstalk\BeanstalkClient;
 use Amp\Loop;
 use Amp\Promise;
 use Monolog\Logger;
+use Webgriffe\Esb\Model\FlowConfig;
 use Webgriffe\Esb\Model\Job;
 use function Amp\call;
 use Webgriffe\Esb\Service\CronProducersServer;
@@ -15,14 +16,10 @@ use Webgriffe\Esb\Service\HttpProducersServer;
 class ProducerInstance
 {
     /**
-     * @var string
+     * @var FlowConfig
      */
-    private $flowName;
-    /**
-     * @var string
-     */
-    private $tube;
-    /**
+    private $flowConfig;
+        /**
      * @var ProducerInterface
      */
     private $producer;
@@ -44,16 +41,14 @@ class ProducerInstance
     private $cronProducersServer;
 
     public function __construct(
-        string $flowName,
-        string $tube,
+        FlowConfig $flowConfig,
         ProducerInterface $producer,
         BeanstalkClient $beanstalkClient,
         Logger $logger,
         HttpProducersServer $httpProducersServer,
         CronProducersServer $cronProducersServer
     ) {
-        $this->flowName = $flowName;
-        $this->tube = $tube;
+        $this->flowConfig = $flowConfig;
         $this->producer = $producer;
         $this->beanstalkClient = $beanstalkClient;
         $this->logger = $logger;
@@ -65,10 +60,10 @@ class ProducerInstance
     {
         return call(function () {
             yield $this->producer->init();
-            yield $this->beanstalkClient->use($this->tube);
+            yield $this->beanstalkClient->use($this->flowConfig->getTube());
             $this->logger->info(
                 'A Producer has been successfully initialized',
-                ['flow' => $this->flowName, 'producer' => \get_class($this->producer)]
+                ['flow' => $this->flowConfig->getDescription(), 'producer' => \get_class($this->producer)]
             );
             if ($this->producer instanceof RepeatProducerInterface) {
                 Loop::repeat(
@@ -91,7 +86,11 @@ class ProducerInstance
                 }
             } else {
                 throw new \RuntimeException(
-                    sprintf('Unknown producer type "%s" for flow "%s".', \get_class($this->producer), $this->flowName)
+                    sprintf(
+                        'Unknown producer type "%s" for flow "%s".',
+                        \get_class($this->producer),
+                        $this->flowConfig->getDescription()
+                    )
                 );
             }
         });

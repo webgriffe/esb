@@ -13,6 +13,7 @@ use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
 use Symfony\Component\DependencyInjection\Reference;
+use Webgriffe\Esb\Model\FlowConfig;
 
 class FlowExtension implements ExtensionInterface, CompilerPassInterface
 {
@@ -72,61 +73,59 @@ class FlowExtension implements ExtensionInterface, CompilerPassInterface
     public function process(ContainerBuilder $container)
     {
         $definition = $container->findDefinition(FlowManager::class);
-        foreach ($this->flowsConfig as $config) {
+        foreach ($this->flowsConfig as $flowTube => $flowConfigData) {
+            $flowConfig = new FlowConfig($flowTube, $flowConfigData);
             $flowDefinition = new Definition(Flow::class);
+            $flowDefinition->setAutowired(true);
+            $flowDefinition->setArgument('$flowConfig', $flowConfig);
             try {
-                $producerId = $config['producer'];
-                $producerDefinition = $container->findDefinition($producerId);
+                $producerDefinition = $container->findDefinition($flowConfig->getProducerServiceId());
                 $producerDefinition->setShared(false);
 
                 $producerInstanceDefinition = new Definition();
                 $producerInstanceDefinition
                     ->setAutowired(true)
                     ->setClass(ProducerInstance::class)
-                    ->setArgument('$flowName', $config['name'])
-                    ->setArgument('$tube', $config['tube'])
-                    ->setArgument('$producer', new Reference($producerId))
+                    ->setArgument('$flowConfig', $flowConfig)
+                    ->setArgument('$producer', new Reference($flowConfig->getProducerServiceId()))
                 ;
-                $flowDefinition->addArgument($producerInstanceDefinition);
+                $flowDefinition->setArgument('$producerInstance', $producerInstanceDefinition);
             } catch (ServiceNotFoundException $e) {
                 throw new InvalidConfigurationException(
                     sprintf(
                         'Invalid producer for flow "%s", there is no service defined with ID "%s".',
-                        $config['name'],
-                        $config['producer']
+                        $flowConfig->getDescription(),
+                        $flowConfig->getProducerServiceId()
                     )
                 );
             }
             try {
-                $workerId = $config['worker'];
-                $workerDefinition = $container->findDefinition($workerId);
+                $workerDefinition = $container->findDefinition($flowConfig->getWorkerServiceId());
                 $workerDefinition->setShared(false);
                 $workerInstancesDefinitions = [];
-                for ($instanceId = 1; $instanceId <= $config['workerInstances']; $instanceId++) {
-                    $workerInstancesDefinitions[] = new Definition(
-                        WorkerInstance::class,
-                        [
-                            $config['name'],
-                            $config['tube'],
-                            $instanceId,
-                            new Reference($workerId),
-                            new Reference(BeanstalkClient::class),
-                            new Reference(Logger::class)
-                        ]
-                    );
+                for ($instanceId = 1; $instanceId <= $flowConfig->getWorkerInstancesCount(); $instanceId++) {
+                    $workerInstanceDefinition = new Definition();
+                    $workerInstanceDefinition
+                        ->setAutowired(true)
+                        ->setClass(WorkerInstance::class)
+                        ->setArgument('$flowConfig', $flowConfig)
+                        ->setArgument('$instanceId', $instanceId)
+                        ->setArgument('$worker', new Reference($flowConfig->getWorkerServiceId()))
+                    ;
+                    $workerInstancesDefinitions[] = $workerInstanceDefinition;
                 }
-                $flowDefinition->addArgument($workerInstancesDefinitions);
+                $flowDefinition->setArgument('$workerInstances', $workerInstancesDefinitions);
             } catch (ServiceNotFoundException $e) {
                 throw new InvalidConfigurationException(
                     sprintf(
                         'Invalid workder for flow "%s", there is no service defined with ID "%s".',
-                        $config['name'],
-                        $config['producer']
+                        $flowConfig->getDescription(),
+                        $flowConfig->getWorkerServiceId()
                     )
                 );
             }
-            $container->setDefinition($config['name'], $flowDefinition);
-            $definition->addMethodCall('addFlow', [new Reference($config['name'])]);
+            $container->setDefinition($flowTube, $flowDefinition);
+            $definition->addMethodCall('addFlow', [new Reference($flowTube)]);
         }
     }
 }

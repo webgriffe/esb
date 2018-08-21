@@ -18,9 +18,4 @@ interface WorkerInterface
      * @return Promise
      */
     public function work(QueuedJob $job): Promise;
-
-    /**
-     * @return int
-     */
-    public function getReleaseDelay(): int;
 }

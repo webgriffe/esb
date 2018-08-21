@@ -25,12 +25,10 @@ class RepeatProducerAndWorkerTest extends KernelTestCase
                 DummyFilesystemWorker::class => ['arguments' => [$workerFile]],
             ],
             'flows' => [
-                [
-                    'name' => 'DummyFlow',
-                    'tube' => self::TUBE,
-                    'producer' => DummyFilesystemRepeatProducer::class,
-                    'worker' => DummyFilesystemWorker::class,
-                    'workerInstances' => 1
+                self::TUBE => [
+                    'description' => 'Repeat Flow',
+                    'producer' => ['service' => DummyFilesystemRepeatProducer::class],
+                    'worker' => ['service' => DummyFilesystemWorker::class],
                 ]
             ]
         ]);
@@ -78,12 +76,10 @@ class RepeatProducerAndWorkerTest extends KernelTestCase
                 DummyFilesystemWorker::class => ['arguments' => [$workerFile]],
             ],
             'flows' => [
-                [
-                    'name' => 'DummyFlow',
-                    'tube' => self::TUBE,
-                    'producer' => DummyFilesystemRepeatProducer::class,
-                    'worker' => DummyFilesystemWorker::class,
-                    'workerInstances' => 1
+                self::TUBE => [
+                    'description' => 'Repeat Flow',
+                    'producer' => ['service' => DummyFilesystemRepeatProducer::class],
+                    'worker' => ['service' => DummyFilesystemWorker::class],
                 ]
             ]
         ]);

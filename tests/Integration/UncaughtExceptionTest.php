@@ -20,12 +20,10 @@ class UncaughtExceptionTest extends KernelTestCase
                 DummyFilesystemWorker::class => ['arguments' => ['/dev/null']],
             ],
             'flows' => [
-                [
-                    'name' => 'DummyFlow',
-                    'tube' => 'sample_tube',
-                    'producer' => DummyRepeatProducer::class,
-                    'worker' => DummyFilesystemWorker::class,
-                    'workerInstances' => 1
+                'sample_tube' => [
+                    'description' => 'Flow',
+                    'producer' => ['service' => DummyRepeatProducer::class],
+                    'worker' => ['service' => DummyFilesystemWorker::class],
                 ]
             ]
         ]);

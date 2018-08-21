@@ -14,7 +14,7 @@ use Webgriffe\Esb\TestUtils;
 
 class CrontabProducerAndWorkerTest extends KernelTestCase
 {
-    const TUBE = 'sample_tube';
+    const TUBE = 'crontab_flow';
 
     use TestUtils;
 
@@ -30,12 +30,10 @@ class CrontabProducerAndWorkerTest extends KernelTestCase
                 DummyFilesystemWorker::class => ['arguments' => [$workerFile]],
             ],
             'flows' => [
-                [
-                    'name' => 'DummyFlow',
-                    'tube' => self::TUBE,
-                    'producer' => DummyCrontabProducer::class,
-                    'worker' => DummyFilesystemWorker::class,
-                    'workerInstances' => 1
+                self::TUBE => [
+                    'description' => 'Crontab Flow',
+                    'producer' => ['service' => DummyCrontabProducer::class],
+                    'worker' => ['service' => DummyFilesystemWorker::class],
                 ]
             ]
         ]);
@@ -62,12 +60,10 @@ class CrontabProducerAndWorkerTest extends KernelTestCase
                 DummyFilesystemWorker::class => ['arguments' => [$workerFile]],
             ],
             'flows' => [
-                [
-                    'name' => 'DummyFlow',
-                    'tube' => self::TUBE,
-                    'producer' => DummyCrontabProducer::class,
-                    'worker' => DummyFilesystemWorker::class,
-                    'workerInstances' => 1
+                self::TUBE => [
+                    'description' => 'Crontab Flow',
+                    'producer' => ['service' => DummyCrontabProducer::class],
+                    'worker' => ['service' => DummyFilesystemWorker::class],
                 ]
             ]
         ]);

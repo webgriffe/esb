@@ -33,12 +33,10 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
                     DummyFilesystemWorker::class => ['arguments' => [$this->workerFile]],
                 ],
                 'flows' => [
-                    [
-                        'name' => 'DummyFlow',
-                        'tube' => self::TUBE,
-                        'producer' => DummyHttpRequestProducer::class,
-                        'worker' => DummyFilesystemWorker::class,
-                        'workerInstances' => 1
+                    self::TUBE => [
+                        'description' => 'Http Flow',
+                        'producer' => ['service' => DummyHttpRequestProducer::class],
+                        'worker' => ['service' => DummyFilesystemWorker::class],
                     ]
                 ]
             ]

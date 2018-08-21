@@ -28,12 +28,4 @@ class AlwaysFailingWorker implements WorkerInterface
             throw new \Error('Failed!');
         });
     }
-
-    /**
-     * @return int
-     */
-    public function getReleaseDelay(): int
-    {
-        return 0;
-    }
 }

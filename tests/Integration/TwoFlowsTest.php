@@ -32,19 +32,15 @@ class TwoFlowsTest extends KernelTestCase
                 'worker2' => ['class' => DummyFilesystemWorker::class,'arguments' => [$workerFile2]],
             ],
             'flows' => [
-                [
-                    'name' => 'Flow 1',
-                    'tube' => self::TUBE1,
-                    'producer' => 'producer1',
-                    'worker' => 'worker1',
-                    'workerInstances' => 1
+                self::TUBE1 => [
+                    'description' => 'Flow 1',
+                    'producer' => ['service' => 'producer1'],
+                    'worker' => ['service' => 'worker1'],
                 ],
-                [
-                    'name' => 'Flow 2',
-                    'tube' => self::TUBE2,
-                    'producer' => 'producer2',
-                    'worker' => 'worker2',
-                    'workerInstances' => 1
+                self::TUBE2 => [
+                    'description' => 'Flow 2',
+                    'producer' => ['service' => 'producer2'],
+                    'worker' => ['service' => 'worker2'],
                 ]
             ]
         ]);

@@ -6,11 +6,20 @@ namespace Webgriffe\Esb;
 use Amp\Beanstalk\BeanstalkClient;
 use Amp\Promise;
 use Monolog\Logger;
+use Webgriffe\Esb\Model\FlowConfig;
 use Webgriffe\Esb\Model\QueuedJob;
 use function Amp\call;
 
 class WorkerInstance
 {
+    /**
+     * @var FlowConfig
+     */
+    private $flowConfig;
+    /**
+     * @var int
+     */
+    private $instanceId;
     /**
      * @var WorkerInterface
      */
@@ -19,18 +28,6 @@ class WorkerInstance
      * @var BeanstalkClient
      */
     private $beanstalkClient;
-    /**
-     * @var int
-     */
-    private $instanceId;
-    /**
-     * @var string
-     */
-    private $flowName;
-    /**
-     * @var string
-     */
-    private $tube;
     /**
      * @var Logger
      */
@@ -42,18 +39,16 @@ class WorkerInstance
     private static $workCounts = [];
 
     public function __construct(
-        string $flowName,
-        string $tube,
+        FlowConfig $flowConfig,
         int $instanceId,
         WorkerInterface $worker,
         BeanstalkClient $beanstalkClient,
         Logger $logger
     ) {
+        $this->flowConfig = $flowConfig;
+        $this->instanceId = $instanceId;
         $this->worker = $worker;
         $this->beanstalkClient = $beanstalkClient;
-        $this->instanceId = $instanceId;
-        $this->flowName = $flowName;
-        $this->tube = $tube;
         $this->logger = $logger;
     }
 
@@ -61,13 +56,13 @@ class WorkerInstance
     {
         return call(function () {
             yield $this->worker->init();
-            yield $this->beanstalkClient->watch($this->tube);
+            yield $this->beanstalkClient->watch($this->flowConfig->getTube());
             yield $this->beanstalkClient->ignore('default');
 
             $this->logger->info(
                 'A Worker instance has been successfully initialized',
                 [
-                    'flow' => $this->flowName,
+                    'flow' => $this->flowConfig->getDescription(),
                     'worker' => \get_class($this->worker),
                     'instance_id' => $this->instanceId
                 ]
@@ -77,7 +72,7 @@ class WorkerInstance
                 $job = new QueuedJob($rawJob[0], unserialize($rawJob[1], ['allowed_classes' => false]));
 
                 $logContext = [
-                    'flow' => $this->flowName,
+                    'flow' => $this->flowConfig->getDescription(),
                     'worker' => \get_class($this->worker),
                     'instance_id' => $this->instanceId,
                     'job_id' => $job->getId(),
@@ -102,7 +97,7 @@ class WorkerInstance
                         array_merge($logContext, ['error' => $e->getMessage()])
                     );
 
-                    if (self::$workCounts[$job->getId()] >= 5) {
+                    if (self::$workCounts[$job->getId()] >= $this->flowConfig->getWorkerMaxRetry()) {
                         yield $this->beanstalkClient->bury($job->getId());
                         $this->logger->critical(
                             'A Job reached maximum work retry limit and has been buried',
@@ -112,7 +107,7 @@ class WorkerInstance
                         continue;
                     }
 
-                    yield $this->beanstalkClient->release($job->getId(), $this->worker->getReleaseDelay());
+                    yield $this->beanstalkClient->release($job->getId(), $this->flowConfig->getWorkerReleaseDelay());
                     $this->logger->info('Worker released a Job', $logContext);
                 }
             }

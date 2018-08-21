@@ -26,12 +26,10 @@ class NonUtf8DataHandlingTest extends KernelTestCase
                 DummyFilesystemWorker::class => ['arguments' => ['/dev/null']],
             ],
             'flows' => [
-                [
-                    'name' => 'DummyFlow',
-                    'tube' => 'sample_tube',
-                    'producer' => DummyFilesystemRepeatProducer::class,
-                    'worker' => DummyFilesystemWorker::class,
-                    'workerInstances' => 1
+                'sample_tube' => [
+                    'description' => 'Http Flow',
+                    'producer' => ['service' => DummyFilesystemRepeatProducer::class],
+                    'worker' => ['service' => DummyFilesystemWorker::class],
                 ]
             ]
         ]);
