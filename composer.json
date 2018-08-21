@@ -12,7 +12,7 @@
         "symfony/dependency-injection": "^3.3",
         "symfony/config": "^3.3",
         "symfony/yaml": "^3.3",
-        "amphp/beanstalk": "^0.2.0",
+        "amphp/beanstalk": "^0.2.4",
         "monolog/monolog": "^1.23",
         "dragonmantank/cron-expression": "^2.0",
         "twig/twig": "^2.5",
