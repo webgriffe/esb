@@ -101,14 +101,23 @@ class WorkerInstance
                         yield $this->beanstalkClient->bury($job->getId());
                         $this->logger->critical(
                             'A Job reached maximum work retry limit and has been buried',
-                            array_merge($logContext, ['last_error' => $e->getMessage()])
+                            array_merge(
+                                $logContext,
+                                [
+                                    'last_error' => $e->getMessage(),
+                                    'max_retry' => $this->flowConfig->getWorkerMaxRetry()
+                                ]
+                            )
                         );
                         unset(self::$workCounts[$job->getId()]);
                         continue;
                     }
 
                     yield $this->beanstalkClient->release($job->getId(), $this->flowConfig->getWorkerReleaseDelay());
-                    $this->logger->info('Worker released a Job', $logContext);
+                    $this->logger->info(
+                        'Worker released a Job',
+                        array_merge($logContext, ['release_delay' => $this->flowConfig->getWorkerReleaseDelay()])
+                    );
                 }
             }
         });

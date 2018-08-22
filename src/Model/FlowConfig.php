@@ -50,7 +50,7 @@ class FlowConfig
 
     public function getWorkerReleaseDelay(): int
     {
-        return $this->config['worker']['relase_delay'];
+        return $this->config['worker']['release_delay'];
     }
 
     public function getWorkerMaxRetry(): int

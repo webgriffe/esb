@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace Webgriffe\Esb;
 
@@ -11,7 +12,7 @@ class DummyRepeatProducer implements RepeatProducerInterface
     /**
      * @var array
      */
-    private $jobs;
+    public static $jobs;
     /**
      * @var int
      */
@@ -19,12 +20,10 @@ class DummyRepeatProducer implements RepeatProducerInterface
 
     /**
      * DummyRepeatProducer constructor.
-     * @param array $jobs
      * @param int $interval
      */
-    public function __construct(array $jobs, int $interval)
+    public function __construct(int $interval = 1)
     {
-        $this->jobs = $jobs;
         $this->interval = $interval;
     }
 
@@ -44,8 +43,8 @@ class DummyRepeatProducer implements RepeatProducerInterface
      */
     public function produce($data = null): Iterator
     {
-        $iterator = Iterator\fromIterable($this->jobs);
-        $this->jobs = [];
+        $iterator = Iterator\fromIterable(self::$jobs);
+        self::$jobs = [];
         return $iterator;
     }
 
