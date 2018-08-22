@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace Webgriffe\Esb;
 
@@ -9,14 +10,13 @@ use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use Webgriffe\Esb\Console\Server;
-use Webgriffe\Esb\Service\ProducerManager;
-use Webgriffe\Esb\Service\WorkerManager;
+use Webgriffe\Esb\FlowManager;
 
 class Kernel
 {
-    const WORKER_TAG = 'esb.worker';
-    const PRODUCER_TAG = 'esb.producer';
-
+    /**
+     * @var ContainerBuilder
+     */
     private $container;
     /**
      * @var string
@@ -38,37 +38,32 @@ class Kernel
         $this->localConfigFilePath = $localConfigFilePath;
         $this->environment = $environment;
         $this->container = new ContainerBuilder();
-        $this->container->registerForAutoconfiguration(WorkerInterface::class)->addTag(self::WORKER_TAG);
-        $this->container->registerForAutoconfiguration(ProducerInterface::class)->addTag(self::PRODUCER_TAG);
-        $this->container->addCompilerPass(new WorkerPass());
-        $this->container->addCompilerPass(new ProducerPass());
         $loader = new YamlFileLoader($this->container, new FileLocator(dirname(__DIR__)));
         $this->loadSystemConfiguration($loader);
+        $this->container->registerExtension(new FlowExtension());
         $this->loadLocalConfiguration($loader);
         $this->container->compile(true);
     }
 
+    /**
+     * @throws \Exception
+     */
     public function boot()
     {
-        /** @var WorkerManager $workerManager */
-        $workerManager = $this->getContainer()->get(WorkerManager::class);
-        $workerManager->bootWorkers();
-        /** @var ProducerManager $producerManager */
-        $producerManager = $this->getContainer()->get(ProducerManager::class);
-        $producerManager->bootProducers();
-
+        Loop::setErrorHandler([$this, 'errorHandler']);
+        /** @var FlowManager $flowManager */
+        $flowManager = $this->getContainer()->get(FlowManager::class);
+        $flowManager->bootFlows();
         /** @var Server $consoleServer */
         $consoleServer = $this->getContainer()->get(Server::class);
         $consoleServer->boot();
-
-        Loop::setErrorHandler([$this, 'errorHandler']);
         Loop::run();
     }
 
     /**
      * @return ContainerBuilder
      */
-    public function getContainer()
+    public function getContainer(): ContainerBuilder
     {
         return $this->container;
     }
@@ -122,6 +117,7 @@ class Kernel
 
     /**
      * @param YamlFileLoader $loader
+     * @throws \Exception
      */
     private function loadLocalConfiguration(YamlFileLoader $loader)
     {

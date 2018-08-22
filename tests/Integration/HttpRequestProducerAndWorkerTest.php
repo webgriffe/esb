@@ -2,10 +2,10 @@
 
 namespace Webgriffe\Esb\Integration;
 
-use Amp\Loop;
+use Amp\Artax\DefaultClient;
 use Amp\Artax\Request;
 use Amp\Artax\Response;
-use Amp\Artax\DefaultClient;
+use Amp\Loop;
 use Monolog\Logger;
 use org\bovigo\vfs\vfsStream;
 use Webgriffe\Esb\DummyFilesystemWorker;
@@ -20,6 +20,8 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
     private $workerFile;
     private $httpPort;
 
+    const TUBE = 'sample_tube';
+
     public function setUp()
     {
         parent::setUp();
@@ -28,7 +30,14 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
             [
                 'services' => [
                     DummyHttpRequestProducer::class => ['arguments' => []],
-                    DummyFilesystemWorker::class => ['arguments' => [$this->workerFile]]
+                    DummyFilesystemWorker::class => ['arguments' => [$this->workerFile]],
+                ],
+                'flows' => [
+                    self::TUBE => [
+                        'description' => 'Http Flow',
+                        'producer' => ['service' => DummyHttpRequestProducer::class],
+                        'worker' => ['service' => DummyFilesystemWorker::class],
+                    ]
                 ]
             ]
         );
@@ -68,7 +77,7 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
             '/Successfully produced a new Job .*? "payload_data":["job3"]/',
             Logger::INFO
         );
-        $this->assertReadyJobsCountInTube(0, DummyFilesystemWorker::TUBE);
+        $this->assertReadyJobsCountInTube(0, self::TUBE);
     }
 
     public function testHttpRequestProducerWithWrongUriShouldReturn404()
@@ -88,6 +97,6 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
         self::$kernel->boot();
 
         $this->assertFileNotExists($this->workerFile);
-        $this->assertReadyJobsCountInTube(0, DummyFilesystemWorker::TUBE);
+        $this->assertReadyJobsCountInTube(0, self::TUBE);
     }
 }

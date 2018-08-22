@@ -11,6 +11,8 @@ use Webgriffe\Esb\TestUtils;
 
 class RepeatProducerAndWorkerTest extends KernelTestCase
 {
+    const TUBE = 'sample_tube';
+
     use TestUtils;
 
     public function testRepeatProducerAndWorkerTogether()
@@ -20,7 +22,14 @@ class RepeatProducerAndWorkerTest extends KernelTestCase
         self::createKernel([
             'services' => [
                 DummyFilesystemRepeatProducer::class => ['arguments' => [$producerDir]],
-                DummyFilesystemWorker::class => ['arguments' => [$workerFile]]
+                DummyFilesystemWorker::class => ['arguments' => [$workerFile]],
+            ],
+            'flows' => [
+                self::TUBE => [
+                    'description' => 'Repeat Flow',
+                    'producer' => ['service' => DummyFilesystemRepeatProducer::class],
+                    'worker' => ['service' => DummyFilesystemWorker::class],
+                ]
             ]
         ]);
         mkdir($producerDir);
@@ -46,7 +55,7 @@ class RepeatProducerAndWorkerTest extends KernelTestCase
         $this->assertCount(2, $workerFileLines);
         $this->assertContains('job1', $workerFileLines[0]);
         $this->assertContains('job2', $workerFileLines[1]);
-        $this->assertReadyJobsCountInTube(0, DummyFilesystemWorker::TUBE);
+        $this->assertReadyJobsCountInTube(0, self::TUBE);
     }
 
     public function testLongProduceRepeatProducerDoesNotOverlapProduceInvokations()
@@ -64,7 +73,14 @@ class RepeatProducerAndWorkerTest extends KernelTestCase
                         $produceDelay
                     ]
                 ],
-                DummyFilesystemWorker::class => ['arguments' => [$workerFile]]
+                DummyFilesystemWorker::class => ['arguments' => [$workerFile]],
+            ],
+            'flows' => [
+                self::TUBE => [
+                    'description' => 'Repeat Flow',
+                    'producer' => ['service' => DummyFilesystemRepeatProducer::class],
+                    'worker' => ['service' => DummyFilesystemWorker::class],
+                ]
             ]
         ]);
         mkdir($producerDir);
@@ -80,6 +96,6 @@ class RepeatProducerAndWorkerTest extends KernelTestCase
         $this->assertCount(2, $workerFileLines);
         $this->assertContains('job1', $workerFileLines[0]);
         $this->assertContains('job2', $workerFileLines[1]);
-        $this->assertReadyJobsCountInTube(0, DummyFilesystemWorker::TUBE);
+        $this->assertReadyJobsCountInTube(0, self::TUBE);
     }
 }

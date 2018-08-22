@@ -5,34 +5,18 @@ namespace Webgriffe\Esb;
 use Amp\Iterator;
 use Amp\Promise;
 use Amp\Success;
+use Webgriffe\Esb\Model\Job;
 
 class DummyCrontabProducer implements CrontabProducerInterface
 {
     /**
-     * @var array
+     * @var Job[]
      */
-    private $jobs;
-    /**
-     * @var string
-     */
-    private $tube;
-
-    public function __construct(string $tube)
-    {
-        $this->tube = $tube;
-    }
+    public static $jobs = [];
 
     public function getCrontab(): string
     {
         return '0 * * * *'; // Runs every hour at minute 0
-    }
-
-    /**
-     * @return string
-     */
-    public function getTube(): string
-    {
-        return $this->tube;
     }
 
     /**
@@ -51,16 +35,8 @@ class DummyCrontabProducer implements CrontabProducerInterface
      */
     public function produce($data = null): Iterator
     {
-        $iterator = Iterator\fromIterable($this->jobs);
-        $this->jobs = [];
+        $iterator = Iterator\fromIterable(self::$jobs);
+        self::$jobs = [];
         return $iterator;
-    }
-
-    /**
-     * @param array $jobs
-     */
-    public function setJobs(array $jobs)
-    {
-        $this->jobs = $jobs;
     }
 }

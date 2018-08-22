@@ -22,14 +22,6 @@ class DummyHttpRequestProducer implements HttpRequestProducerInterface
     }
 
     /**
-     * @return string
-     */
-    public function getTube(): string
-    {
-        return DummyFilesystemWorker::TUBE;
-    }
-
-    /**
      * @return Promise
      * @throws \Error
      */

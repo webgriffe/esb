@@ -14,24 +14,29 @@ use Webgriffe\Esb\TestUtils;
 
 class CrontabProducerAndWorkerTest extends KernelTestCase
 {
+    const TUBE = 'crontab_flow';
+
     use TestUtils;
 
     public function testCrontabProducerAndWorkerDoesNotProduceIfIsNotTheRightTime()
     {
         vfsStream::setup();
+        DummyCrontabProducer::$jobs = [new Job(['job1']), new Job(['job2'])];
         $workerFile = vfsStream::url('root/worker.data');
         self::createKernel([
             'services' => [
                 DateTimeBuilderInterface::class => ['class' => DateTimeBuilderStub::class],
-                DummyCrontabProducer::class => ['arguments' => [DummyFilesystemWorker::TUBE]],
-                DummyFilesystemWorker::class => ['arguments' => [$workerFile]]
+                DummyCrontabProducer::class => ['arguments' => []],
+                DummyFilesystemWorker::class => ['arguments' => [$workerFile]],
+            ],
+            'flows' => [
+                self::TUBE => [
+                    'description' => 'Crontab Flow',
+                    'producer' => ['service' => DummyCrontabProducer::class],
+                    'worker' => ['service' => DummyFilesystemWorker::class],
+                ]
             ]
         ]);
-
-        $jobs = [new Job(['job1']), new Job(['job2'])];
-        /** @var DummyCrontabProducer $producer */
-        $producer = self::$kernel->getContainer()->get(DummyCrontabProducer::class);
-        $producer->setJobs($jobs);
 
         DateTimeBuilderStub::$forcedNow = '2018-02-19 12:45:00';
         Loop::delay(200, function () {
@@ -46,19 +51,22 @@ class CrontabProducerAndWorkerTest extends KernelTestCase
     public function testCrontabProducerAndWorkerProducesIfItsTheRightTime()
     {
         vfsStream::setup();
+        DummyCrontabProducer::$jobs = [new Job(['job1']), new Job(['job2'])];
         $workerFile = vfsStream::url('root/worker.data');
         self::createKernel([
             'services' => [
                 DateTimeBuilderInterface::class => ['class' => DateTimeBuilderStub::class],
-                DummyCrontabProducer::class => ['arguments' => [DummyFilesystemWorker::TUBE]],
-                DummyFilesystemWorker::class => ['arguments' => [$workerFile]]
+                DummyCrontabProducer::class => ['arguments' => []],
+                DummyFilesystemWorker::class => ['arguments' => [$workerFile]],
+            ],
+            'flows' => [
+                self::TUBE => [
+                    'description' => 'Crontab Flow',
+                    'producer' => ['service' => DummyCrontabProducer::class],
+                    'worker' => ['service' => DummyFilesystemWorker::class],
+                ]
             ]
         ]);
-
-        $jobs = [new Job(['job1']), new Job(['job2'])];
-        /** @var DummyCrontabProducer $producer */
-        $producer = self::$kernel->getContainer()->get(DummyCrontabProducer::class);
-        $producer->setJobs($jobs);
 
         DateTimeBuilderStub::$forcedNow = '2018-02-19 13:00:00';
         Loop::delay(200, function () {
@@ -72,6 +80,6 @@ class CrontabProducerAndWorkerTest extends KernelTestCase
         $this->assertCount(2, $workerFileLines);
         $this->assertContains('job1', $workerFileLines[0]);
         $this->assertContains('job2', $workerFileLines[1]);
-        $this->assertReadyJobsCountInTube(0, DummyFilesystemWorker::TUBE);
+        $this->assertReadyJobsCountInTube(0, self::TUBE);
     }
 }

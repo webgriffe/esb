@@ -10,16 +10,6 @@ use Webgriffe\Esb\Model\QueuedJob;
 
 class AlwaysFailingWorker implements WorkerInterface
 {
-    const TUBE = 'sample_tube';
-
-    /**
-     * @return string
-     */
-    public function getTube(): string
-    {
-        return self::TUBE;
-    }
-
     /**
      * @return Promise
      */
@@ -37,21 +27,5 @@ class AlwaysFailingWorker implements WorkerInterface
         return call(function () {
             throw new \Error('Failed!');
         });
-    }
-
-    /**
-     * @return int
-     */
-    public function getReleaseDelay(): int
-    {
-        return 0;
-    }
-
-    /**
-     * @return int
-     */
-    public function getInstancesCount(): int
-    {
-        return 1;
     }
 }

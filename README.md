@@ -41,8 +41,36 @@ Copy the sample configuration file into your ESB root directory:
 cp vendor/webgriffe/esb/esb.yml.sample ./esb.yml
 ```
 
-The `esb.yml` file is the main configuration of your ESB application, where you have to register workers and producers. All the services implementing 
-[WorkerInterface](https://github.com/webgriffe/esb/blob/master/src/WorkerInterface.php) and [ProducerInterface](https://github.com/webgriffe/esb/blob/master/src/ProducerInterface.php) are registered automatically as workers and producers. Refer to the [Symfony Dependency Injection](http://symfony.com/doc/current/components/dependency_injection.html) component documentation and the [sample configuration file](https://github.com/webgriffe/esb/blob/master/esb.yml.sample) for more information about configuration of your ESB services.
+The `esb.yml` file is the main configuration of your ESB application, where you have to define flows with their worker and producer services.
+
+```yaml
+services:
+  _defaults:
+    autowire: true                  # This is optional (see https://symfony.com/doc/current/service_container/autowiring.html)
+
+  My\Esb\Producer:                  # A producer service definition
+    arguments: []
+
+  My\Esb\Worker:                    # A worker service definition
+    arguments: []
+
+
+flows:
+  sample_flow:                      # The flow "code" and will be the Beanstalkd tube name
+    description: Sample Flow        # The flow description
+    producer:
+      service: My\Esb\Producer      # A producer service ID defined above
+    worker:
+      service: My\Esb\Worker        # A worker service ID defined above
+      instances: 1                  # The number of worker instances to spawn for this flow
+      release_delay: 0              # The jobs release delay in seconds for this flow (see the Beanstalkd protocol here https://github.com/beanstalkd/beanstalkd/blob/master/doc/protocol.txt)
+      max_retry: 5                  # The number of maximum work retries for a job in this tube/flow before being buried
+
+```
+
+The `services` section is where you have to define your worker and producer services using the syntax of the [Symfony Dependency Injection](http://symfony.com/doc/current/components/dependency_injection.html) component.
+
+The `flows` section is where you have to define your ESB flows. Every flow must refer to a producer and a worker service defined in the `services` section. 
 
 You also have to define some parameters under the `parameters` section, refer to the `esb.yml.sample` file for more informations about required parameters. Usually it's better to isolate parameters in a `parameters.yml` file which can be included in the `esb.yml` as follows:
 
@@ -52,13 +80,10 @@ imports:
   - { resource: parameters.yml}
 
 services:
-  _defaults:
-    autowire: true
-    autoconfigure: true
-    public: true
-  
-  My\Esb\Namespace\:
-    resource: 'src/*'
+  # ...
+
+flows:
+  # ...
 ```
 
 ```yaml
@@ -68,10 +93,12 @@ parameters:
   # Other parameters here ...
 ```
 
+Refer to the [sample configuration file](https://github.com/webgriffe/esb/blob/master/esb.yml.sample) for the complete list of parameters and for more information about the configuration of your ESB.
+
 Producers
 ---------
 
-As said, a producer is a class which implements the `ProducerInterface`. Anyway implementing only the `ProducerInterface` is not enough. Every producer must implement also one of the supported *producer type* interfaces. This is because the framework must know when to invoke every producer. At the moment we support 3 producer types:
+A producer can be any service whose class implements the `ProducerInterface`. Anyway implementing only the `ProducerInterface` is not enough. Every producer must implement also one of the supported *producer type* interfaces. This is because the framework must know when to invoke every producer. At the moment we support the following producer types:
 
 * `RepeatProducerInterface`: these producers are invoked repeatedly every fixed interval.
 * `CrontabProducerInterface`: these producers are invoked when their [crontab expression](https://en.wikipedia.org/wiki/Cron#CRON_expression) matches.
@@ -87,11 +114,11 @@ See the dummy producers in the [tests/](https://github.com/webgriffe/esb/tree/ma
 Workers
 -------
 
-Workers are simpler than producers. They implement only the `WorkerInterface` and don't have *worker type* interfaces. This is because every worker is invoked immediatly when a job is available on its tube.
+A worker can be any service whose class implements the `WorkerInterface`. Every worker is invoked immediatly when a job is available on its flow's tube.
 
 The `work` method of a worker must return an Amp's [Promise](https://amphp.org/amp/promises/) that must resolve when the job is worked succesfully. Otherwise the `work` method must throw an exception.
 
-When a worker successfully works a job the ESB framwork deletes it from the tube. Instead, when a worker fails to work a job the ESB framework keeps it in the tube for a maximum of 5 times then the job is buried and a critical event is logged.
+When a worker successfully works a job the ESB framwork deletes it from the tube. Instead, when a worker fails to work a job the ESB framework keeps it in the tube for a maximum of a `max_retry` times, then the job is **buried** and a critical event is logged.
 
 Like for producers, **you should never use I/O blocking function calls inside your workers**. Look for [Amp](https://amphp.org/) or [ReactPHP](https://reactphp.org) libraries when you need to do I/O operations.
 
@@ -112,7 +139,7 @@ You can (and should) also unit test your workers and producers. Because workers 
 Unit test example
 -----------------
 
-Here follows an example of a producer test which verify that the producer produces stock inventory update jobs based on am XML file in a given directory.
+Here follows an example of a producer test which verify that the producer produces stock inventory update jobs based on an XML file in a given directory.
 
 ```php
 public function testShouldProduceMultipleJobsWithMultipleEntriesFile()
