@@ -11,7 +11,7 @@ cache:
 
 install:
   - sudo apt-get update
-  - sudo apt-get install --force-yes beanstalkd
+  - sudo apt-get install beanstalkd
 
 before_script:
   - composer install
