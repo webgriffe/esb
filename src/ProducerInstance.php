@@ -6,12 +6,12 @@ namespace Webgriffe\Esb;
 use Amp\Beanstalk\BeanstalkClient;
 use Amp\Loop;
 use Amp\Promise;
-use Monolog\Logger;
+use Psr\Log\LoggerInterface;
 use Webgriffe\Esb\Model\FlowConfig;
 use Webgriffe\Esb\Model\Job;
-use function Amp\call;
 use Webgriffe\Esb\Service\CronProducersServer;
 use Webgriffe\Esb\Service\HttpProducersServer;
+use function Amp\call;
 
 class ProducerInstance
 {
@@ -28,7 +28,7 @@ class ProducerInstance
      */
     private $beanstalkClient;
     /**
-     * @var Logger
+     * @var LoggerInterface
      */
     private $logger;
     /**
@@ -44,7 +44,7 @@ class ProducerInstance
         FlowConfig $flowConfig,
         ProducerInterface $producer,
         BeanstalkClient $beanstalkClient,
-        Logger $logger,
+        LoggerInterface $logger,
         HttpProducersServer $httpProducersServer,
         CronProducersServer $cronProducersServer
     ) {

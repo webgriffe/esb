@@ -20,6 +20,7 @@ services:
   Monolog\Handler\TestHandler:
     class: \Monolog\Handler\TestHandler
 
-  Monolog\Logger:
+  Psr\Log\LoggerInterface:
     class: \Monolog\Logger
     arguments: [ 'esb', ['@Monolog\Handler\TestHandler'] ]
+    public: true

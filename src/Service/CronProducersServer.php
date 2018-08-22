@@ -3,14 +3,14 @@ declare(strict_types=1);
 
 namespace Webgriffe\Esb\Service;
 
-use function Amp\call;
 use Amp\Loop;
 use Amp\Promise;
 use Cron\CronExpression;
-use Monolog\Logger;
+use Psr\Log\LoggerInterface;
 use Webgriffe\Esb\CrontabProducerInterface;
 use Webgriffe\Esb\DateTimeBuilderInterface;
 use Webgriffe\Esb\ProducerInstance;
+use function Amp\call;
 
 class CronProducersServer
 {
@@ -25,7 +25,7 @@ class CronProducersServer
      */
     private $dateTimeBuilder;
     /**
-     * @var Logger
+     * @var LoggerInterface
      */
     private $logger;
     /**
@@ -33,7 +33,7 @@ class CronProducersServer
      */
     private $cronTickWatcherId;
 
-    public function __construct(DateTimeBuilderInterface $dateTimeBuilder, Logger $logger)
+    public function __construct(DateTimeBuilderInterface $dateTimeBuilder, LoggerInterface $logger)
     {
         $this->dateTimeBuilder = $dateTimeBuilder;
         $this->logger = $logger;

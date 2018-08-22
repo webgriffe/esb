@@ -4,13 +4,12 @@ declare(strict_types=1);
 namespace Webgriffe\Esb;
 
 use Amp\Loop;
-use Monolog\Logger;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Config\Exception\FileLocatorFileNotFoundException;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use Webgriffe\Esb\Console\Server;
-use Webgriffe\Esb\FlowManager;
 
 class Kernel
 {
@@ -74,8 +73,8 @@ class Kernel
      */
     public function errorHandler(\Throwable $exception)
     {
-        /** @var Logger $logger */
-        $logger = $this->container->get(Logger::class);
+        /** @var LoggerInterface $logger */
+        $logger = $this->getContainer()->get(LoggerInterface::class);
         $logger->critical(
             'An uncaught exception occurred, ESB will be stopped now!',
             [

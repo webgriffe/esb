@@ -4,12 +4,12 @@ declare(strict_types=1);
 namespace Webgriffe\Esb;
 
 use Amp\Loop;
-use Monolog\Logger;
+use Psr\Log\LoggerInterface;
 
 class FlowManager
 {
     /**
-     * @var Logger
+     * @var LoggerInterface
      */
     private $logger;
 
@@ -20,9 +20,9 @@ class FlowManager
 
     /**
      * FlowManager constructor.
-     * @param Logger $logger
+     * @param LoggerInterface $logger
      */
-    public function __construct(Logger $logger)
+    public function __construct(LoggerInterface $logger)
     {
         $this->logger = $logger;
     }

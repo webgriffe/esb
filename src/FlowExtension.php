@@ -3,8 +3,6 @@ declare(strict_types=1);
 
 namespace Webgriffe\Esb;
 
-use Amp\Beanstalk\BeanstalkClient;
-use Monolog\Logger;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\Config\Definition\Processor;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;

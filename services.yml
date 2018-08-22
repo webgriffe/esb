@@ -28,9 +28,10 @@ services:
     class: \Monolog\Handler\NativeMailerHandler
     arguments: [ '%critical_events_to%', 'Critical event from ESB', '%critical_events_from%', !php/const:Monolog\Logger::CRITICAL ]
 
-  Monolog\Logger:
+  Psr\Log\LoggerInterface:
     class: \Monolog\Logger
     arguments: [ 'esb', ['@Monolog\Handler\StreamHandler', '@Monolog\Handler\ErrorLogHandler', '@Monolog\Handler\NativeMailerHandler'] ]
+    public: true
 
   Webgriffe\Esb\DateTimeBuilderInterface:
     class: \Webgriffe\Esb\DateTimeBuilder
@@ -43,5 +44,5 @@ services:
         port: '%console_port%'
         username: '%console_username%'
         password: '%console_password%'
-      - '@Monolog\Logger'
+      - '@Psr\Log\LoggerInterface'
     public: true

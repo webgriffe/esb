@@ -5,7 +5,7 @@ namespace Webgriffe\Esb;
 
 use Amp\Beanstalk\BeanstalkClient;
 use Amp\Promise;
-use Monolog\Logger;
+use Psr\Log\LoggerInterface;
 use Webgriffe\Esb\Model\FlowConfig;
 use Webgriffe\Esb\Model\QueuedJob;
 use function Amp\call;
@@ -29,7 +29,7 @@ class WorkerInstance
      */
     private $beanstalkClient;
     /**
-     * @var Logger
+     * @var LoggerInterface
      */
     private $logger;
 
@@ -43,7 +43,7 @@ class WorkerInstance
         int $instanceId,
         WorkerInterface $worker,
         BeanstalkClient $beanstalkClient,
-        Logger $logger
+        LoggerInterface $logger
     ) {
         $this->flowConfig = $flowConfig;
         $this->instanceId = $instanceId;

@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace Webgriffe\Esb;
 
 use Amp\Loop;
-use Monolog\Logger;
+use Psr\Log\LoggerInterface;
 use Webgriffe\Esb\Model\FlowConfig;
 
 class Flow
@@ -22,7 +22,7 @@ class Flow
      */
     private $workerInstances;
     /**
-     * @var Logger
+     * @var LoggerInterface
      */
     private $logger;
 
@@ -30,7 +30,7 @@ class Flow
         FlowConfig $flowConfig,
         ProducerInstance $producerInstance,
         array $workerInstances,
-        Logger $logger
+        LoggerInterface $logger
     ) {
         $this->flowConfig = $flowConfig;
         $this->producerInstance = $producerInstance;
