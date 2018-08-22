@@ -210,9 +210,10 @@ A web console UI is available and allows to inspect tubes and jobs; is it also p
 # esb.yml
 parameters:
   # ...
-  console_port: 8080         # Web console port
-  console_username: admin    # Web console username
-  console_password: password # Web console password
+  console_port: 8080                      # Web console port
+  console_username: admin                 # Web console username
+  console_password: password              # Web console password
+  console_log_file: /tmp/esb_console.log  # Web console server log file
 
 # ...
 ```

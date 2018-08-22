@@ -60,12 +60,10 @@ class Server
             $server = new \Amp\Http\Server\Server(
                 $sockets,
                 new CallableRequestHandler($this->callableFromInstanceMethod('requestHandler')),
-                new NullLogger()
+                $this->logger
             );
 
             yield $server->start();
-
-            $this->logger->info('Web console server started.', ['port' => $port ]);
         });
     }
 

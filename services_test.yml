@@ -12,6 +12,7 @@ parameters:
   env(CONSOLE_PORT): 34982
   console_username: admin
   console_password: p4ssw0rd
+  console_log_file: ~
 
 services:
   _defaults:
@@ -24,3 +25,7 @@ services:
     class: \Monolog\Logger
     arguments: [ 'esb', ['@Monolog\Handler\TestHandler'] ]
     public: true
+
+  console_logger:
+    class: \Monolog\Logger
+    arguments: ['esb_console', ['@Monolog\Handler\TestHandler']]
