@@ -67,42 +67,44 @@
     </form>
 
     {% if foundJobs|length > 0 %}
-        <table class="table table-striped">
-            <thead>
-            <tr>
-                <th scope="col">Job ID</th>
-                <th scope="col">Payload</th>
-                <th scope="col">State</th>
-                <th scope="col">Actions</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for jobId, job in foundJobs %}
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
                 <tr>
-                    <th scope="row">{{ jobId }}</th>
-                    <td><pre>{{ job.payload }}</pre></td>
-                    <td><pre>{{ job.stats.state }}</pre></td>
-                    <td>
-                        <div class="btn-group btn-group-sm" role="group" aria-label="Actions">
-                            <a class="btn btn-secondary" href="/job/{{ jobId }}">
-                                <span class="oi oi-eye"></span>
-                                View
-                            </a>
-                            {% if job.stats.state == 'buried' %}
-                                <a class="btn btn-secondary" href="/kick/{{ jobId }}">
-                                    <span class="oi oi-bolt"></span>
-                                    Kick
-                                </a>
-                            {% endif %}
-                            <a class="btn btn-secondary" href="/delete/{{ jobId }}">
-                                <span class="oi oi-trash"></span>
-                                Delete
-                            </a>
-                        </div>
-                    </td>
+                    <th scope="col">Job ID</th>
+                    <th scope="col">Payload</th>
+                    <th scope="col">State</th>
+                    <th scope="col">Actions</th>
                 </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                {% for jobId, job in foundJobs %}
+                    <tr>
+                        <th scope="row">{{ jobId }}</th>
+                        <td><pre>{{ job.payload|length > 70 ? job.payload|slice(0, 70) ~ '...' : job.payload }}</pre></td>
+                        <td><pre>{{ job.stats.state }}</pre></td>
+                        <td>
+                            <div class="btn-group btn-group-sm" role="group" aria-label="Actions">
+                                <a class="btn btn-secondary" href="/job/{{ jobId }}">
+                                    <span class="oi oi-eye"></span>
+                                    View
+                                </a>
+                                {% if job.stats.state == 'buried' %}
+                                    <a class="btn btn-secondary" href="/kick/{{ jobId }}">
+                                        <span class="oi oi-bolt"></span>
+                                        Kick
+                                    </a>
+                                {% endif %}
+                                <a class="btn btn-secondary" href="/delete/{{ jobId }}">
+                                    <span class="oi oi-trash"></span>
+                                    Delete
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
     {% endif %}
 {% endblock %}
