@@ -24,9 +24,19 @@ services:
     class: \Monolog\Handler\ErrorLogHandler
     arguments: [ !php/const:Monolog\Handler\ErrorLogHandler::OPERATING_SYSTEM, !php/const:Monolog\Logger::ERROR ]
 
+  Monolog\Formatter\HtmlFormatter: {}
+
   Monolog\Handler\NativeMailerHandler:
     class: \Monolog\Handler\NativeMailerHandler
     arguments: [ '%logger_mail_to%', 'Significant event from ESB', '%logger_mail_from%', !php/const:Monolog\Logger::WARNING ]
+    calls:
+      - method: setFormatter
+        arguments:
+          - '@Monolog\Formatter\HtmlFormatter'
+      - method: setContentType
+        arguments:
+          - 'text/html'
+
 
   Psr\Log\LoggerInterface:
     class: \Monolog\Logger
