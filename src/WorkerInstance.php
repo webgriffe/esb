@@ -92,14 +92,17 @@ class WorkerInstance
                     yield $this->beanstalkClient->delete($job->getId());
                     unset(self::$workCounts[$job->getId()]);
                 } catch (\Throwable $e) {
-                    $this->logger->error(
+                    $this->logger->notice(
                         'An error occurred while working a Job.',
-                        array_merge($logContext, ['error' => $e->getMessage()])
+                        array_merge(
+                            $logContext,
+                            ['work_count' => self::$workCounts[$job->getId()], 'error' => $e->getMessage()]
+                        )
                     );
 
                     if (self::$workCounts[$job->getId()] >= $this->flowConfig->getWorkerMaxRetry()) {
                         yield $this->beanstalkClient->bury($job->getId());
-                        $this->logger->critical(
+                        $this->logger->error(
                             'A Job reached maximum work retry limit and has been buried',
                             array_merge(
                                 $logContext,

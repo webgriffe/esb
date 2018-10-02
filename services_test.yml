@@ -6,8 +6,8 @@ parameters:
   env(BEANSTALKD_CONNECTION_URI): "tcp://127.0.0.1:11300"
   http_server_port: '%env(HTTP_SERVER_PORT)%'
   env(HTTP_SERVER_PORT): 34981
-  critical_events_to: "toemail@address.com"
-  critical_events_from: "From Name <fromemail@address.com>"
+  logger_mail_to: "toemail@address.com"
+  logger_mail_from: "From Name <fromemail@address.com>"
   console_port: '%env(CONSOLE_PORT)%'
   env(CONSOLE_PORT): 34982
   console_username: admin

@@ -40,7 +40,7 @@ class FailingJobHandlingTest extends KernelTestCase
         self::$kernel->boot();
 
         $this->assertTrue(
-            $this->logHandler()->hasCriticalThatPasses(
+            $this->logHandler()->hasErrorThatPasses(
                 function (array $record) {
                     return $record['message'] === 'A Job reached maximum work retry limit and has been buried' &&
                         $record['context']['max_retry'] === 2;

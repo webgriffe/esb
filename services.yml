@@ -26,7 +26,7 @@ services:
 
   Monolog\Handler\NativeMailerHandler:
     class: \Monolog\Handler\NativeMailerHandler
-    arguments: [ '%critical_events_to%', 'Critical event from ESB', '%critical_events_from%', !php/const:Monolog\Logger::CRITICAL ]
+    arguments: [ '%logger_mail_to%', 'Significant event from ESB', '%logger_mail_from%', !php/const:Monolog\Logger::WARNING ]
 
   Psr\Log\LoggerInterface:
     class: \Monolog\Logger
