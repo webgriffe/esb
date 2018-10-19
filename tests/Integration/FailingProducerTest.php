@@ -1,0 +1,42 @@
+<?php
+declare(strict_types=1);
+
+namespace Webgriffe\Esb\Integration;
+
+use Amp\Loop;
+use org\bovigo\vfs\vfsStream;
+use Webgriffe\Esb\AlwaysFailingProducer;
+use Webgriffe\Esb\DummyFilesystemWorker;
+use Webgriffe\Esb\KernelTestCase;
+use Webgriffe\Esb\TestUtils;
+
+class FailingProducerTest extends KernelTestCase
+{
+    use TestUtils;
+
+    const TUBE = 'sample_tube';
+
+    public function testFailingProducerShouldBeCaughtAndLogged()
+    {
+        $workerFile = vfsStream::url('root/worker.data');
+        self::createKernel([
+            'services' => [
+                AlwaysFailingProducer::class => ['arguments' => [10]],
+                DummyFilesystemWorker::class => ['arguments' => [$workerFile]],
+            ],
+            'flows' => [
+                self::TUBE => [
+                    'description' => 'Failing Producer Flow',
+                    'producer' => ['service' => AlwaysFailingProducer::class],
+                    'worker' => ['service' => DummyFilesystemWorker::class],
+                ]
+            ]
+        ]);
+        Loop::delay(200, function () {
+            Loop::stop();
+        });
+
+        self::$kernel->boot();
+        $this->assertTrue($this->logHandler()->hasErrorThatContains('An error occurred producing/queueing jobs'));
+    }
+}

@@ -104,14 +104,13 @@ class ProducerInstance
     {
         return call(function () use ($data) {
             $jobsCount = 0;
-            $jobs = $this->producer->produce($data);
-
-            while (yield $jobs->advance()) {
-                /** @var Job $job */
-                $job = $jobs->getCurrent();
-                $payload = serialize($job->getPayloadData());
-
-                try {
+            $job = null;
+            try {
+                $jobs = $this->producer->produce($data);
+                while (yield $jobs->advance()) {
+                    /** @var Job $job */
+                    $job = $jobs->getCurrent();
+                    $payload = serialize($job->getPayloadData());
                     $jobId = yield $this->beanstalkClient->put(
                         $payload,
                         $job->getTimeout(),
@@ -127,16 +126,16 @@ class ProducerInstance
                         ]
                     );
                     $jobsCount++;
-                } catch (\Throwable $error) {
-                    $this->logger->error(
-                        'An error occurred producing a job.',
-                        [
-                            'producer' => \get_class($this->producer),
-                            'payload_data' => NonUtf8Cleaner::clean($job->getPayloadData()),
-                            'error' => $error->getMessage(),
-                        ]
-                    );
                 }
+            } catch (\Throwable $error) {
+                $this->logger->error(
+                    'An error occurred producing/queueing jobs.',
+                    [
+                        'producer' => \get_class($this->producer),
+                        'last_job_payload_data' => $job ? NonUtf8Cleaner::clean($job->getPayloadData()) : null,
+                        'error' => $error->getMessage(),
+                    ]
+                );
             }
             return $jobsCount;
         });
