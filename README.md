@@ -30,7 +30,7 @@ Installation
 Require this package using [Composer](https://getcomposer.org/):
 
 ```bash
-composer require webgriffe/esb dev-master
+composer require webgriffe/esb
 ```
 
 Configuration
