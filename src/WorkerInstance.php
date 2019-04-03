@@ -69,15 +69,23 @@ class WorkerInstance
             );
 
             while ($rawJob = yield $this->beanstalkClient->reserve()) {
-                $job = new QueuedJob($rawJob[0], unserialize($rawJob[1], ['allowed_classes' => false]));
-
+                list($jobId, $rawPayload) = $rawJob;
                 $logContext = [
                     'flow' => $this->flowConfig->getDescription(),
                     'worker' => \get_class($this->worker),
                     'instance_id' => $this->instanceId,
-                    'job_id' => $job->getId(),
-                    'payload_data' => NonUtf8Cleaner::clean($job->getPayloadData())
+                    'job_id' => $jobId,
                 ];
+
+                $payloadData = @unserialize($rawPayload, ['allowed_classes' => false]);
+                if ($payloadData === false) {
+                    $logContext['raw_payload'] = NonUtf8Cleaner::cleanString($rawPayload);
+                    $this->logger->critical('Cannot unserialize job payload so it has been buried.', $logContext);
+                    continue;
+                }
+                $job = new QueuedJob($jobId, $payloadData);
+                $logContext['payload_data'] = NonUtf8Cleaner::clean($job->getPayloadData());
+
                 $this->logger->info('Worker reserved a Job', $logContext);
 
                 try {

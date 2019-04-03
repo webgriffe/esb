@@ -13,4 +13,11 @@ class NonUtf8Cleaner
         array_walk_recursive($data, [$formatter, 'detectAndCleanUtf8']);
         return $data;
     }
+
+    public static function cleanString(string $data): string
+    {
+        $formatter = new NormalizerFormatter();
+        $formatter->detectAndCleanUtf8($data);
+        return $data;
+    }
 }
