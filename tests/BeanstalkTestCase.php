@@ -73,4 +73,14 @@ class BeanstalkTestCase extends TestCase
         $stats = $this->pheanstalk->statsTube($tube);
         $this->assertEquals($expectedReadyJobsCount, $stats['current-jobs-ready']);
     }
+
+    /**
+     * @param int $expectedBuriedJobsCount
+     * @param string $tube
+     */
+    protected function assertBuriedJobsCountInTube(int $expectedBuriedJobsCount, string $tube)
+    {
+        $stats = $this->pheanstalk->statsTube($tube);
+        $this->assertEquals($expectedBuriedJobsCount, $stats['current-jobs-buried']);
+    }
 }

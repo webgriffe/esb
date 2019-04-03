@@ -80,6 +80,7 @@ class WorkerInstance
                 $payloadData = @unserialize($rawPayload, ['allowed_classes' => false]);
                 if ($payloadData === false) {
                     $logContext['raw_payload'] = NonUtf8Cleaner::cleanString($rawPayload);
+                    yield $this->beanstalkClient->bury($jobId);
                     $this->logger->critical('Cannot unserialize job payload so it has been buried.', $logContext);
                     continue;
                 }

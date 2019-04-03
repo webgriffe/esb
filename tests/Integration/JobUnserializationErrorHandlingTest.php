@@ -6,6 +6,7 @@ namespace Webgriffe\Esb\Integration;
 use Amp\Beanstalk\BeanstalkClient;
 use Amp\Loop;
 use org\bovigo\vfs\vfsStream;
+use Webgriffe\Esb\BeanstalkTestCase;
 use Webgriffe\Esb\DummyFilesystemWorker;
 use Webgriffe\Esb\DummyRepeatProducer;
 use Webgriffe\Esb\KernelTestCase;
@@ -38,7 +39,9 @@ class JobUnserializationErrorHandlingTest extends KernelTestCase
         Loop::delay(
             200,
             function () {
-                $beanstalkdClient = new BeanstalkClient('tcp://127.0.0.1:11300?tube=' . self::TUBE);
+                $beanstalkdClient = new BeanstalkClient(
+                    BeanstalkTestCase::getBeanstalkdConnectionUri() . '?tube=' . self::TUBE
+                );
                 yield $beanstalkdClient->put('... not unserializable payload ...');
                 Loop::delay(
                     200,
@@ -52,5 +55,7 @@ class JobUnserializationErrorHandlingTest extends KernelTestCase
         self::$kernel->boot();
 
         $this->assertContains('Cannot unserialize job payload so it has been buried.', $this->dumpLog());
+        $this->assertReadyJobsCountInTube(0, self::TUBE);
+        $this->assertBuriedJobsCountInTube(1, self::TUBE);
     }
 }
