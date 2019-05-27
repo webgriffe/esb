@@ -13,7 +13,7 @@ use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
 use Symfony\Component\DependencyInjection\Reference;
 use Webgriffe\Esb\Model\FlowConfig;
 
-class FlowExtension implements ExtensionInterface, CompilerPassInterface
+final class FlowExtension implements ExtensionInterface, CompilerPassInterface
 {
     /**
      * @var array

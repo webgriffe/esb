@@ -9,7 +9,7 @@ use Amp\Promise;
 use Amp\Success;
 use Webgriffe\Esb\Model\Job;
 
-class DummyHttpRequestProducer implements HttpRequestProducerInterface
+final class DummyHttpRequestProducer implements HttpRequestProducerInterface
 {
     public function getAttachedRequestMethod(): string
     {

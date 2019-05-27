@@ -7,7 +7,7 @@ namespace Webgriffe\Esb;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
-class FlowConfiguration implements ConfigurationInterface
+final class FlowConfiguration implements ConfigurationInterface
 {
     /**
      * Generates the configuration tree builder.

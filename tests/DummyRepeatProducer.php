@@ -7,7 +7,7 @@ use Amp\Promise;
 use Amp\Success;
 use Amp\Iterator;
 
-class DummyRepeatProducer implements RepeatProducerInterface
+final class DummyRepeatProducer implements RepeatProducerInterface
 {
     /**
      * @var array

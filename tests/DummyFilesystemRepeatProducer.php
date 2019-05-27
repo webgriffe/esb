@@ -14,7 +14,7 @@ use Webgriffe\Esb\Model\Job;
 /**
  * Sample repeat producer which produces a job for every file found in a given directory.
  */
-class DummyFilesystemRepeatProducer implements RepeatProducerInterface
+final class DummyFilesystemRepeatProducer implements RepeatProducerInterface
 {
     /**
      * @var string

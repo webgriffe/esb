@@ -8,7 +8,7 @@ use Amp\Promise;
 use Amp\Success;
 use Webgriffe\Esb\Model\QueuedJob;
 
-class AlwaysFailingWorker implements WorkerInterface
+final class AlwaysFailingWorker implements WorkerInterface
 {
     /**
      * @return Promise

@@ -2,7 +2,7 @@
 
 namespace Webgriffe\Esb;
 
-class DateTimeBuilderStub implements DateTimeBuilderInterface
+final class DateTimeBuilderStub implements DateTimeBuilderInterface
 {
     public static $forcedNow;
 

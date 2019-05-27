@@ -2,7 +2,7 @@
 
 namespace Webgriffe\Esb;
 
-class DateTimeBuilder implements DateTimeBuilderInterface
+final class DateTimeBuilder implements DateTimeBuilderInterface
 {
     public function build($time = 'now', \DateTimeZone $timezone = null): \DateTime
     {

@@ -11,7 +11,7 @@ use function Amp\call;
 /**
  * This is a sample worker which simply writes job data to the /tmp/sample_worker.data file
  */
-class DummyFilesystemWorker implements WorkerInterface
+final class DummyFilesystemWorker implements WorkerInterface
 {
     /**
      * @var string

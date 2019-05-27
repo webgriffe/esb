@@ -7,7 +7,7 @@ use Amp\Promise;
 use Amp\Success;
 use Webgriffe\Esb\Model\Job;
 
-class DummyCrontabProducer implements CrontabProducerInterface
+final class DummyCrontabProducer implements CrontabProducerInterface
 {
     /**
      * @var Job[]

@@ -7,7 +7,7 @@ use Amp\Iterator;
 use Amp\Promise;
 use Amp\Success;
 
-class AlwaysFailingProducer implements RepeatProducerInterface
+final class AlwaysFailingProducer implements RepeatProducerInterface
 {
     /**
      * @var int
