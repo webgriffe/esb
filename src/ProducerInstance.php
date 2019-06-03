@@ -13,7 +13,7 @@ use Webgriffe\Esb\Service\CronProducersServer;
 use Webgriffe\Esb\Service\HttpProducersServer;
 use function Amp\call;
 
-class ProducerInstance
+final class ProducerInstance implements ProducerInstanceInterface
 {
     /**
      * @var FlowConfig
