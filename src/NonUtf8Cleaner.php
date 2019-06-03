@@ -5,6 +5,9 @@ namespace Webgriffe\Esb;
 
 use Monolog\Formatter\NormalizerFormatter;
 
+/**
+ * @internal
+ */
 class NonUtf8Cleaner
 {
     public static function clean(array $data): array
