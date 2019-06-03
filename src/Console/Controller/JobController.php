@@ -8,6 +8,9 @@ use function Amp\call;
 use Amp\Http\Server\Response;
 use Amp\Http\Status;
 
+/**
+ * @internal
+ */
 class JobController
 {
     use ControllerTrait;

@@ -8,6 +8,9 @@ use Amp\Http\Server\Response;
 use Amp\Http\Status;
 use Amp\Promise;
 
+/**
+ * @internal
+ */
 class IndexController
 {
     use ControllerTrait;

@@ -24,6 +24,9 @@ use Webgriffe\Esb\Console\Controller\KickController;
 use Webgriffe\Esb\Console\Controller\TubeController;
 use function Amp\call;
 
+/**
+ * @internal
+ */
 class Server
 {
     use CallableMaker;
