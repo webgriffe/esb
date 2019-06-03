@@ -6,6 +6,9 @@ namespace Webgriffe\Esb;
 use Amp\Loop;
 use Psr\Log\LoggerInterface;
 
+/**
+ * @internal
+ */
 class FlowManager
 {
     /**

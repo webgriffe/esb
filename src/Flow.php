@@ -7,6 +7,9 @@ use Amp\Loop;
 use Psr\Log\LoggerInterface;
 use Webgriffe\Esb\Model\FlowConfig;
 
+/**
+ * @internal
+ */
 class Flow
 {
     /**
