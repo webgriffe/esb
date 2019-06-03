@@ -10,7 +10,7 @@ use Webgriffe\Esb\Model\FlowConfig;
 use Webgriffe\Esb\Model\QueuedJob;
 use function Amp\call;
 
-class WorkerInstance implements WorkerInstanceInterface
+final class WorkerInstance implements WorkerInstanceInterface
 {
     /**
      * @var FlowConfig
