@@ -5,7 +5,13 @@ namespace Webgriffe\Esb;
 
 interface HttpRequestProducerInterface extends ProducerInterface
 {
+    /**
+     * @return string
+     */
     public function getAttachedRequestMethod(): string;
 
+    /**
+     * @return string
+     */
     public function getAttachedRequestUri(): string;
 }

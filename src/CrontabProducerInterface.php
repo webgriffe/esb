@@ -5,5 +5,8 @@ namespace Webgriffe\Esb;
 
 interface CrontabProducerInterface extends ProducerInterface
 {
+    /**
+     * @return string
+     */
     public function getCrontab(): string;
 }
