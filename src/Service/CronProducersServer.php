@@ -12,6 +12,9 @@ use Webgriffe\Esb\DateTimeBuilderInterface;
 use Webgriffe\Esb\ProducerInstance;
 use function Amp\call;
 
+/**
+ * @internal
+ */
 class CronProducersServer
 {
     const CRON_TICK_SECONDS = 60;

@@ -17,6 +17,9 @@ use Webgriffe\Esb\HttpRequestProducerInterface;
 use Webgriffe\Esb\ProducerInstance;
 use function Amp\call;
 
+/**
+ * @internal
+ */
 class HttpProducersServer
 {
     use CallableMaker;
