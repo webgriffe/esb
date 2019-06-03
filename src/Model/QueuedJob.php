@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace Webgriffe\Esb\Model;
 
-class QueuedJob
+class QueuedJob implements QueuedJobInterface
 {
     /**
      * @var int

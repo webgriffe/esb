@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace Webgriffe\Esb\Model;
 
-class Job
+class Job implements JobInterface
 {
     /**
      * @var array
