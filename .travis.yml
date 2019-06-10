@@ -10,6 +10,9 @@ cache:
   directories:
     - $HOME/.composer/cache
 
+services:
+  - docker
+
 install:
   - sudo apt-get update
   - sudo apt-get install beanstalkd
@@ -18,3 +21,6 @@ before_script:
   - composer install
   - vendor/bin/phpcs
   - vendor/bin/phpstan analyse --no-progress -l 6 -c phpstan.neon src tests
+
+after_success:
+  - docker run --rm -v $(pwd):/app nyholm/roave-bc-check roave-backwards-compatibility-check:assert-backwards-compatible --from=$(git describe --tags $(git rev-list --tags --max-count=1))
