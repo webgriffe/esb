@@ -19,7 +19,7 @@ install:
 
 before_script:
   - composer install
-  - if (( $(echo "$(phpenv version-name) >= 7.1" |bc -l) )); then composer global require maglnet/composer-require-checker && composer-require-checker --config-file=composer-require-checker.json; fi
+  - if (( $(echo "$(phpenv version-name) >= 7.1" |bc -l) )); then composer global require maglnet/composer-require-checker && $HOME/.composer/vendor/bin/composer-require-checker --config-file=composer-require-checker.json; fi
   - vendor/bin/phpcs
   - vendor/bin/phpstan analyse --no-progress -l 6 -c phpstan.neon src tests
 
