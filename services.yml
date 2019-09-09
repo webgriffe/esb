@@ -16,13 +16,21 @@ services:
     arguments:
       $port: '%http_server_port%'
 
-  Monolog\Handler\StreamHandler:
-    class: \Monolog\Handler\StreamHandler
-    arguments: [ 'php://stdout', !php/const:Monolog\Logger::DEBUG ]
+  esb_logger.stdout_stream:
+    class: \Amp\ByteStream\ResourceOutputStream
+    arguments: [!php/const:\STDOUT]
 
-  Monolog\Handler\ErrorLogHandler:
-    class: \Monolog\Handler\ErrorLogHandler
-    arguments: [ !php/const:Monolog\Handler\ErrorLogHandler::OPERATING_SYSTEM, !php/const:Monolog\Logger::ERROR ]
+  esb_logger.stderr_stream:
+    class: \Amp\ByteStream\ResourceOutputStream
+    arguments: [!php/const:\STDERR]
+
+  esb_logger.stdout_stream_handler:
+    class: \Amp\Log\StreamHandler
+    arguments: [ '@esb_logger.stdout_stream', !php/const:Monolog\Logger::DEBUG ]
+
+  esb_logger.stderr_stream_handler:
+    class: \Amp\Log\StreamHandler
+    arguments: [ '@esb_logger.stderr_stream', !php/const:Monolog\Logger::ERROR ]
 
   Monolog\Formatter\HtmlFormatter: {}
 
@@ -37,22 +45,21 @@ services:
         arguments:
           - 'text/html'
 
-
   Psr\Log\LoggerInterface:
     class: \Monolog\Logger
-    arguments: [ 'esb', ['@Monolog\Handler\StreamHandler', '@Monolog\Handler\ErrorLogHandler', '@Monolog\Handler\NativeMailerHandler'] ]
+    arguments: [ 'esb', ['@esb_logger.stdout_stream_handler', '@esb_logger.stderr_stream_handler', '@Monolog\Handler\NativeMailerHandler'] ]
     public: true
 
   Webgriffe\Esb\DateTimeBuilderInterface:
     class: \Webgriffe\Esb\DateTimeBuilder
 
-  console_logger.stream_handler:
-    class: \Monolog\Handler\StreamHandler
+  console_logger.file_handler:
+    class: \Webgriffe\Esb\FileStreamHandler
     arguments: [ '%console_log_file%' ]
 
   console_logger:
     class: \Monolog\Logger
-    arguments: ['esb_console', ['@console_logger.stream_handler']]
+    arguments: ['esb_console', ['@console_logger.file_handler']]
 
   Webgriffe\Esb\Console\Server:
     class: \Webgriffe\Esb\Console\Server

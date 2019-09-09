@@ -24,7 +24,8 @@
         "psr/log": "^1.1",
         "amphp/socket": "^0.10",
         "amphp/http": "^1.1",
-        "amphp/file": "^0.3"
+        "amphp/file": "^0.3",
+        "amphp/log": "^1.1"
     },
     "autoload": {
         "psr-4": {
