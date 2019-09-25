@@ -24,7 +24,7 @@ class BeanstalkTestCase extends TestCase
      */
     protected static function getBeanstalkdConnectionUri(): string
     {
-        return getenv('BEANSTALKD_CONNECTION_URI') ?: 'tcp://127.0.0.1:11300';
+        return getenv('ESB_BEANSTALKD_URL') ?: 'tcp://127.0.0.1:11300';
     }
 
     /**

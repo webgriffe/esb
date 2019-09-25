@@ -246,7 +246,7 @@ beanstalkd &
 vendor/bin/phpunit
 ```
 
-By default it tries to connect to a Beanstalkd running on `127.0.0.1` and default port `11300`. If you have Beanstalkd running elsewhere (for example in a Docker container) you can set the `BEANSTALKD_CONNECTION_URI` environment variable with the connection string (like `tcp://docker:11300`).
+By default it tries to connect to a Beanstalkd running on `127.0.0.1` and default port `11300`. If you have Beanstalkd running elsewhere (for example in a Docker container) you can set the `ESB_BEANSTALKD_URL` environment variable with the connection string (like `tcp://docker:11300`).
 
 License
 -------
