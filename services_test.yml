@@ -2,14 +2,11 @@ imports:
   - { resource: services.yml}
 
 parameters:
-  beanstalkd: '%env(BEANSTALKD_CONNECTION_URI)%'
-  env(BEANSTALKD_CONNECTION_URI): "tcp://127.0.0.1:11300"
-  http_server_port: '%env(HTTP_SERVER_PORT)%'
-  env(HTTP_SERVER_PORT): 34981
+  beanstalkd: '%env(string:ESB_BEANSTALKD_URL)%'
+  http_server_port: '%env(int:ESB_HTTP_SERVER_PORT)%'
   logger_mail_to: "toemail@address.com"
   logger_mail_from: "From Name <fromemail@address.com>"
-  console_port: '%env(CONSOLE_PORT)%'
-  env(CONSOLE_PORT): 34982
+  console_port: '%env(int:ESB_CONSOLE_PORT)%'
   console_username: admin
   console_password: p4ssw0rd
   console_log_file: ~
