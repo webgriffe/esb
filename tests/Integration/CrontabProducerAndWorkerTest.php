@@ -3,6 +3,7 @@
 namespace Webgriffe\Esb\Integration;
 
 use Amp\Loop;
+use Amp\Promise;
 use org\bovigo\vfs\vfsStream;
 use Webgriffe\Esb\DateTimeBuilderInterface;
 use Webgriffe\Esb\DateTimeBuilderStub;
@@ -11,6 +12,7 @@ use Webgriffe\Esb\DummyFilesystemWorker;
 use Webgriffe\Esb\KernelTestCase;
 use Webgriffe\Esb\Model\Job;
 use Webgriffe\Esb\TestUtils;
+use function Amp\File\exists;
 
 class CrontabProducerAndWorkerTest extends KernelTestCase
 {
@@ -67,17 +69,14 @@ class CrontabProducerAndWorkerTest extends KernelTestCase
                 ]
             ]
         ]);
-
         DateTimeBuilderStub::$forcedNow = '2018-02-19 13:00:00';
-        Loop::delay(200, function () {
-            Loop::stop();
+        $this->stopWhen(function () use ($workerFile) {
+            return (yield exists($workerFile)) && count($this->getFileLines($workerFile)) === 2;
         });
 
         self::$kernel->boot();
 
-        $this->assertFileExists($workerFile);
         $workerFileLines = $this->getFileLines($workerFile);
-        $this->assertCount(2, $workerFileLines);
         $this->assertContains('job1', $workerFileLines[0]);
         $this->assertContains('job2', $workerFileLines[1]);
         $this->assertReadyJobsCountInTube(0, self::TUBE);

@@ -9,6 +9,7 @@ use Webgriffe\Esb\DummyFilesystemRepeatProducer;
 use Webgriffe\Esb\DummyFilesystemWorker;
 use Webgriffe\Esb\KernelTestCase;
 use Webgriffe\Esb\TestUtils;
+use function Amp\File\exists;
 
 class TwoFlowsTest extends KernelTestCase
 {
@@ -44,7 +45,8 @@ class TwoFlowsTest extends KernelTestCase
                 ]
             ]
         ]);
-
+        mkdir($producerDir1);
+        mkdir($producerDir2);
         Loop::delay(
             200,
             function () use ($producerDir1, $producerDir2) {
@@ -55,23 +57,22 @@ class TwoFlowsTest extends KernelTestCase
                     function () use ($producerDir1, $producerDir2) {
                         touch($producerDir1 . DIRECTORY_SEPARATOR . 'job2');
                         touch($producerDir2 . DIRECTORY_SEPARATOR . 'job2');
-                        Loop::delay(200, function () {
-                            Loop::stop();
-                        });
                     }
                 );
             }
         );
+        $this->stopWhen(function () use ($workerFile1, $workerFile2) {
+            return ((yield exists($workerFile1)) && count($this->getFileLines($workerFile1)) === 2) &&
+                    ((yield exists($workerFile2)) && count($this->getFileLines($workerFile2)) === 2);
+        });
 
         self::$kernel->boot();
 
         $workerFileLines = $this->getFileLines($workerFile1);
-        $this->assertCount(2, $workerFileLines);
         $this->assertContains('job1', $workerFileLines[0]);
         $this->assertContains('job2', $workerFileLines[1]);
         $this->assertReadyJobsCountInTube(0, self::TUBE1);
         $workerFileLines = $this->getFileLines($workerFile2);
-        $this->assertCount(2, $workerFileLines);
         $this->assertContains('job1', $workerFileLines[0]);
         $this->assertContains('job2', $workerFileLines[1]);
         $this->assertReadyJobsCountInTube(0, self::TUBE1);
