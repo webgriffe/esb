@@ -32,11 +32,12 @@ class FailingProducerTest extends KernelTestCase
                 ]
             ]
         ]);
-        Loop::delay(200, function () {
-            Loop::stop();
+        $this->stopWhen(function () {
+            return $this->logHandler()->hasErrorRecords();
         });
 
         self::$kernel->boot();
+
         $this->assertTrue($this->logHandler()->hasErrorThatContains('An error occurred producing/queueing jobs'));
     }
 }

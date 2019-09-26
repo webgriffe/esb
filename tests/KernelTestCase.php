@@ -3,9 +3,12 @@
 namespace Webgriffe\Esb;
 
 use Amp\File\BlockingDriver;
+use Amp\Loop;
 use Monolog\Handler\TestHandler;
 use org\bovigo\vfs\vfsStream;
 use Symfony\Component\Yaml\Yaml;
+use function Amp\call;
+use function Amp\File\exists;
 use function Amp\File\filesystem;
 
 class KernelTestCase extends BeanstalkTestCase
@@ -63,5 +66,20 @@ class KernelTestCase extends BeanstalkTestCase
         return implode('', array_map(function ($entry) {
             return $entry['formatted'];
         }, $records));
+    }
+
+    protected function stopWhen(callable $stopCondition, int $timeoutInSeconds = 10)
+    {
+        $start = Loop::now();
+        Loop::repeat(1, function () use ($start, $stopCondition, $timeoutInSeconds) {
+            if (yield call($stopCondition)) {
+                Loop::stop();
+            }
+            if ((Loop::now() - $start) >= $timeoutInSeconds * 1000) {
+                throw new \RuntimeException(
+                    sprintf('Stop condition not reached within %s seconds timeout!', $timeoutInSeconds)
+                );
+            }
+        });
     }
 }

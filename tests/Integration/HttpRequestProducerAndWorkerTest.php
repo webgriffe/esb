@@ -6,12 +6,18 @@ use Amp\Artax\DefaultClient;
 use Amp\Artax\Request;
 use Amp\Artax\Response;
 use Amp\Loop;
+use Amp\Promise;
+use Amp\Socket\ClientSocket;
+use Amp\Socket\ConnectException;
 use Monolog\Logger;
 use org\bovigo\vfs\vfsStream;
 use Webgriffe\Esb\DummyFilesystemWorker;
 use Webgriffe\Esb\DummyHttpRequestProducer;
 use Webgriffe\Esb\KernelTestCase;
 use Webgriffe\Esb\TestUtils;
+use function Amp\call;
+use function Amp\File\exists;
+use function Amp\Socket\connect;
 
 class HttpRequestProducerAndWorkerTest extends KernelTestCase
 {
@@ -46,16 +52,17 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
 
     public function testHttpRequestProducerAndWorker()
     {
-        Loop::delay(200, function () {
+        Loop::delay(100, function () {
+            yield $this->waitForConnectionAvailable("tcp://127.0.0.1:{$this->httpPort}");
             $payload = json_encode(['jobs' => ['job1', 'job2', 'job3']]);
             $client = new DefaultClient();
             $request = (new Request("http://127.0.0.1:{$this->httpPort}/dummy", 'POST'))->withBody($payload);
             /** @var Response $response */
             $response = yield $client->request($request);
             $this->assertContains('"Successfully scheduled 3 job(s) to be queued."', yield $response->getBody());
-            Loop::delay(200, function () {
-                Loop::stop();
-            });
+        });
+        $this->stopWhen(function () {
+            return (yield exists($this->workerFile)) && count($this->getFileLines($this->workerFile)) === 3;
         });
 
         self::$kernel->boot();
@@ -82,7 +89,8 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
 
     public function testHttpRequestProducerWithWrongUriShouldReturn404()
     {
-        Loop::delay(200, function () {
+        Loop::delay(100, function () {
+            yield $this->waitForConnectionAvailable("tcp://127.0.0.1:{$this->httpPort}");
             $payload = json_encode(['jobs' => ['job1', 'job2', 'job3']]);
             $client = new DefaultClient();
             $request = (new Request("http://127.0.0.1:{$this->httpPort}/wrong-uri", 'POST'))->withBody($payload);
@@ -98,5 +106,20 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
 
         $this->assertFileNotExists($this->workerFile);
         $this->assertReadyJobsCountInTube(0, self::TUBE);
+    }
+
+    private function waitForConnectionAvailable(string $uri): Promise
+    {
+        return call(function () use ($uri) {
+            do {
+                try {
+                    /** @var ClientSocket $connection */
+                    $connection = yield connect($uri);
+                } catch (ConnectException $e) {
+                    $connection = null;
+                }
+            } while ($connection === null);
+            $connection->close();
+        });
     }
 }
