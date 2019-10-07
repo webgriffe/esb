@@ -6,6 +6,8 @@ services:
       context: .
     env_file:
       - .env
+    environment:
+      - PHP_DATE_TIMEZONE=${PHP_DATE_TIMEZONE:-UTC}
     ports:
       - "${ESB_CONSOLE_PORT}:${ESB_CONSOLE_PORT}"
       - "${ESB_HTTP_SERVER_PORT}:${ESB_HTTP_SERVER_PORT}"
