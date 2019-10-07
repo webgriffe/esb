@@ -9,13 +9,14 @@ services:
       ESB_HTTP_SERVER_PORT: 34981
       ESB_BEANSTALKD_URL: "tcp://beanstalkd:11300"
     ports:
-      - 8080
-      - 34981
+      - "8080:8080"
+      - "34981:34981"
     volumes:
       - .:/srv/esb:rw,cached
     working_dir: /srv/esb
     depends_on:
       - beanstalkd
+    command: "bin/esb"
 
   beanstalkd:
     image: schickling/beanstalkd
