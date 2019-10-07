@@ -59,6 +59,7 @@ class Kernel
         /** @var Server $consoleServer */
         $consoleServer = $this->getContainer()->get(Server::class);
         $consoleServer->boot();
+        Loop::onSignal(SIGINT, [$this, 'sigintHandler']);
         Loop::run();
     }
 
@@ -97,6 +98,22 @@ class Kernel
     public function getEnvironment(): string
     {
         return $this->environment;
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function sigintHandler()
+    {
+        /** @var LoggerInterface $logger */
+        $logger = $this->getContainer()->get(LoggerInterface::class);
+        $logger->info('Caught "SIGINT" signal: ESB shutting down now!');
+        $this->shutdown();
+    }
+
+    public function shutdown()
+    {
+        Loop::stop(); // TODO it should be a more gracefully shutdown...
     }
 
     /**
