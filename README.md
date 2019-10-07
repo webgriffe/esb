@@ -243,6 +243,8 @@ To contribute simply fork this repository, do your changes and then propose a pu
 
 We recommend to use Docker. Indeed a [`docker-compose.yml`](https://github.com/webgriffe/esb/blob/master/docker-compose.yml) file is provided.
 
+Just copy the `.env.dist` file to `.env` and adjust the environment variables values according to your environment.
+
 For example, to **run the entire test suite** (PHP Code Sniffer, PHPStan, PHPUnit, etc...) you can simply run:
 
 ```bash
