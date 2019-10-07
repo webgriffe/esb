@@ -14,3 +14,5 @@ RUN set -eux; \
 	composer global require "hirak/prestissimo:^0.3" --prefer-dist --no-progress --no-suggest --classmap-authoritative; \
 	composer clear-cache
 ENV PATH="${PATH}:/root/.composer/vendor/bin"
+
+COPY .docker/php/php.ini /usr/local/etc/php/php.ini
