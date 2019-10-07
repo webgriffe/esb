@@ -239,17 +239,33 @@ You can also add your own handlers using the `esb.yml` configuration file.
 Contributing
 ------------
 
-To contribute simply fork this repository, do your changes and then propose a pull requests. The test suite requires a running instance of Beanstalkd:
+To contribute simply fork this repository, do your changes and then propose a pull request.
+
+We recommend to use Docker. Indeed a [`docker-compose.yml`](https://github.com/webgriffe/esb/blob/master/docker-compose.yml) file is provided.
+
+For example, to **run the entire test suite** (PHP Code Sniffer, PHPStan, PHPUnit, etc...) you can simply run:
 
 ```bash
-beanstalkd &
-vendor/bin/phpunit
+docker-compose run php composer tests
 ```
 
-By default it tries to connect to a Beanstalkd running on `127.0.0.1` and default port `11300`. If you have Beanstalkd running elsewhere (for example in a Docker container) you can set the `ESB_BEANSTALKD_URL` environment variable with the connection string (like `tcp://docker:11300`).
+Or to only run PHPUnit tests you can use:
+
+```bash
+docker-compose run php vendor/bin/phpunit
+```
+
+The test suite uses the `ESB_BEANSTALKD_URL` environment variable to get the connection URL of the Beanstalkd instance. This environment variable is already set in the provided [`docker-compose.yml`](https://github.com/webgriffe/esb/blob/master/docker-compose.yml) file.
+
+You can also run an instance of the ESB locally using Docker. You must create an `esb.yml` configuration file in the root directory and then run:
+
+```bash
+docker-compose up
+```
 
 License
 -------
+
 This library is under the MIT license. See the complete license in the LICENSE file.
 
 Credits
