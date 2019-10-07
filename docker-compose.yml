@@ -14,7 +14,13 @@ services:
     working_dir: /srv/esb
     depends_on:
       - beanstalkd
+      - mailhog
     command: "bin/esb"
 
   beanstalkd:
     image: schickling/beanstalkd
+
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "${MAILHOG_WEB_PORT_HOST}:8025"
