@@ -34,19 +34,16 @@ class FailingJobHandlingTest extends KernelTestCase
         ]);
 
         DummyRepeatProducer::$jobs = [new Job(['test'])];
-        Loop::delay(2010, function () {
-            Loop::stop();
-        });
-        self::$kernel->boot();
-
-        $this->assertTrue(
-            $this->logHandler()->hasErrorThatPasses(
+        $this->stopWhen(function () {
+            return $this->logHandler()->hasErrorThatPasses(
                 function (array $record) {
                     return $record['message'] === 'A Job reached maximum work retry limit and has been buried' &&
                         $record['context']['max_retry'] === 2;
                 }
-            )
-        );
+            );
+        });
+        self::$kernel->boot();
+
         $this->assertTrue(
             $this->logHandler()->hasInfoThatPasses(
                 function (array $record) {

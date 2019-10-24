@@ -42,18 +42,17 @@ class RepeatProducerAndWorkerTest extends KernelTestCase
                     200,
                     function () use ($producerDir) {
                         touch($producerDir . DIRECTORY_SEPARATOR . 'job2');
-                        Loop::delay(200, function () {
-                            Loop::stop();
-                        });
                     }
                 );
             }
         );
+        $this->stopWhen(function () use ($workerFile) {
+            return (yield exists($workerFile)) && count($this->getFileLines($workerFile)) === 2;
+        });
 
         self::$kernel->boot();
 
         $workerFileLines = $this->getFileLines($workerFile);
-        $this->assertCount(2, $workerFileLines);
         $this->assertContains('job1', $workerFileLines[0]);
         $this->assertContains('job2', $workerFileLines[1]);
         $this->assertReadyJobsCountInTube(0, self::TUBE);
