@@ -2,7 +2,6 @@ sudo: required
 
 language: php
 php:
-  - 7.0
   - 7.1
   - 7.2
 
@@ -22,7 +21,7 @@ install:
 
 before_script:
   - composer install
-  - if (( $(echo "$(phpenv version-name) >= 7.1" |bc -l) )); then composer global require maglnet/composer-require-checker && $HOME/.composer/vendor/bin/composer-require-checker --config-file=composer-require-checker.json; fi
+  - composer global require maglnet/composer-require-checker && $HOME/.composer/vendor/bin/composer-require-checker --config-file=composer-require-checker.json;
   - vendor/bin/phpcs
   - vendor/bin/phpstan analyse --no-progress -l 6 -c phpstan.neon src tests
 
