@@ -16,3 +16,8 @@ RUN set -eux; \
 ENV PATH="${PATH}:/root/.composer/vendor/bin"
 
 COPY .docker/php/php.ini /usr/local/etc/php/php.ini
+
+RUN set -eux; \
+	apk --no-cache add \
+	    git \
+    ;
