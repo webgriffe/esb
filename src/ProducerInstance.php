@@ -10,6 +10,7 @@ use Psr\Log\LoggerInterface;
 use Webgriffe\Esb\Model\FlowConfig;
 use Webgriffe\Esb\Model\Job;
 use Webgriffe\Esb\Service\CronProducersServer;
+use Webgriffe\Esb\Service\ElasticSearch;
 use Webgriffe\Esb\Service\HttpProducersServer;
 use function Amp\call;
 
@@ -39,6 +40,10 @@ final class ProducerInstance implements ProducerInstanceInterface
      * @var CronProducersServer
      */
     private $cronProducersServer;
+    /**
+     * @var ElasticSearch
+     */
+    private $elasticSearch;
 
     public function __construct(
         FlowConfig $flowConfig,
@@ -46,7 +51,8 @@ final class ProducerInstance implements ProducerInstanceInterface
         BeanstalkClient $beanstalkClient,
         LoggerInterface $logger,
         HttpProducersServer $httpProducersServer,
-        CronProducersServer $cronProducersServer
+        CronProducersServer $cronProducersServer,
+        ElasticSearch $elasticSearch
     ) {
         $this->flowConfig = $flowConfig;
         $this->producer = $producer;
@@ -54,6 +60,7 @@ final class ProducerInstance implements ProducerInstanceInterface
         $this->logger = $logger;
         $this->httpProducersServer = $httpProducersServer;
         $this->cronProducersServer = $cronProducersServer;
+        $this->elasticSearch = $elasticSearch;
     }
 
     public function boot(): Promise
@@ -110,6 +117,7 @@ final class ProducerInstance implements ProducerInstanceInterface
                 while (yield $jobs->advance()) {
                     /** @var Job $job */
                     $job = $jobs->getCurrent();
+                    yield $this->elasticSearch->indexNewJob($job);
                     $payload = serialize($job->getPayloadData());
                     $jobId = yield $this->beanstalkClient->put(
                         $payload,

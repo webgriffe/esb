@@ -1,30 +1,42 @@
 <?php
+declare(strict_types=1);
 
 namespace Webgriffe\Esb;
 
+use Amp\Artax\Response;
+use Amp\Artax\SocketException;
+use Amp\Elasticsearch\Client;
 use Amp\File\BlockingDriver;
 use Amp\Loop;
+use Amp\Promise;
 use Monolog\Handler\TestHandler;
 use org\bovigo\vfs\vfsStream;
 use Symfony\Component\Yaml\Yaml;
 use function Amp\call;
-use function Amp\File\exists;
 use function Amp\File\filesystem;
 
 class KernelTestCase extends BeanstalkTestCase
 {
+    private const ELASTICSEARCH_CONNECTION_TIMEOUT = 60;
+
     /**
      * @var Kernel|null
      */
     protected static $kernel;
+    /**
+     * @var Client
+     */
+    protected $esClient;
 
     /**
-     * @throws \Error
+     * @throws \Throwable
      */
     public function setUp()
     {
         parent::setUp();
         filesystem(new BlockingDriver());
+        $this->esClient = new Client(getenv('ES_BASE_URI') ?: 'http://127.0.0.1:9200');
+        $this->elasticSearchReset();
     }
 
     protected function tearDown()
@@ -83,5 +95,39 @@ class KernelTestCase extends BeanstalkTestCase
                 );
             }
         });
+    }
+
+    private function elasticSearchReset(): void
+    {
+        $this->waitForElasticSearch();
+        $indices = Promise\wait($this->esClient->catIndices());
+        foreach ($indices as $index) {
+            Promise\wait($this->esClient->deleteIndex($index['index']));
+        }
+    }
+
+    private function waitForElasticSearch(): void
+    {
+        $start = time();
+        $status = false;
+        do {
+            if (time() - $start >= self::ELASTICSEARCH_CONNECTION_TIMEOUT) {
+                throw new \RuntimeException(
+                    sprintf(
+                        'ElasticSearch is still not available after %s seconds! Latest status was "%s".',
+                        self::ELASTICSEARCH_CONNECTION_TIMEOUT,
+                        is_string($status) ? $status : 'unknown'
+                    )
+                );
+            }
+            try {
+                /** @var Response $response */
+                $response = Promise\wait($this->esClient->catHealth());
+                $status = $response[0]['status'];
+            } catch (SocketException $e) {
+                // We want to retry until timeout is reached
+                $status = false;
+            }
+        } while (!in_array($status, ['green', 'yellow']));
     }
 }

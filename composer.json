@@ -25,7 +25,8 @@
         "psr/log": "^1.1",
         "amphp/socket": "^0.10",
         "amphp/http": "^1.1",
-        "amphp/file": "^0.3"
+        "amphp/file": "^0.3",
+        "amphp/elasticsearch": "dev-master"
     },
     "autoload": {
         "psr-4": {
@@ -54,5 +55,11 @@
         "phpstan": "phpstan analyse --no-progress -l 6 -c phpstan.neon src tests",
         "phpunit": "phpunit",
         "tests": ["@phpcs", "@phpstan", "@phpunit"]
-    }
+    },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/mmenozzi/amp-elasticsearch"
+        }
+    ]
 }
