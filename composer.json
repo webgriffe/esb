@@ -26,7 +26,8 @@
         "amphp/socket": "^0.10",
         "amphp/http": "^1.1",
         "amphp/file": "^0.3",
-        "amphp/elasticsearch": "dev-master"
+        "amphp/elasticsearch": "dev-master",
+        "webmozart/assert": "^1.5"
     },
     "autoload": {
         "psr-4": {
