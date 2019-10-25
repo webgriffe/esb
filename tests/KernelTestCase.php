@@ -71,13 +71,15 @@ class KernelTestCase extends BeanstalkTestCase
     protected function stopWhen(callable $stopCondition, int $timeoutInSeconds = 10)
     {
         $start = Loop::now();
-        Loop::repeat(1, function () use ($start, $stopCondition, $timeoutInSeconds) {
+        Loop::repeat(1, function ($watcherId) use ($start, $stopCondition, $timeoutInSeconds) {
             if (yield call($stopCondition)) {
+                Loop::cancel($watcherId);
                 Loop::stop();
             }
             if ((Loop::now() - $start) >= $timeoutInSeconds * 1000) {
+                $log = $this->dumpLog();
                 throw new \RuntimeException(
-                    sprintf('Stop condition not reached within %s seconds timeout!', $timeoutInSeconds)
+                    sprintf("Stop condition not reached within %s seconds timeout! Log:\n%s", $timeoutInSeconds, $log)
                 );
             }
         });
