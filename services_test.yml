@@ -30,5 +30,4 @@ services:
 
   Webgriffe\Esb\Service\ElasticSearch:
     arguments:
-      - '@Amp\Elasticsearch\Client'
-      - {indexRefresh: wait_for}
+      $options: {indexRefresh: wait_for}
