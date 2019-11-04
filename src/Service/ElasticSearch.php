@@ -43,7 +43,7 @@ class ElasticSearch
             yield $this->client->indexDocument(
                 self::INDEX_NAME,
                 '',
-                $this->normalizer->normalize($job, 'json'),
+                (array)$this->normalizer->normalize($job, 'json'),
                 ['refresh' => $this->indexRefresh]
             );
         });
