@@ -3,8 +3,14 @@ declare(strict_types=1);
 
 namespace Webgriffe\Esb\Model;
 
+use Ramsey\Uuid\Uuid;
+
 final class Job implements JobInterface
 {
+    /**
+     * @var string
+     */
+    private $uuid;
     /**
      * @var array
      */
@@ -33,19 +39,36 @@ final class Job implements JobInterface
      * @param int $delay
      * @param int $priority
      * @param array $events
+     * @param string|null $uuid
+     * @throws \Exception
+     *
+     * TODO $events and $uuid constructor argument have been added only to allow deserialization of Job. Remove it.
      */
     public function __construct(
         array $payloadData,
         int $timeout = 60,
         int $delay = 0,
         $priority = 0,
-        array $events = []
+        array $events = [],
+        string $uuid = null
     ) {
+        if ($uuid === null) {
+            $uuid = Uuid::uuid1()->toString();
+        }
+        $this->uuid = $uuid;
         $this->payloadData = $payloadData;
         $this->timeout = $timeout;
         $this->delay = $delay;
         $this->priority = $priority;
         $this->events = $events;
+    }
+
+    /**
+     * @return string
+     */
+    public function getUuid(): string
+    {
+        return $this->uuid;
     }
 
     /**

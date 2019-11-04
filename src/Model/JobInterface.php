@@ -6,6 +6,11 @@ namespace Webgriffe\Esb\Model;
 interface JobInterface
 {
     /**
+     * @return string
+     */
+    public function getUuid(): string;
+
+    /**
      * @return array
      */
     public function getPayloadData(): array;

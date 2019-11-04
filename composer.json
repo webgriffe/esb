@@ -31,7 +31,8 @@
         "symfony/serializer": "^4.3",
         "symfony/property-access": "^4.3",
         "symfony/property-info": "^4.3",
-        "doctrine/annotations": "^1.8"
+        "doctrine/annotations": "^1.8",
+        "ramsey/uuid": "^3.8"
     },
     "autoload": {
         "psr-4": {

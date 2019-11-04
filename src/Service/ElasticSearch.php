@@ -37,12 +37,12 @@ class ElasticSearch
         $this->indexRefresh = $indexRefresh;
     }
 
-    public function indexNewJob(JobInterface $job): Amp\Promise
+    public function indexJob(JobInterface $job): Amp\Promise
     {
         return Amp\call(function () use ($job) {
             yield $this->client->indexDocument(
                 self::INDEX_NAME,
-                '',
+                $job->getUuid(),
                 (array)$this->normalizer->normalize($job, 'json'),
                 ['refresh' => $this->indexRefresh]
             );
