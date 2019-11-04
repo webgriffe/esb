@@ -24,4 +24,19 @@ interface JobInterface
      * @return int
      */
     public function getPriority(): int;
+
+    /**
+     * @param JobEventInterface $tag
+     */
+    public function addEvent(JobEventInterface $tag): void;
+
+    /**
+     * @return JobEventInterface[]
+     */
+    public function getEvents(): array;
+
+    /**
+     * @return JobEventInterface|null
+     */
+    public function getLastEvent(): ?JobEventInterface;
 }
