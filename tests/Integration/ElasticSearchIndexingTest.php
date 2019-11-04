@@ -13,6 +13,7 @@ use Webgriffe\Esb\DummyFilesystemWorker;
 use Webgriffe\Esb\KernelTestCase;
 use Webgriffe\Esb\Model\Job;
 use Webgriffe\Esb\Model\ProducedJobEvent;
+use Webgriffe\Esb\Model\ReservedJobEvent;
 use Webgriffe\Esb\Service\ElasticSearch;
 use Webgriffe\Esb\TestUtils;
 use function Amp\File\exists;
@@ -67,10 +68,15 @@ class ElasticSearchIndexingTest extends KernelTestCase
         $this->assertForEachJob(
             function (Job $job) {
                 $events = $job->getEvents();
+                $this->assertCount(2, $events);
                 /** @var ProducedJobEvent $event */
                 $event = $events[0];
                 $this->assertInstanceOf(ProducedJobEvent::class, $event);
                 $this->assertEquals(DummyFilesystemRepeatProducer::class, $event->getProducerFqcn());
+                /** @var ReservedJobEvent $event */
+                $event = $events[1];
+                $this->assertInstanceOf(ReservedJobEvent::class, $event);
+                $this->assertEquals(DummyFilesystemWorker::class, $event->getWorkerFqcn());
             },
             $search['hits']['hits']
         );

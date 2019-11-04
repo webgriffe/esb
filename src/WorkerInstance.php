@@ -11,6 +11,8 @@ use Symfony\Component\Serializer\SerializerInterface;
 use Webgriffe\Esb\Model\FlowConfig;
 use Webgriffe\Esb\Model\Job;
 use Webgriffe\Esb\Model\QueuedJob;
+use Webgriffe\Esb\Model\ReservedJobEvent;
+use Webgriffe\Esb\Service\ElasticSearch;
 use function Amp\call;
 
 final class WorkerInstance implements WorkerInstanceInterface
@@ -44,6 +46,10 @@ final class WorkerInstance implements WorkerInstanceInterface
      * @var array
      */
     private static $workCounts = [];
+    /**
+     * @var ElasticSearch
+     */
+    private $elasticSearch;
 
     public function __construct(
         FlowConfig $flowConfig,
@@ -51,7 +57,8 @@ final class WorkerInstance implements WorkerInstanceInterface
         WorkerInterface $worker,
         BeanstalkClient $beanstalkClient,
         LoggerInterface $logger,
-        SerializerInterface $serializer
+        SerializerInterface $serializer,
+        ElasticSearch $elasticSearch
     ) {
         $this->flowConfig = $flowConfig;
         $this->instanceId = $instanceId;
@@ -59,6 +66,7 @@ final class WorkerInstance implements WorkerInstanceInterface
         $this->beanstalkClient = $beanstalkClient;
         $this->logger = $logger;
         $this->serializer = $serializer;
+        $this->elasticSearch = $elasticSearch;
     }
 
     public function boot(): Promise
@@ -68,11 +76,12 @@ final class WorkerInstance implements WorkerInstanceInterface
             yield $this->beanstalkClient->watch($this->flowConfig->getTube());
             yield $this->beanstalkClient->ignore('default');
 
+            $workerFqcn = \get_class($this->worker);
             $this->logger->info(
                 'A Worker instance has been successfully initialized',
                 [
                     'flow' => $this->flowConfig->getDescription(),
-                    'worker' => \get_class($this->worker),
+                    'worker' => $workerFqcn,
                     'instance_id' => $this->instanceId
                 ]
             );
@@ -81,7 +90,7 @@ final class WorkerInstance implements WorkerInstanceInterface
                 list($jobId, $rawPayload) = $rawJob;
                 $logContext = [
                     'flow' => $this->flowConfig->getDescription(),
-                    'worker' => \get_class($this->worker),
+                    'worker' => $workerFqcn,
                     'instance_id' => $this->instanceId,
                     'job_id' => $jobId,
                 ];
@@ -95,6 +104,8 @@ final class WorkerInstance implements WorkerInstanceInterface
                     $this->logger->critical('Cannot deserialize job so it has been buried.', $logContext);
                     continue;
                 }
+                $job->addEvent(new ReservedJobEvent(new \DateTime(), $workerFqcn));
+                yield $this->elasticSearch->indexJob($job);
                 $payloadData = $job->getPayloadData();
                 $job = new QueuedJob($jobId, $payloadData);
                 $logContext['payload_data'] = NonUtf8Cleaner::clean($job->getPayloadData());
