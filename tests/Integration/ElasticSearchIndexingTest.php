@@ -14,6 +14,7 @@ use Webgriffe\Esb\KernelTestCase;
 use Webgriffe\Esb\Model\Job;
 use Webgriffe\Esb\Model\ProducedJobEvent;
 use Webgriffe\Esb\Model\ReservedJobEvent;
+use Webgriffe\Esb\Model\WorkedJobEvent;
 use Webgriffe\Esb\Service\ElasticSearch;
 use Webgriffe\Esb\TestUtils;
 use function Amp\File\exists;
@@ -57,18 +58,23 @@ class ElasticSearchIndexingTest extends KernelTestCase
                 );
             }
         );
-        $this->stopWhen(function () use ($workerFile) {
-            return (yield exists($workerFile)) && count($this->getFileLines($workerFile)) === 2;
+        $this->stopWhen(function () {
+            $successLog = array_filter(
+                $this->logHandler()->getRecords(),
+                function ($log) {
+                    return strpos($log['message'], 'Successfully worked a Job') !== false;
+                }
+            );
+            return count($successLog) >= 2;
         });
         self::$kernel->boot();
 
         $search = Promise\wait($this->esClient->uriSearchOneIndex(ElasticSearch::INDEX_NAME, ''));
         $this->assertCount(2, $search['hits']['hits']);
-
         $this->assertForEachJob(
             function (Job $job) {
                 $events = $job->getEvents();
-                $this->assertCount(2, $events);
+                $this->assertCount(3, $events);
                 /** @var ProducedJobEvent $event */
                 $event = $events[0];
                 $this->assertInstanceOf(ProducedJobEvent::class, $event);
@@ -77,6 +83,11 @@ class ElasticSearchIndexingTest extends KernelTestCase
                 $event = $events[1];
                 $this->assertInstanceOf(ReservedJobEvent::class, $event);
                 $this->assertEquals(DummyFilesystemWorker::class, $event->getWorkerFqcn());
+                /** @var WorkedJobEvent $event */
+                $event = $events[2];
+                $this->assertInstanceOf(WorkedJobEvent::class, $event);
+                $this->assertEquals(DummyFilesystemWorker::class, $event->getWorkerFqcn());
+                $this->assertEquals($event, $job->getLastEvent());
             },
             $search['hits']['hits']
         );
