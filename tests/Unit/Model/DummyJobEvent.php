@@ -10,10 +10,6 @@ class DummyJobEvent implements JobEventInterface
 {
     private $time;
 
-    /**
-     * DummyJobEvent constructor.
-     * @param $time
-     */
     public function __construct(\DateTime $time)
     {
         $this->time = $time;
