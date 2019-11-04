@@ -27,7 +27,11 @@
         "amphp/http": "^1.1",
         "amphp/file": "^0.3",
         "amphp/elasticsearch": "dev-master",
-        "webmozart/assert": "^1.5"
+        "webmozart/assert": "^1.5",
+        "symfony/serializer": "^4.3",
+        "symfony/property-access": "^4.3",
+        "symfony/property-info": "^4.3",
+        "doctrine/annotations": "^1.8"
     },
     "autoload": {
         "psr-4": {

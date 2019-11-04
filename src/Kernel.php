@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Webgriffe\Esb;
 
 use Amp\Loop;
+use Doctrine\Common\Annotations\AnnotationRegistry;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Config\Exception\FileLocatorFileNotFoundException;
 use Symfony\Component\Config\FileLocator;
@@ -37,6 +38,7 @@ class Kernel
      */
     public function __construct(string $localConfigFilePath, string $environment = null)
     {
+        AnnotationRegistry::registerUniqueLoader('class_exists');
         $this->localConfigFilePath = $localConfigFilePath;
         $this->environment = $environment;
         $this->container = new ContainerBuilder();

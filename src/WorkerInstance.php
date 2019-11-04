@@ -6,7 +6,9 @@ namespace Webgriffe\Esb;
 use Amp\Beanstalk\BeanstalkClient;
 use Amp\Promise;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Serializer\SerializerInterface;
 use Webgriffe\Esb\Model\FlowConfig;
+use Webgriffe\Esb\Model\Job;
 use Webgriffe\Esb\Model\QueuedJob;
 use function Amp\call;
 
@@ -32,6 +34,10 @@ final class WorkerInstance implements WorkerInstanceInterface
      * @var LoggerInterface
      */
     private $logger;
+    /**
+     * @var SerializerInterface
+     */
+    private $serializer;
 
     /**
      * @var array
@@ -43,13 +49,15 @@ final class WorkerInstance implements WorkerInstanceInterface
         int $instanceId,
         WorkerInterface $worker,
         BeanstalkClient $beanstalkClient,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        SerializerInterface $serializer
     ) {
         $this->flowConfig = $flowConfig;
         $this->instanceId = $instanceId;
         $this->worker = $worker;
         $this->beanstalkClient = $beanstalkClient;
         $this->logger = $logger;
+        $this->serializer = $serializer;
     }
 
     public function boot(): Promise
@@ -77,7 +85,9 @@ final class WorkerInstance implements WorkerInstanceInterface
                     'job_id' => $jobId,
                 ];
 
-                $payloadData = @unserialize($rawPayload, ['allowed_classes' => false]);
+                /** @var Job $job */
+                $job = $this->serializer->deserialize($rawPayload, Job::class, 'json');
+                $payloadData = $job->getPayloadData();
                 if ($payloadData === false) {
                     $logContext['raw_payload'] = NonUtf8Cleaner::cleanString($rawPayload);
                     yield $this->beanstalkClient->bury($jobId);

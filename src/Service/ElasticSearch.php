@@ -6,6 +6,7 @@ namespace Webgriffe\Esb\Service;
 
 use Amp;
 use Amp\Elasticsearch\Client;
+use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 use Webgriffe\Esb\Model\JobInterface;
 use Webmozart\Assert\Assert;
 
@@ -19,13 +20,18 @@ class ElasticSearch
      */
     private $client;
     /**
+     * @var NormalizerInterface
+     */
+    private $normalizer;
+    /**
      * @var string
      */
     private $indexRefresh;
 
-    public function __construct(Client $client, array $options = [])
+    public function __construct(Client $client, NormalizerInterface $normalizer, array $options = [])
     {
         $this->client = $client;
+        $this->normalizer = $normalizer;
         $indexRefresh = $options['indexRefresh'] ?? 'false';
         Assert::oneOf($indexRefresh, ['true', 'false', 'wait_for']);
         $this->indexRefresh = $indexRefresh;
@@ -37,29 +43,9 @@ class ElasticSearch
             yield $this->client->indexDocument(
                 self::INDEX_NAME,
                 '',
-                $this->convertJobToDocument($job),
+                $this->normalizer->normalize($job, 'json'),
                 ['refresh' => $this->indexRefresh]
             );
         });
-    }
-
-    private function convertJobToDocument(JobInterface $job): array
-    {
-        return [
-            'job' => [
-                'payloadData' => $job->getPayloadData(),
-                'priority' => $job->getPriority(),
-                'delay' => $job->getDelay(),
-                'timeout' => $job->getTimeout(),
-            ]
-        ];
-    }
-
-    /**
-     * @return string
-     */
-    public function getIndexRefresh(): string
-    {
-        return $this->indexRefresh;
     }
 }

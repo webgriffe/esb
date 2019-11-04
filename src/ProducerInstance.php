@@ -7,6 +7,7 @@ use Amp\Beanstalk\BeanstalkClient;
 use Amp\Loop;
 use Amp\Promise;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Serializer\SerializerInterface;
 use Webgriffe\Esb\Model\FlowConfig;
 use Webgriffe\Esb\Model\Job;
 use Webgriffe\Esb\Service\CronProducersServer;
@@ -44,6 +45,10 @@ final class ProducerInstance implements ProducerInstanceInterface
      * @var ElasticSearch
      */
     private $elasticSearch;
+    /**
+     * @var SerializerInterface
+     */
+    private $serializer;
 
     public function __construct(
         FlowConfig $flowConfig,
@@ -52,7 +57,8 @@ final class ProducerInstance implements ProducerInstanceInterface
         LoggerInterface $logger,
         HttpProducersServer $httpProducersServer,
         CronProducersServer $cronProducersServer,
-        ElasticSearch $elasticSearch
+        ElasticSearch $elasticSearch,
+        SerializerInterface $serializer
     ) {
         $this->flowConfig = $flowConfig;
         $this->producer = $producer;
@@ -61,6 +67,7 @@ final class ProducerInstance implements ProducerInstanceInterface
         $this->httpProducersServer = $httpProducersServer;
         $this->cronProducersServer = $cronProducersServer;
         $this->elasticSearch = $elasticSearch;
+        $this->serializer = $serializer;
     }
 
     public function boot(): Promise
@@ -118,9 +125,8 @@ final class ProducerInstance implements ProducerInstanceInterface
                     /** @var Job $job */
                     $job = $jobs->getCurrent();
                     yield $this->elasticSearch->indexNewJob($job);
-                    $payload = serialize($job->getPayloadData());
                     $jobId = yield $this->beanstalkClient->put(
-                        $payload,
+                        $this->serializer->serialize($job, 'json'),
                         $job->getTimeout(),
                         $job->getDelay(),
                         $job->getPriority()

@@ -68,3 +68,36 @@ services:
   Amp\Elasticsearch\Client:
     arguments:
       $baseUri: '%elasticsearch_base_uri%'
+
+  annotation_reader:
+    class: \Doctrine\Common\Annotations\AnnotationReader
+
+  serializer.json_encoder:
+    class: \Symfony\Component\Serializer\Encoder\JsonEncoder
+  serializer.object_normalizer.reflection_extractor:
+    class: \Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor
+  serializer.date_time_normalizer:
+    class: \Symfony\Component\Serializer\Normalizer\DateTimeNormalizer
+  serializer.array_denormalizer:
+    class: \Symfony\Component\Serializer\Normalizer\ArrayDenormalizer
+  serializer.class_metadata_factory.annotation_loader:
+    class: \Symfony\Component\Serializer\Mapping\Loader\AnnotationLoader
+    arguments:
+      - '@annotation_reader'
+  serializer.class_metadata_factory:
+    class: \Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactory
+    arguments:
+      - '@serializer.class_metadata_factory.annotation_loader'
+  serializer.object_normalizer:
+    class: \Symfony\Component\Serializer\Normalizer\ObjectNormalizer
+    arguments:
+      $classMetadataFactory: '@serializer.class_metadata_factory'
+      $propertyTypeExtractor: '@serializer.object_normalizer.reflection_extractor'
+  serializer:
+    public: true # Serializer is public on for testing purpose. Never get serializer directly from the container.
+    class: \Symfony\Component\Serializer\Serializer
+    arguments:
+      - ['@serializer.array_denormalizer', '@serializer.date_time_normalizer', '@serializer.object_normalizer']
+      - ['@serializer.json_encoder']
+  Symfony\Component\Serializer\SerializerInterface: '@serializer'
+  Symfony\Component\Serializer\Normalizer\NormalizerInterface: '@serializer'
