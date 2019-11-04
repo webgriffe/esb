@@ -54,7 +54,7 @@ class JobUnserializationErrorHandlingTest extends KernelTestCase
 
         self::$kernel->boot();
 
-        $this->assertContains('Cannot unserialize job payload so it has been buried.', $this->dumpLog());
+        $this->assertContains('Cannot deserialize job so it has been buried.', $this->dumpLog());
         $this->assertReadyJobsCountInTube(0, self::TUBE);
         $this->assertBuriedJobsCountInTube(1, self::TUBE);
     }

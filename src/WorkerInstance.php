@@ -6,6 +6,7 @@ namespace Webgriffe\Esb;
 use Amp\Beanstalk\BeanstalkClient;
 use Amp\Promise;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Serializer\Exception\ExceptionInterface;
 use Symfony\Component\Serializer\SerializerInterface;
 use Webgriffe\Esb\Model\FlowConfig;
 use Webgriffe\Esb\Model\Job;
@@ -85,15 +86,16 @@ final class WorkerInstance implements WorkerInstanceInterface
                     'job_id' => $jobId,
                 ];
 
-                /** @var Job $job */
-                $job = $this->serializer->deserialize($rawPayload, Job::class, 'json');
-                $payloadData = $job->getPayloadData();
-                if ($payloadData === false) {
+                try {
+                    /** @var Job $job */
+                    $job = $this->serializer->deserialize($rawPayload, Job::class, 'json');
+                } catch (ExceptionInterface $exception) {
                     $logContext['raw_payload'] = NonUtf8Cleaner::cleanString($rawPayload);
                     yield $this->beanstalkClient->bury($jobId);
-                    $this->logger->critical('Cannot unserialize job payload so it has been buried.', $logContext);
+                    $this->logger->critical('Cannot deserialize job so it has been buried.', $logContext);
                     continue;
                 }
+                $payloadData = $job->getPayloadData();
                 $job = new QueuedJob($jobId, $payloadData);
                 $logContext['payload_data'] = NonUtf8Cleaner::clean($job->getPayloadData());
 
