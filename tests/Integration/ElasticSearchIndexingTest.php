@@ -5,14 +5,16 @@ declare(strict_types=1);
 namespace Webgriffe\Esb\Integration;
 
 use Amp\Loop;
-use Amp\Success;
+use Amp\Promise;
 use org\bovigo\vfs\vfsStream;
+use Symfony\Component\Serializer\Serializer;
 use Webgriffe\Esb\DummyFilesystemRepeatProducer;
 use Webgriffe\Esb\DummyFilesystemWorker;
 use Webgriffe\Esb\KernelTestCase;
+use Webgriffe\Esb\Model\Job;
+use Webgriffe\Esb\Model\ProducedJobEvent;
 use Webgriffe\Esb\Service\ElasticSearch;
 use Webgriffe\Esb\TestUtils;
-use Amp\Promise;
 use function Amp\File\exists;
 
 class ElasticSearchIndexingTest extends KernelTestCase
@@ -59,7 +61,30 @@ class ElasticSearchIndexingTest extends KernelTestCase
         });
         self::$kernel->boot();
 
-        $index = Promise\wait($this->esClient->statsIndex(ElasticSearch::INDEX_NAME, 'docs'));
-        $this->assertEquals(2, $index['indices'][ElasticSearch::INDEX_NAME]['total']['docs']['count']);
+        $search = Promise\wait($this->esClient->uriSearchOneIndex(ElasticSearch::INDEX_NAME, ''));
+        $this->assertCount(2, $search['hits']['hits']);
+
+        $this->assertForEachJob(
+            function (Job $job) {
+                $events = $job->getEvents();
+                /** @var ProducedJobEvent $event */
+                $event = $events[0];
+                $this->assertInstanceOf(ProducedJobEvent::class, $event);
+                $this->assertEquals(DummyFilesystemRepeatProducer::class, $event->getProducerFqcn());
+            },
+            $search['hits']['hits']
+        );
+    }
+
+    private function assertForEachJob(callable $callable, array $jobsData)
+    {
+        /** @var Serializer $serializer */
+        $serializer = self::$kernel->getContainer()->get('serializer');
+        foreach ($jobsData as $jobData) {
+            $jobData = $jobData['_source'];
+            /** @var Job $job */
+            $job = $serializer->denormalize($jobData, Job::class);
+            $callable($job);
+        }
     }
 }

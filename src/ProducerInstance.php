@@ -10,6 +10,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\Serializer\SerializerInterface;
 use Webgriffe\Esb\Model\FlowConfig;
 use Webgriffe\Esb\Model\Job;
+use Webgriffe\Esb\Model\ProducedJobEvent;
 use Webgriffe\Esb\Service\CronProducersServer;
 use Webgriffe\Esb\Service\ElasticSearch;
 use Webgriffe\Esb\Service\HttpProducersServer;
@@ -124,6 +125,7 @@ final class ProducerInstance implements ProducerInstanceInterface
                 while (yield $jobs->advance()) {
                     /** @var Job $job */
                     $job = $jobs->getCurrent();
+                    $job->addEvent(new ProducedJobEvent(new \DateTime(), \get_class($this->producer)));
                     yield $this->elasticSearch->indexNewJob($job);
                     $jobId = yield $this->beanstalkClient->put(
                         $this->serializer->serialize($job, 'json'),
