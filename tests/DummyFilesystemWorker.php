@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Webgriffe\Esb;
 
-use Amp\Promise;
 use Amp\File;
+use Amp\Promise;
 use Amp\Success;
-use Webgriffe\Esb\Model\QueuedJob;
+use Webgriffe\Esb\Model\JobInterface;
 use function Amp\call;
 
 /**
@@ -33,10 +35,9 @@ final class DummyFilesystemWorker implements WorkerInterface
     }
 
     /**
-     * @param QueuedJob $job
-     * @return Promise
+     * {@inheritDoc}
      */
-    public function work(QueuedJob $job): Promise
+    public function work(JobInterface $job): Promise
     {
         return call(function () use ($job) {
             $content = '';

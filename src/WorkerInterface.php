@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace Webgriffe\Esb;
 
 use Amp\Promise;
-use Webgriffe\Esb\Model\QueuedJob;
+use Webgriffe\Esb\Model\JobInterface;
 
 interface WorkerInterface
 {
@@ -14,8 +14,8 @@ interface WorkerInterface
     public function init(): Promise;
 
     /**
-     * @param QueuedJob $job
+     * @param JobInterface $job
      * @return Promise
      */
-    public function work(QueuedJob $job): Promise;
+    public function work(JobInterface $job): Promise;
 }

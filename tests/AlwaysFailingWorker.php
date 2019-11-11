@@ -3,10 +3,10 @@ declare(strict_types=1);
 
 namespace Webgriffe\Esb;
 
-use function Amp\call;
 use Amp\Promise;
 use Amp\Success;
-use Webgriffe\Esb\Model\QueuedJob;
+use Webgriffe\Esb\Model\JobInterface;
+use function Amp\call;
 
 final class AlwaysFailingWorker implements WorkerInterface
 {
@@ -19,10 +19,9 @@ final class AlwaysFailingWorker implements WorkerInterface
     }
 
     /**
-     * @param QueuedJob $job
-     * @return Promise
+     * {@inheritDoc}
      */
-    public function work(QueuedJob $job): Promise
+    public function work(JobInterface $job): Promise
     {
         return call(function () {
             throw new \Error('Failed!');

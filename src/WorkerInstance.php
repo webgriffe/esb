@@ -6,11 +6,9 @@ namespace Webgriffe\Esb;
 use Amp\Beanstalk\BeanstalkClient;
 use Amp\Promise;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Serializer\Exception\ExceptionInterface;
 use Webgriffe\Esb\Model\ErroredJobEvent;
 use Webgriffe\Esb\Model\FlowConfig;
 use Webgriffe\Esb\Model\Job;
-use Webgriffe\Esb\Model\QueuedJob;
 use Webgriffe\Esb\Model\ReservedJobEvent;
 use Webgriffe\Esb\Model\WorkedJobEvent;
 use Webgriffe\Esb\Service\ElasticSearch;
@@ -115,8 +113,7 @@ final class WorkerInstance implements WorkerInstanceInterface
                     }
                     ++self::$workCounts[$jobBeanstalkId];
 
-                    // TODO Remove QueuedJob
-                    yield $this->worker->work(new QueuedJob($jobBeanstalkId, $payloadData));
+                    yield $this->worker->work($job);
                     $job->addEvent(new WorkedJobEvent(new \DateTime(), $workerFqcn));
                     yield $this->elasticSearch->indexJob($job);
                     $this->logger->info('Successfully worked a Job', $logContext);
