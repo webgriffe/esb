@@ -83,12 +83,11 @@ final class WorkerInstance implements WorkerInstanceInterface
 
             while ($rawJob = yield $this->beanstalkClient->reserve()) {
                 list($jobBeanstalkId, $jobUuid) = $rawJob;
-                // TODO rename job_id key in job_beanstalk_id
                 $logContext = [
                     'flow' => $this->flowConfig->getDescription(),
                     'worker' => $workerFqcn,
                     'instance_id' => $this->instanceId,
-                    'job_id' => $jobBeanstalkId,
+                    'job_beanstalk_id' => $jobBeanstalkId,
                     'job_uuid' => $jobUuid
                 ];
 

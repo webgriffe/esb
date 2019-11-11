@@ -127,12 +127,11 @@ final class ProducerInstance implements ProducerInstanceInterface
                         $job->getDelay(),
                         $job->getPriority()
                     );
-                    // TODO rename job_id key in job_beanstalk_id
                     $this->logger->info(
                         'Successfully produced a new Job',
                         [
                             'producer' => \get_class($this->producer),
-                            'job_id' => $jobId,
+                            'job_beanstalk_id' => $jobId,
                             'job_uuid' => $job->getUuid(),
                             'payload_data' => NonUtf8Cleaner::clean($job->getPayloadData())
                         ]
