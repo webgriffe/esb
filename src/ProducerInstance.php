@@ -46,10 +46,6 @@ final class ProducerInstance implements ProducerInstanceInterface
      * @var ElasticSearch
      */
     private $elasticSearch;
-    /**
-     * @var SerializerInterface
-     */
-    private $serializer;
 
     public function __construct(
         FlowConfig $flowConfig,
@@ -58,8 +54,7 @@ final class ProducerInstance implements ProducerInstanceInterface
         LoggerInterface $logger,
         HttpProducersServer $httpProducersServer,
         CronProducersServer $cronProducersServer,
-        ElasticSearch $elasticSearch,
-        SerializerInterface $serializer
+        ElasticSearch $elasticSearch
     ) {
         $this->flowConfig = $flowConfig;
         $this->producer = $producer;
@@ -68,7 +63,6 @@ final class ProducerInstance implements ProducerInstanceInterface
         $this->httpProducersServer = $httpProducersServer;
         $this->cronProducersServer = $cronProducersServer;
         $this->elasticSearch = $elasticSearch;
-        $this->serializer = $serializer;
     }
 
     public function boot(): Promise
@@ -128,16 +122,18 @@ final class ProducerInstance implements ProducerInstanceInterface
                     $job->addEvent(new ProducedJobEvent(new \DateTime(), \get_class($this->producer)));
                     yield $this->elasticSearch->indexJob($job);
                     $jobId = yield $this->beanstalkClient->put(
-                        $this->serializer->serialize($job, 'json'),
+                        $job->getUuid(),
                         $job->getTimeout(),
                         $job->getDelay(),
                         $job->getPriority()
                     );
+                    // TODO rename job_id key in job_beanstalk_id
                     $this->logger->info(
                         'Successfully produced a new Job',
                         [
                             'producer' => \get_class($this->producer),
                             'job_id' => $jobId,
+                            'job_uuid' => $job->getUuid(),
                             'payload_data' => NonUtf8Cleaner::clean($job->getPayloadData())
                         ]
                     );

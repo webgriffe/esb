@@ -101,3 +101,8 @@ services:
       - ['@serializer.json_encoder']
   Symfony\Component\Serializer\SerializerInterface: '@serializer'
   Symfony\Component\Serializer\Normalizer\NormalizerInterface: '@serializer'
+  Symfony\Component\Serializer\Normalizer\DenormalizerInterface: '@serializer'
+
+  Webgriffe\Esb\Service\ElasticSearch:
+    arguments:
+      $normalizer: '@serializer'

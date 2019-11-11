@@ -10,7 +10,8 @@ use Symfony\Component\Serializer\Annotation\DiscriminatorMap;
  * @DiscriminatorMap(typeProperty="type", mapping={
  *    "produced"="Webgriffe\Esb\Model\ProducedJobEvent",
  *    "reserved"="Webgriffe\Esb\Model\ReservedJobEvent",
- *    "worked"="Webgriffe\Esb\Model\WorkedJobEvent"
+ *    "worked"="Webgriffe\Esb\Model\WorkedJobEvent",
+ *    "errored"="Webgriffe\Esb\Model\ErroredJobEvent"
  * })
  */
 interface JobEventInterface

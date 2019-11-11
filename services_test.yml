@@ -27,7 +27,3 @@ services:
   console_logger:
     class: \Monolog\Logger
     arguments: ['esb_console', ['@Monolog\Handler\TestHandler']]
-
-  Webgriffe\Esb\Service\ElasticSearch:
-    arguments:
-      $options: {indexRefresh: wait_for}
