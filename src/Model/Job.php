@@ -42,7 +42,10 @@ final class Job implements JobInterface
      * @param string|null $uuid
      * @throws \Exception
      *
-     * TODO $events and $uuid constructor argument have been added only to allow deserialization of Job. Remove it.
+     * TODO:    $events and $uuid constructor argument shouldn't be set by ProducerInterface implementations.
+     *          They are declared as constructor arguments because the Serializer should be able to set them when
+     *          deserializing/denormalizing Jobs.
+     *          Maybe we need to change the design of this?
      */
     public function __construct(
         array $payloadData,
