@@ -91,7 +91,7 @@ final class WorkerInstance implements WorkerInstanceInterface
 
                 try {
                     /** @var Job $job */
-                    $job = yield $this->elasticSearch->fetchJob($jobUuid);
+                    $job = yield $this->elasticSearch->fetchJob($jobUuid, $this->flowConfig->getTube());
                 } catch (\Throwable $exception) {
                     yield $this->beanstalkClient->bury($jobBeanstalkId);
                     $this->logger->critical(
@@ -101,7 +101,7 @@ final class WorkerInstance implements WorkerInstanceInterface
                     continue;
                 }
                 $job->addEvent(new ReservedJobEvent(new \DateTime(), $workerFqcn));
-                yield $this->elasticSearch->indexJob($job);
+                yield $this->elasticSearch->indexJob($job, $this->flowConfig->getTube());
                 $payloadData = $job->getPayloadData();
                 $logContext['payload_data'] = NonUtf8Cleaner::clean($payloadData);
 
@@ -115,14 +115,14 @@ final class WorkerInstance implements WorkerInstanceInterface
 
                     yield $this->worker->work($job);
                     $job->addEvent(new WorkedJobEvent(new \DateTime(), $workerFqcn));
-                    yield $this->elasticSearch->indexJob($job);
+                    yield $this->elasticSearch->indexJob($job, $this->flowConfig->getTube());
                     $this->logger->info('Successfully worked a Job', $logContext);
 
                     yield $this->beanstalkClient->delete($jobBeanstalkId);
                     unset(self::$workCounts[$jobBeanstalkId]);
                 } catch (\Throwable $e) {
                     $job->addEvent(new ErroredJobEvent(new \DateTime(), $workerFqcn, $e->getMessage()));
-                    yield $this->elasticSearch->indexJob($job);
+                    yield $this->elasticSearch->indexJob($job, $this->flowConfig->getTube());
                     $this->logger->notice(
                         'An error occurred while working a Job.',
                         array_merge(

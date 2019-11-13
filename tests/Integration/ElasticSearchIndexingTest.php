@@ -72,7 +72,7 @@ class ElasticSearchIndexingTest extends KernelTestCase
         self::$kernel->boot();
 
         Promise\wait($this->esClient->refresh());
-        $search = Promise\wait($this->esClient->uriSearchOneIndex(ElasticSearch::INDEX_NAME, ''));
+        $search = Promise\wait($this->esClient->uriSearchOneIndex(self::TUBE, ''));
         $this->assertCount(2, $search['hits']['hits']);
         $this->assertForEachJob(
             function (Job $job) {
@@ -141,7 +141,7 @@ class ElasticSearchIndexingTest extends KernelTestCase
         self::$kernel->boot();
 
         Promise\wait($this->esClient->refresh());
-        $search = Promise\wait($this->esClient->uriSearchOneIndex(ElasticSearch::INDEX_NAME, ''));
+        $search = Promise\wait($this->esClient->uriSearchOneIndex(self::TUBE, ''));
         $this->assertCount(2, $search['hits']['hits']);
         $this->assertForEachJob(
             function (Job $job) {

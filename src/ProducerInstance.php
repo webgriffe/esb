@@ -120,7 +120,7 @@ final class ProducerInstance implements ProducerInstanceInterface
                     /** @var Job $job */
                     $job = $jobs->getCurrent();
                     $job->addEvent(new ProducedJobEvent(new \DateTime(), \get_class($this->producer)));
-                    yield $this->elasticSearch->indexJob($job);
+                    yield $this->elasticSearch->indexJob($job, $this->flowConfig->getTube());
                     $jobId = yield $this->beanstalkClient->put(
                         $job->getUuid(),
                         $job->getTimeout(),

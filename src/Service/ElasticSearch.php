@@ -15,9 +15,6 @@ use Webmozart\Assert\Assert;
 
 class ElasticSearch
 {
-    // TODO: Saving everything on the same index seems a bad idea...
-    public const INDEX_NAME = 'esb_job';
-
     /**
      * @var Client
      */
@@ -34,21 +31,21 @@ class ElasticSearch
         $this->normalizer = $normalizer;
     }
 
-    public function indexJob(JobInterface $job): Amp\Promise
+    public function indexJob(JobInterface $job, string $indexName): Amp\Promise
     {
-        return Amp\call(function () use ($job) {
+        return Amp\call(function () use ($job, $indexName) {
             yield $this->client->indexDocument(
-                self::INDEX_NAME,
+                $indexName,
                 $job->getUuid(),
                 (array)$this->normalizer->normalize($job, 'json')
             );
         });
     }
 
-    public function fetchJob(string $uuid): Amp\Promise
+    public function fetchJob(string $uuid, string $indexName): Amp\Promise
     {
-        return Amp\call(function () use ($uuid) {
-            $response = yield $this->client->getDocument(self::INDEX_NAME, $uuid);
+        return Amp\call(function () use ($uuid, $indexName) {
+            $response = yield $this->client->getDocument($indexName, $uuid);
             if (!$response['found']) {
                 throw new JobNotFoundException($uuid);
             }
