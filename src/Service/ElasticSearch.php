@@ -6,6 +6,7 @@ namespace Webgriffe\Esb\Service;
 
 use Amp;
 use Amp\Elasticsearch\Client;
+use Amp\Elasticsearch\Error;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 use Webgriffe\Esb\Model\Job;
@@ -45,9 +46,13 @@ class ElasticSearch
     public function fetchJob(string $uuid, string $indexName): Amp\Promise
     {
         return Amp\call(function () use ($uuid, $indexName) {
-            $response = yield $this->client->getDocument($indexName, $uuid);
-            if (!$response['found']) {
-                throw new JobNotFoundException($uuid);
+            try {
+                $response = yield $this->client->getDocument($indexName, $uuid);
+            } catch (Error $error) {
+                if ($error->getCode() === 404) {
+                    throw new JobNotFoundException($uuid);
+                }
+                throw $error;
             }
             Assert::keyExists($response, '_source');
             return $this->normalizer->denormalize($response['_source'], Job::class, 'json');

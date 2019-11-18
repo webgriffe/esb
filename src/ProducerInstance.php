@@ -8,6 +8,7 @@ use Amp\Loop;
 use Amp\Promise;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Serializer\SerializerInterface;
+use Webgriffe\Esb\Exception\ElasticSearch\JobNotFoundException;
 use Webgriffe\Esb\Model\FlowConfig;
 use Webgriffe\Esb\Model\Job;
 use Webgriffe\Esb\Model\ProducedJobEvent;
@@ -120,6 +121,14 @@ final class ProducerInstance implements ProducerInstanceInterface
                     /** @var Job $job */
                     $job = $jobs->getCurrent();
                     $job->addEvent(new ProducedJobEvent(new \DateTime(), \get_class($this->producer)));
+                    if (yield $this->jobExists($job->getUuid())) {
+                        throw new \RuntimeException(
+                            sprintf(
+                                'A job with UUID "%s" already exists but this should be a new job.',
+                                $job->getUuid()
+                            )
+                        );
+                    }
                     yield $this->elasticSearch->indexJob($job, $this->flowConfig->getTube());
                     $jobId = yield $this->beanstalkClient->put(
                         $job->getUuid(),
@@ -155,5 +164,17 @@ final class ProducerInstance implements ProducerInstanceInterface
     public function getProducer(): ProducerInterface
     {
         return $this->producer;
+    }
+
+    private function jobExists(string $jobUuid): Promise
+    {
+        return call(function () use ($jobUuid) {
+            try {
+                yield $this->elasticSearch->fetchJob($jobUuid, $this->flowConfig->getTube());
+            } catch (JobNotFoundException $exception) {
+                return false;
+            }
+            return true;
+        });
     }
 }
