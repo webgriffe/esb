@@ -17,7 +17,7 @@ class NonUtf8DataHandlingTest extends KernelTestCase
     /**
      * @throws \Exception
      */
-    public function testRepeatProducerAndWorkerTogether()
+    public function testHandlesNonUtf8Data()
     {
         $producerDir = vfsStream::url('root/producer_dir');
         self::createKernel([
@@ -27,7 +27,7 @@ class NonUtf8DataHandlingTest extends KernelTestCase
             ],
             'flows' => [
                 'sample_tube' => [
-                    'description' => 'Http Flow',
+                    'description' => 'Test Flow',
                     'producer' => ['service' => DummyFilesystemRepeatProducer::class],
                     'worker' => ['service' => DummyFilesystemWorker::class],
                 ]
