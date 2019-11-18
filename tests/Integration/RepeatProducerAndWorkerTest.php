@@ -53,8 +53,8 @@ class RepeatProducerAndWorkerTest extends KernelTestCase
         self::$kernel->boot();
 
         $workerFileLines = $this->getFileLines($workerFile);
-        $this->assertContains('job1', $workerFileLines[0]);
-        $this->assertContains('job2', $workerFileLines[1]);
+        $this->assertOneArrayEntryContains('job1', $workerFileLines);
+        $this->assertOneArrayEntryContains('job2', $workerFileLines);
         $this->assertReadyJobsCountInTube(0, self::TUBE);
     }
 
@@ -96,5 +96,15 @@ class RepeatProducerAndWorkerTest extends KernelTestCase
         $this->assertContains('job1', $workerFileLines[0]);
         $this->assertContains('job2', $workerFileLines[1]);
         $this->assertReadyJobsCountInTube(0, self::TUBE);
+    }
+
+    private function assertOneArrayEntryContains(string $expected, array $array): void
+    {
+        foreach ($array as $item) {
+            if (strpos($item, $expected) !== false) {
+                return;
+            }
+        }
+        $this->fail(sprintf('Failed asserting that array has one entry that contains "%s".', $expected));
     }
 }
