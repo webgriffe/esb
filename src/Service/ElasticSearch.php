@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Webgriffe\Esb\Service;
 
 use Amp;
-use Amp\Elasticsearch\Client;
-use Amp\Elasticsearch\Error;
+use Webgriffe\AmpElasticsearch\Client;
+use Webgriffe\AmpElasticsearch\Error;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 use Webgriffe\Esb\Model\Job;

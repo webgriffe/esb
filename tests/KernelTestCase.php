@@ -5,7 +5,7 @@ namespace Webgriffe\Esb;
 
 use Amp\Artax\Response;
 use Amp\Artax\SocketException;
-use Amp\Elasticsearch\Client;
+use Webgriffe\AmpElasticsearch\Client;
 use Amp\File\BlockingDriver;
 use Amp\Loop;
 use Amp\Promise;

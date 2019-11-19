@@ -65,7 +65,7 @@ services:
       - '@console_logger'
     public: true
 
-  Amp\Elasticsearch\Client:
+  Webgriffe\AmpElasticsearch\Client:
     arguments:
       $baseUri: '%elasticsearch_base_uri%'
 
