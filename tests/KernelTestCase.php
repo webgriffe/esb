@@ -100,10 +100,11 @@ class KernelTestCase extends BeanstalkTestCase
     private function elasticSearchReset(): void
     {
         $this->waitForElasticSearch();
-        $indices = Promise\wait($this->esClient->catIndices());
-        foreach ($indices as $index) {
-            Promise\wait($this->esClient->deleteIndex($index['index']));
-        }
+        Promise\wait($this->esClient->deleteIndex('_all'));
+        Promise\wait($this->esClient->refresh());
+        do {
+            $stats = Promise\wait($this->esClient->statsIndex('_all'));
+        } while (count($stats['indices']));
     }
 
     private function waitForElasticSearch(): void
