@@ -17,13 +17,11 @@ use Webgriffe\Esb\Model\Job;
 use Webgriffe\Esb\Model\ProducedJobEvent;
 use Webgriffe\Esb\Model\ReservedJobEvent;
 use Webgriffe\Esb\Model\WorkedJobEvent;
-use Webgriffe\Esb\Service\ElasticSearch;
 use Webgriffe\Esb\TestUtils;
-use function Amp\File\exists;
 
 class ElasticSearchIndexingTest extends KernelTestCase
 {
-    const TUBE = 'sample_tube';
+    private const FLOW_CODE = 'es_indexing_test_repeat_flow';
 
     use TestUtils;
 
@@ -40,8 +38,8 @@ class ElasticSearchIndexingTest extends KernelTestCase
                 DummyFilesystemWorker::class => ['arguments' => [$workerFile]],
             ],
             'flows' => [
-                self::TUBE => [
-                    'description' => 'Repeat Flow',
+                self::FLOW_CODE => [
+                    'description' => 'ElasticSearch Indexing Test Repeat Flow',
                     'producer' => ['service' => DummyFilesystemRepeatProducer::class],
                     'worker' => ['service' => DummyFilesystemWorker::class],
                 ]
@@ -72,7 +70,7 @@ class ElasticSearchIndexingTest extends KernelTestCase
         self::$kernel->boot();
 
         Promise\wait($this->esClient->refresh());
-        $search = Promise\wait($this->esClient->uriSearchOneIndex(self::TUBE, ''));
+        $search = Promise\wait($this->esClient->uriSearchOneIndex(self::FLOW_CODE, ''));
         $this->assertCount(2, $search['hits']['hits']);
         $this->assertForEachJob(
             function (Job $job) {
@@ -108,7 +106,7 @@ class ElasticSearchIndexingTest extends KernelTestCase
                 AlwaysFailingWorker::class => [],
             ],
             'flows' => [
-                self::TUBE => [
+                self::FLOW_CODE => [
                     'description' => 'Always Failing Flow',
                     'producer' => ['service' => DummyFilesystemRepeatProducer::class],
                     'worker' => ['service' => AlwaysFailingWorker::class],
@@ -141,7 +139,7 @@ class ElasticSearchIndexingTest extends KernelTestCase
         self::$kernel->boot();
 
         Promise\wait($this->esClient->refresh());
-        $search = Promise\wait($this->esClient->uriSearchOneIndex(self::TUBE, ''));
+        $search = Promise\wait($this->esClient->uriSearchOneIndex(self::FLOW_CODE, ''));
         $this->assertCount(2, $search['hits']['hits']);
         $this->assertForEachJob(
             function (Job $job) {

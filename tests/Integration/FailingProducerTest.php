@@ -14,7 +14,7 @@ class FailingProducerTest extends KernelTestCase
 {
     use TestUtils;
 
-    const TUBE = 'sample_tube';
+    private const FLOW_CODE = 'failing_producer_flow';
 
     public function testFailingProducerShouldBeCaughtAndLogged()
     {
@@ -25,7 +25,7 @@ class FailingProducerTest extends KernelTestCase
                 DummyFilesystemWorker::class => ['arguments' => [$workerFile]],
             ],
             'flows' => [
-                self::TUBE => [
+                self::FLOW_CODE => [
                     'description' => 'Failing Producer Flow',
                     'producer' => ['service' => AlwaysFailingProducer::class],
                     'worker' => ['service' => DummyFilesystemWorker::class],

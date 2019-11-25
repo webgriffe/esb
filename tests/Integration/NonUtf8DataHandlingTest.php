@@ -14,6 +14,8 @@ class NonUtf8DataHandlingTest extends KernelTestCase
 {
     use TestUtils;
 
+    private const FLOW_CODE = 'non_utf8_data_handling_flow';
+
     /**
      * @throws \Exception
      */
@@ -26,8 +28,8 @@ class NonUtf8DataHandlingTest extends KernelTestCase
                 DummyFilesystemWorker::class => ['arguments' => ['/dev/null']],
             ],
             'flows' => [
-                'sample_tube' => [
-                    'description' => 'Test Flow',
+                self::FLOW_CODE => [
+                    'description' => 'Non UTF8 Data Handling Test Flow',
                     'producer' => ['service' => DummyFilesystemRepeatProducer::class],
                     'worker' => ['service' => DummyFilesystemWorker::class],
                 ]

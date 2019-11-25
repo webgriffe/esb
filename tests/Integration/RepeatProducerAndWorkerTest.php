@@ -12,7 +12,7 @@ use function Amp\File\exists;
 
 class RepeatProducerAndWorkerTest extends KernelTestCase
 {
-    const TUBE = 'sample_tube';
+    private const FLOW_CODE = 'repeat_producer_and_worker_flow';
 
     use TestUtils;
 
@@ -26,8 +26,8 @@ class RepeatProducerAndWorkerTest extends KernelTestCase
                 DummyFilesystemWorker::class => ['arguments' => [$workerFile]],
             ],
             'flows' => [
-                self::TUBE => [
-                    'description' => 'Repeat Flow',
+                self::FLOW_CODE => [
+                    'description' => 'Repeat Producer and Worker Test Flow',
                     'producer' => ['service' => DummyFilesystemRepeatProducer::class],
                     'worker' => ['service' => DummyFilesystemWorker::class],
                 ]
@@ -55,7 +55,7 @@ class RepeatProducerAndWorkerTest extends KernelTestCase
         $workerFileLines = $this->getFileLines($workerFile);
         $this->assertOneArrayEntryContains('job1', $workerFileLines);
         $this->assertOneArrayEntryContains('job2', $workerFileLines);
-        $this->assertReadyJobsCountInTube(0, self::TUBE);
+        $this->assertReadyJobsCountInTube(0, self::FLOW_CODE);
     }
 
     public function testLongProduceRepeatProducerDoesNotOverlapProduceInvokations()
@@ -76,7 +76,7 @@ class RepeatProducerAndWorkerTest extends KernelTestCase
                 DummyFilesystemWorker::class => ['arguments' => [$workerFile]],
             ],
             'flows' => [
-                self::TUBE => [
+                self::FLOW_CODE => [
                     'description' => 'Repeat Flow',
                     'producer' => ['service' => DummyFilesystemRepeatProducer::class],
                     'worker' => ['service' => DummyFilesystemWorker::class],
@@ -95,7 +95,7 @@ class RepeatProducerAndWorkerTest extends KernelTestCase
         $workerFileLines = $this->getFileLines($workerFile);
         $this->assertContains('job1', $workerFileLines[0]);
         $this->assertContains('job2', $workerFileLines[1]);
-        $this->assertReadyJobsCountInTube(0, self::TUBE);
+        $this->assertReadyJobsCountInTube(0, self::FLOW_CODE);
     }
 
     private function assertOneArrayEntryContains(string $expected, array $array): void

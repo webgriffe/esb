@@ -11,7 +11,7 @@ use Webgriffe\Esb\Model\Job;
 
 class FailingJobHandlingTest extends KernelTestCase
 {
-    const TUBE = 'failing_jobs_flow';
+    private const FLOW_CODE = 'failing_jobs_flow';
 
     public function testFailingJobIsReleasedWithProperDelayAndThenBuriedAftetProperMaxRetries()
     {
@@ -21,8 +21,8 @@ class FailingJobHandlingTest extends KernelTestCase
                 AlwaysFailingWorker::class => ['arguments' => []],
             ],
             'flows' => [
-                self::TUBE => [
-                    'description' => 'Repeat Flow',
+                self::FLOW_CODE => [
+                    'description' => 'Failing Jobs Handling Test Repeat Flow',
                     'producer' => ['service' => DummyRepeatProducer::class],
                     'worker' => [
                         'service' => AlwaysFailingWorker::class,

@@ -26,7 +26,7 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
     private $workerFile;
     private $httpPort;
 
-    const TUBE = 'sample_tube';
+    private const FLOW_CODE = 'http_producer_flow';
 
     public function setUp()
     {
@@ -39,8 +39,8 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
                     DummyFilesystemWorker::class => ['arguments' => [$this->workerFile]],
                 ],
                 'flows' => [
-                    self::TUBE => [
-                        'description' => 'Http Flow',
+                    self::FLOW_CODE => [
+                        'description' => 'Http Request Producer And Worker Test Flow',
                         'producer' => ['service' => DummyHttpRequestProducer::class],
                         'worker' => ['service' => DummyFilesystemWorker::class],
                     ]
@@ -84,7 +84,7 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
             '/Successfully produced a new Job .*? "payload_data":["job3"]/',
             Logger::INFO
         );
-        $this->assertReadyJobsCountInTube(0, self::TUBE);
+        $this->assertReadyJobsCountInTube(0, self::FLOW_CODE);
     }
 
     public function testHttpRequestProducerWithWrongUriShouldReturn404()
@@ -105,7 +105,7 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
         self::$kernel->boot();
 
         $this->assertFileNotExists($this->workerFile);
-        $this->assertReadyJobsCountInTube(0, self::TUBE);
+        $this->assertReadyJobsCountInTube(0, self::FLOW_CODE);
     }
 
     private function waitForConnectionAvailable(string $uri): Promise

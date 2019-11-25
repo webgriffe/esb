@@ -13,8 +13,8 @@ use function Amp\File\exists;
 
 class TwoFlowsTest extends KernelTestCase
 {
-    const TUBE1 = 'flow1';
-    const TUBE2 = 'flow2';
+    private const FLOW1_CODE = 'two_flows_flow1';
+    private const FLOW2_CODE = 'two_flows_flow2';
 
     use TestUtils;
 
@@ -33,13 +33,13 @@ class TwoFlowsTest extends KernelTestCase
                 'worker2' => ['class' => DummyFilesystemWorker::class,'arguments' => [$workerFile2]],
             ],
             'flows' => [
-                self::TUBE1 => [
-                    'description' => 'Flow 1',
+                self::FLOW1_CODE => [
+                    'description' => 'Two Flows Test Flow 1',
                     'producer' => ['service' => 'producer1'],
                     'worker' => ['service' => 'worker1'],
                 ],
-                self::TUBE2 => [
-                    'description' => 'Flow 2',
+                self::FLOW2_CODE => [
+                    'description' => 'Two Flows Test Flow 2',
                     'producer' => ['service' => 'producer2'],
                     'worker' => ['service' => 'worker2'],
                 ]
@@ -71,10 +71,10 @@ class TwoFlowsTest extends KernelTestCase
         $workerFileLines = $this->getFileLines($workerFile1);
         $this->assertContains('job1', $workerFileLines[0]);
         $this->assertContains('job2', $workerFileLines[1]);
-        $this->assertReadyJobsCountInTube(0, self::TUBE1);
+        $this->assertReadyJobsCountInTube(0, self::FLOW1_CODE);
         $workerFileLines = $this->getFileLines($workerFile2);
         $this->assertContains('job1', $workerFileLines[0]);
         $this->assertContains('job2', $workerFileLines[1]);
-        $this->assertReadyJobsCountInTube(0, self::TUBE1);
+        $this->assertReadyJobsCountInTube(0, self::FLOW1_CODE);
     }
 }

@@ -16,7 +16,7 @@ use function Amp\File\exists;
 
 class CrontabProducerAndWorkerTest extends KernelTestCase
 {
-    const TUBE = 'crontab_flow';
+    private const FLOW_CODE = 'crontab_flow';
 
     use TestUtils;
 
@@ -32,7 +32,7 @@ class CrontabProducerAndWorkerTest extends KernelTestCase
                 DummyFilesystemWorker::class => ['arguments' => [$workerFile]],
             ],
             'flows' => [
-                self::TUBE => [
+                self::FLOW_CODE => [
                     'description' => 'Crontab Flow',
                     'producer' => ['service' => DummyCrontabProducer::class],
                     'worker' => ['service' => DummyFilesystemWorker::class],
@@ -62,7 +62,7 @@ class CrontabProducerAndWorkerTest extends KernelTestCase
                 DummyFilesystemWorker::class => ['arguments' => [$workerFile]],
             ],
             'flows' => [
-                self::TUBE => [
+                self::FLOW_CODE => [
                     'description' => 'Crontab Flow',
                     'producer' => ['service' => DummyCrontabProducer::class],
                     'worker' => ['service' => DummyFilesystemWorker::class],
@@ -79,6 +79,6 @@ class CrontabProducerAndWorkerTest extends KernelTestCase
         $workerFileLines = $this->getFileLines($workerFile);
         $this->assertContains('job1', $workerFileLines[0]);
         $this->assertContains('job2', $workerFileLines[1]);
-        $this->assertReadyJobsCountInTube(0, self::TUBE);
+        $this->assertReadyJobsCountInTube(0, self::FLOW_CODE);
     }
 }
