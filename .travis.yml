@@ -20,7 +20,7 @@ before_install:
   - sudo dpkg -i --force-confnew elasticsearch-7.4.1-amd64.deb
   - sudo sed -i.old 's/-Xms1g/-Xms512m/' /etc/elasticsearch/jvm.options
   - sudo sed -i.old 's/-Xmx1g/-Xmx512m/' /etc/elasticsearch/jvm.options
-  - echo -e '-XX:+DisableExplicitGC\n-Djdk.io.permissionsUseCanonicalPath=true\n-Dlog4j.skipJansi=true\n-server\n' | sudo tee -a /etc/elasticsearch/jvm.options
+  - echo -e 'discovery.type=single-node\n-XX:+DisableExplicitGC\n-Djdk.io.permissionsUseCanonicalPath=true\n-Dlog4j.skipJansi=true\n-server\n' | sudo tee -a /etc/elasticsearch/jvm.options
   - sudo chown -R elasticsearch:elasticsearch /etc/default/elasticsearch
   - sudo systemctl start elasticsearch
 
