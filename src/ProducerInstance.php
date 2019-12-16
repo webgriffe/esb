@@ -115,13 +115,15 @@ final class ProducerInstance implements ProducerInstanceInterface
         return call(function () use ($data) {
             $jobsCount = 0;
             $job = null;
+            $test = false;
             try {
                 $jobs = $this->producer->produce($data);
                 while (yield $jobs->advance()) {
                     /** @var Job $job */
                     $job = $jobs->getCurrent();
                     $job->addEvent(new ProducedJobEvent(new \DateTime(), \get_class($this->producer)));
-                    if (yield $this->jobExists($job->getUuid())) {
+                    $jobExists = yield $this->jobExists($job->getUuid());
+                    if ($jobExists) {
                         throw new \RuntimeException(
                             sprintf(
                                 'A job with UUID "%s" already exists but this should be a new job.',
@@ -154,6 +156,7 @@ final class ProducerInstance implements ProducerInstanceInterface
                         'producer' => \get_class($this->producer),
                         'last_job_payload_data' => $job ? NonUtf8Cleaner::clean($job->getPayloadData()) : null,
                         'error' => $error->getMessage(),
+                        'test' => $test
                     ]
                 );
             }
