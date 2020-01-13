@@ -5,6 +5,7 @@ namespace Webgriffe\Esb\Console\Controller;
 
 use Amp\Beanstalk\BeanstalkClient;
 use Amp\Http\Server\Request;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 trait ControllerTrait
 {
@@ -12,6 +13,10 @@ trait ControllerTrait
      * @var Request
      */
     private $request;
+    /**
+     * @var ContainerInterface
+     */
+    private $container;
     /**
      * @var \Twig_Environment
      */
@@ -21,13 +26,10 @@ trait ControllerTrait
      */
     private $beanstalkClient;
 
-    public function __construct(
-        Request $request,
-        \Twig_Environment $twig,
-        BeanstalkClient $beanstalkClient
-    ) {
+    public function __construct(Request $request, ContainerInterface $container) {
         $this->request = $request;
-        $this->twig = $twig;
-        $this->beanstalkClient = $beanstalkClient;
+        $this->container = $container;
+        $this->twig = $this->container->get('twig');
+        $this->beanstalkClient = $this->container->get(BeanstalkClient::class);
     }
 }

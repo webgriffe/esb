@@ -10,6 +10,7 @@ use Symfony\Component\Config\Exception\FileLocatorFileNotFoundException;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
+use Webgriffe\Esb\Console\ConsoleCompilerPass;
 use Webgriffe\Esb\Console\Server;
 
 /**
@@ -44,6 +45,7 @@ class Kernel
         $this->container = new ContainerBuilder();
         $loader = new YamlFileLoader($this->container, new FileLocator(dirname(__DIR__)));
         $this->loadSystemConfiguration($loader);
+        $this->container->addCompilerPass(new ConsoleCompilerPass());
         $this->container->registerExtension(new FlowExtension());
         $this->loadLocalConfiguration($loader);
         $this->container->compile(true);

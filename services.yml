@@ -57,12 +57,12 @@ services:
   Webgriffe\Esb\Console\Server:
     class: \Webgriffe\Esb\Console\Server
     arguments:
-      - '@Amp\Beanstalk\BeanstalkClient'
       -
         port: '%console_port%'
         username: '%console_username%'
         password: '%console_password%'
-      - '@console_logger'
+    calls:
+      - [ setContainer, [ '@service_container' ]]
     public: true
 
   Webgriffe\AmpElasticsearch\Client:
@@ -106,3 +106,13 @@ services:
   Webgriffe\Esb\Service\ElasticSearch:
     arguments:
       $normalizer: '@serializer'
+
+  twig.loader:
+    class: \Twig\Loader\FilesystemLoader
+    arguments:
+      - '%console.root_dir%/views'
+
+  twig:
+    class: \Twig_Environment
+    arguments:
+      - '@twig.loader'

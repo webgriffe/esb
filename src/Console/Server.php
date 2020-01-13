@@ -17,6 +17,8 @@ use FastRoute\Dispatcher;
 use FastRoute\RouteCollector;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Symfony\Component\DependencyInjection\ContainerAwareInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use Webgriffe\Esb\Console\Controller\DeleteController;
 use Webgriffe\Esb\Console\Controller\IndexController;
 use Webgriffe\Esb\Console\Controller\JobController;
@@ -27,27 +29,21 @@ use function Amp\call;
 /**
  * @internal
  */
-class Server
+class Server implements ContainerAwareInterface
 {
     use CallableMaker;
 
-    /**
-     * @var BeanstalkClient
-     */
-    private $beanstalkClient;
     /**
      * @var array
      */
     private $config;
     /**
-     * @var LoggerInterface
+     * @var ContainerInterface
      */
-    private $logger;
+    private $container;
 
-    public function __construct(BeanstalkClient $beanstalkClient, array $config, LoggerInterface $logger)
+    public function __construct(array $config)
     {
-        $this->beanstalkClient = $beanstalkClient;
-        $this->logger = $logger;
         $this->config = $config;
     }
 
@@ -60,14 +56,24 @@ class Server
                 Socket\listen("[::]:$port"),
             ];
 
+            /** @var LoggerInterface $logger */
+            $logger = $this->container->get('console_logger');
             $server = new \Amp\Http\Server\Server(
                 $sockets,
                 new CallableRequestHandler($this->callableFromInstanceMethod('requestHandler')),
-                $this->logger
+                $logger
             );
 
             yield $server->start();
         });
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function setContainer(ContainerInterface $container = null)
+    {
+        $this->container = $container;
     }
 
     /** @noinspection PhpUnusedPrivateMethodInspection */
@@ -88,8 +94,7 @@ class Server
             return new Response(Status::OK, [], yield File\get($filePath));
         }
 
-        $twig = yield $this->getTwig();
-        $dispatcher = $this->getDispatcher($request, $twig, $this->beanstalkClient);
+        $dispatcher = $this->getDispatcher($request);
 
         $routeInfo = $dispatcher->dispatch($httpMethod, $uri);
         switch ($routeInfo[0]) {
@@ -117,40 +122,18 @@ class Server
         return $response;
     }
 
-    private function getTwig(): Promise
-    {
-        return call(function () {
-            $templates = [];
-            $viewsPath = __DIR__ . '/views';
-            $files = yield File\scandir($viewsPath);
-            foreach ($files as $file) {
-                if (preg_match('/^.*?\.html\.twig$/', $file)) {
-                    $templates[$file] = yield File\get(rtrim($viewsPath, '/') . '/' . $file);
-                }
-            }
-            $loader = new \Twig_Loader_Array($templates);
-            return new \Twig_Environment($loader);
-        });
-    }
-
     /**
      * @param Request $request
-     * @param \Twig_Environment $twig
-     * @param BeanstalkClient $beanstalkClient
      * @return Dispatcher
      */
-    private function getDispatcher(
-        Request $request,
-        \Twig_Environment $twig,
-        BeanstalkClient $beanstalkClient
-    ): Dispatcher {
+    private function getDispatcher(Request $request): Dispatcher {
         return \FastRoute\simpleDispatcher(
-            function (RouteCollector $r) use ($request, $twig, $beanstalkClient) {
-                $r->addRoute('GET', '/', new IndexController($request, $twig, $beanstalkClient));
-                $r->addRoute('GET', '/tube/{tube}', new TubeController($request, $twig, $beanstalkClient));
-                $r->addRoute('GET', '/kick/{jobId:\d+}', new KickController($request, $twig, $beanstalkClient));
-                $r->addRoute('GET', '/delete/{jobId:\d+}', new DeleteController($request, $twig, $beanstalkClient));
-                $r->addRoute('GET', '/job/{jobId:\d+}', new JobController($request, $twig, $beanstalkClient));
+            function (RouteCollector $r) use ($request) {
+                $r->addRoute('GET', '/', new IndexController($request, $this->container));
+                $r->addRoute('GET', '/tube/{tube}', new TubeController($request, $this->container));
+                $r->addRoute('GET', '/kick/{jobId:\d+}', new KickController($request, $this->container));
+                $r->addRoute('GET', '/delete/{jobId:\d+}', new DeleteController($request, $this->container));
+                $r->addRoute('GET', '/job/{jobId:\d+}', new JobController($request, $this->container));
             }
         );
     }
