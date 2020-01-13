@@ -34,6 +34,10 @@ class Server implements ContainerAwareInterface
     use CallableMaker;
 
     /**
+     * @var string
+     */
+    private $publicDir;
+    /**
      * @var array
      */
     private $config;
@@ -42,8 +46,9 @@ class Server implements ContainerAwareInterface
      */
     private $container;
 
-    public function __construct(array $config)
+    public function __construct(string $publicDir, array $config)
     {
+        $this->publicDir = $publicDir;
         $this->config = $config;
     }
 
@@ -57,7 +62,7 @@ class Server implements ContainerAwareInterface
             ];
 
             /** @var LoggerInterface $logger */
-            $logger = $this->container->get('console_logger');
+            $logger = $this->container->get('console.logger');
             $server = new \Amp\Http\Server\Server(
                 $sockets,
                 new CallableRequestHandler($this->callableFromInstanceMethod('requestHandler')),
@@ -89,7 +94,7 @@ class Server implements ContainerAwareInterface
         // Fetch method and URI from somewhere
         $httpMethod = $request->getMethod();
         $uri = $request->getUri()->getPath();
-        $filePath = __DIR__ . '/public/' . ltrim($uri, '/');
+        $filePath = $this->publicDir . DIRECTORY_SEPARATOR . ltrim($uri, '/');
         if ((yield File\exists($filePath)) && (yield File\isfile($filePath))) {
             return new Response(Status::OK, [], yield File\get($filePath));
         }
@@ -126,7 +131,8 @@ class Server implements ContainerAwareInterface
      * @param Request $request
      * @return Dispatcher
      */
-    private function getDispatcher(Request $request): Dispatcher {
+    private function getDispatcher(Request $request): Dispatcher
+    {
         return \FastRoute\simpleDispatcher(
             function (RouteCollector $r) use ($request) {
                 $r->addRoute('GET', '/', new IndexController($request, $this->container));

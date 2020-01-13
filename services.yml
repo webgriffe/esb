@@ -37,7 +37,6 @@ services:
         arguments:
           - 'text/html'
 
-
   Psr\Log\LoggerInterface:
     class: \Monolog\Logger
     arguments: [ 'esb', ['@Monolog\Handler\StreamHandler', '@Monolog\Handler\ErrorLogHandler', '@Monolog\Handler\NativeMailerHandler'] ]
@@ -45,25 +44,6 @@ services:
 
   Webgriffe\Esb\DateTimeBuilderInterface:
     class: \Webgriffe\Esb\DateTimeBuilder
-
-  console_logger.stream_handler:
-    class: \Monolog\Handler\StreamHandler
-    arguments: [ '%console_log_file%' ]
-
-  console_logger:
-    class: \Monolog\Logger
-    arguments: ['esb_console', ['@console_logger.stream_handler']]
-
-  Webgriffe\Esb\Console\Server:
-    class: \Webgriffe\Esb\Console\Server
-    arguments:
-      -
-        port: '%console_port%'
-        username: '%console_username%'
-        password: '%console_password%'
-    calls:
-      - [ setContainer, [ '@service_container' ]]
-    public: true
 
   Webgriffe\AmpElasticsearch\Client:
     arguments:
@@ -106,13 +86,3 @@ services:
   Webgriffe\Esb\Service\ElasticSearch:
     arguments:
       $normalizer: '@serializer'
-
-  twig.loader:
-    class: \Twig\Loader\FilesystemLoader
-    arguments:
-      - '%console.root_dir%/views'
-
-  twig:
-    class: \Twig_Environment
-    arguments:
-      - '@twig.loader'

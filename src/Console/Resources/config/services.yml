@@ -1,0 +1,34 @@
+services:
+  _defaults:
+    autowire: true
+
+  console.logger.stream_handler:
+    class: \Monolog\Handler\StreamHandler
+    arguments: [ '%console_log_file%' ]
+
+  console.logger:
+    class: \Monolog\Logger
+    arguments: ['esb_console', ['@console.logger.stream_handler']]
+    public: true
+
+  console.twig.loader:
+    class: \Twig\Loader\FilesystemLoader
+    arguments:
+      - '%console.views_dir%'
+
+  console.twig:
+    class: \Twig_Environment
+    arguments:
+      - '@console.twig.loader'
+    public: true
+
+  console.server:
+    class: \Webgriffe\Esb\Console\Server
+    arguments:
+      - '%console.public_dir%'
+      - port: '%console_port%'
+        username: '%console_username%'
+        password: '%console_password%'
+    calls:
+      - [ setContainer, [ '@service_container' ]]
+    public: true

@@ -5,5 +5,5 @@
     <rule ref="PSR2"/>
 
     <file>./src</file>
-    <exclude-pattern>./src/Console/public/*</exclude-pattern>
+    <exclude-pattern>./src/Console/Resources/public/*</exclude-pattern>
 </ruleset>

@@ -26,10 +26,11 @@ trait ControllerTrait
      */
     private $beanstalkClient;
 
-    public function __construct(Request $request, ContainerInterface $container) {
+    public function __construct(Request $request, ContainerInterface $container)
+    {
         $this->request = $request;
         $this->container = $container;
-        $this->twig = $this->container->get('twig');
+        $this->twig = $this->container->get('console.twig');
         $this->beanstalkClient = $this->container->get(BeanstalkClient::class);
     }
 }

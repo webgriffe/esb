@@ -24,6 +24,6 @@ services:
     arguments: [ 'esb', ['@Monolog\Handler\TestHandler'] ]
     public: true
 
-  console_logger:
+  console.logger:
     class: \Monolog\Logger
     arguments: ['esb_console', ['@Monolog\Handler\TestHandler']]
