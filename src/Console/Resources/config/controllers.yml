@@ -1,0 +1,33 @@
+services:
+  console.controller.request:
+    synthetic: true
+
+  console.controller.abstract:
+    abstract: true
+    class: '\Webgriffe\Esb\Console\Controller\AbstractController'
+    arguments:
+      - '@console.controller.request'
+      - '@console.twig'
+      - '@Amp\Beanstalk\BeanstalkClient'
+    public: true
+
+  console.controller.index:
+    parent: console.controller.abstract
+    class: '\Webgriffe\Esb\Console\Controller\IndexController'
+
+  console.controller.tube:
+    parent: console.controller.abstract
+    class: '\Webgriffe\Esb\Console\Controller\TubeController'
+
+  console.controller.job:
+    parent: console.controller.abstract
+    class: '\Webgriffe\Esb\Console\Controller\JobController'
+
+  console.controller.kick:
+    parent: console.controller.abstract
+    class: '\Webgriffe\Esb\Console\Controller\KickController'
+
+  console.controller.delete:
+    parent: console.controller.abstract
+    class: '\Webgriffe\Esb\Console\Controller\DeleteController'
+

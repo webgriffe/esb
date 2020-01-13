@@ -11,23 +11,21 @@ use Amp\Http\Status;
 /**
  * @internal
  */
-class JobController
+class JobController extends AbstractController
 {
-    use ControllerTrait;
-
     public function __invoke(string $jobId)
     {
         return call(function () use ($jobId) {
             /** @var Job $stats */
-            $stats = yield $this->beanstalkClient->getJobStats((int)$jobId);
-            $payload = yield $this->beanstalkClient->peek((int)$jobId);
+            $stats = yield $this->getBeanstalkClient()->getJobStats((int)$jobId);
+            $payload = yield $this->getBeanstalkClient()->peek((int)$jobId);
             if (@unserialize($payload) !== false) {
                 $payload = print_r(unserialize($payload), true);
             }
             return new Response(
                 Status::OK,
                 [],
-                $this->twig->render('job.html.twig', ['stats' => $stats, 'payload' => $payload])
+                $this->getTwig()->render('job.html.twig', ['stats' => $stats, 'payload' => $payload])
             );
         });
     }

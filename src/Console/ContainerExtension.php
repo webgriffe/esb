@@ -23,6 +23,7 @@ final class ContainerExtension implements ExtensionInterface, PrependExtensionIn
     {
         $loader = new YamlFileLoader($container, new FileLocator(self::getConfigDir()));
         $loader->load('services.yml');
+        $loader->load('controllers.yml');
     }
 
     /**

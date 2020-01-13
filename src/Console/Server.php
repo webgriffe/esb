@@ -15,6 +15,7 @@ use Amp\Promise;
 use Amp\Socket;
 use FastRoute\Dispatcher;
 use FastRoute\RouteCollector;
+use Monolog\Logger;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\DependencyInjection\ContainerAwareInterface;
@@ -42,14 +43,19 @@ class Server implements ContainerAwareInterface
      */
     private $config;
     /**
+     * @var LoggerInterface
+     */
+    private $logger;
+    /**
      * @var ContainerInterface
      */
     private $container;
 
-    public function __construct(string $publicDir, array $config)
+    public function __construct(string $publicDir, array $config, LoggerInterface $logger)
     {
         $this->publicDir = $publicDir;
         $this->config = $config;
+        $this->logger = $logger;
     }
 
     public function boot()
@@ -61,12 +67,10 @@ class Server implements ContainerAwareInterface
                 Socket\listen("[::]:$port"),
             ];
 
-            /** @var LoggerInterface $logger */
-            $logger = $this->container->get('console.logger');
             $server = new \Amp\Http\Server\Server(
                 $sockets,
                 new CallableRequestHandler($this->callableFromInstanceMethod('requestHandler')),
-                $logger
+                $this->logger
             );
 
             yield $server->start();
@@ -135,11 +139,12 @@ class Server implements ContainerAwareInterface
     {
         return \FastRoute\simpleDispatcher(
             function (RouteCollector $r) use ($request) {
-                $r->addRoute('GET', '/', new IndexController($request, $this->container));
-                $r->addRoute('GET', '/tube/{tube}', new TubeController($request, $this->container));
-                $r->addRoute('GET', '/kick/{jobId:\d+}', new KickController($request, $this->container));
-                $r->addRoute('GET', '/delete/{jobId:\d+}', new DeleteController($request, $this->container));
-                $r->addRoute('GET', '/job/{jobId:\d+}', new JobController($request, $this->container));
+                $this->container->set('console.controller.request', $request);
+                $r->addRoute('GET', '/', $this->container->get('console.controller.index'));
+                $r->addRoute('GET', '/tube/{tube}', $this->container->get('console.controller.tube'));
+                $r->addRoute('GET', '/kick/{jobId:\d+}', $this->container->get('console.controller.kick'));
+                $r->addRoute('GET', '/delete/{jobId:\d+}', $this->container->get('console.controller.delete'));
+                $r->addRoute('GET', '/job/{jobId:\d+}', $this->container->get('console.controller.job'));
             }
         );
     }

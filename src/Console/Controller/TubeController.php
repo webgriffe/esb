@@ -15,17 +15,15 @@ use Amp\Promise;
 /**
  * @internal
  */
-class TubeController
+class TubeController extends AbstractController
 {
-    use ControllerTrait;
-
     public function __invoke(string $tube): Promise
     {
         return call(function () use ($tube) {
             /** @var Tube $tube */
-            $tube = yield $this->beanstalkClient->getTubeStats($tube);
+            $tube = yield $this->getBeanstalkClient()->getTubeStats($tube);
             $queryParams = [];
-            parse_str($this->request->getUri()->getQuery(), $queryParams);
+            parse_str($this->getRequest()->getUri()->getQuery(), $queryParams);
             $foundJobs = [];
             $query = '';
             if (array_key_exists('query', $queryParams)) {
@@ -35,7 +33,7 @@ class TubeController
             return new Response(
                 Status::OK,
                 [],
-                $this->twig->render(
+                $this->getTwig()->render(
                     'tube.html.twig',
                     [
                         'tube' => $tube,
@@ -52,7 +50,7 @@ class TubeController
     {
         return call(function () use ($tube, $query) {
             /** @var System $stats */
-            $stats = yield $this->beanstalkClient->getSystemStats();
+            $stats = yield $this->getBeanstalkClient()->getSystemStats();
             $ready = $stats->currentJobsReady;
             $reserved = $stats->currentJobsReserved;
             $delayed = $stats->currentJobsDelayed;
@@ -63,11 +61,11 @@ class TubeController
             for ($id = 0; $id <= $maxJobId; $id++) {
                 $jobs[$id] = call(function () use ($id, $tube, $query) {
                     /** @var Job $stats */
-                    $stats = yield $this->beanstalkClient->getJobStats($id);
+                    $stats = yield $this->getBeanstalkClient()->getJobStats($id);
                     if ($stats->tube !== $tube) {
                         throw new \RuntimeException('Not the right tube, skip.');
                     }
-                    $payload = yield $this->beanstalkClient->peek($id);
+                    $payload = yield $this->getBeanstalkClient()->peek($id);
                     if (stripos($payload, $query) === false) {
                         throw new \RuntimeException('Not matching the query, skip.');
                     }
@@ -83,19 +81,19 @@ class TubeController
     private function getTubePeeks(string $tube): Promise
     {
         return call(function () use ($tube) {
-            yield $this->beanstalkClient->use($tube);
+            yield $this->getBeanstalkClient()->use($tube);
             try {
-                $peekReady = yield $this->beanstalkClient->peekReady();
+                $peekReady = yield $this->getBeanstalkClient()->peekReady();
             } catch (NotFoundException $e) {
                 $peekReady = false;
             }
             try {
-                $peekDelayed = yield $this->beanstalkClient->peekDelayed();
+                $peekDelayed = yield $this->getBeanstalkClient()->peekDelayed();
             } catch (NotFoundException $e) {
                 $peekDelayed = false;
             }
             try {
-                $peekBuried = yield $this->beanstalkClient->peekBuried();
+                $peekBuried = yield $this->getBeanstalkClient()->peekBuried();
             } catch (NotFoundException $e) {
                 $peekBuried = false;
             }

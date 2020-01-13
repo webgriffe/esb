@@ -11,16 +11,14 @@ use Amp\Http\Status;
 /**
  * @internal
  */
-class KickController
+class KickController extends AbstractController
 {
-    use ControllerTrait;
-
     public function __invoke(string $jobId)
     {
         return call(function () use ($jobId) {
             /** @var Job $stats */
-            $stats = yield $this->beanstalkClient->getJobStats((int)$jobId);
-            yield $this->beanstalkClient->kickJob((int)$jobId);
+            $stats = yield $this->getBeanstalkClient()->getJobStats((int)$jobId);
+            yield $this->getBeanstalkClient()->kickJob((int)$jobId);
             return new Response(Status::MOVED_PERMANENTLY, ['Location' => "/tube/{$stats->tube}"]);
         });
     }

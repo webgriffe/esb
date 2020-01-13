@@ -11,10 +11,8 @@ use Amp\Promise;
 /**
  * @internal
  */
-class IndexController
+class IndexController extends AbstractController
 {
-    use ControllerTrait;
-
     /**
      * @return Promise
      */
@@ -23,11 +21,11 @@ class IndexController
         return call(function () {
             $tubes = yield array_map(
                 function (string $tube) {
-                    return $this->beanstalkClient->getTubeStats($tube);
+                    return $this->getBeanstalkClient()->getTubeStats($tube);
                 },
-                yield $this->beanstalkClient->listTubes()
+                yield $this->getBeanstalkClient()->listTubes()
             );
-            return new Response(Status::OK, [], $this->twig->render('index.html.twig', array('tubes' => $tubes)));
+            return new Response(Status::OK, [], $this->getTwig()->render('index.html.twig', array('tubes' => $tubes)));
         });
     }
 }

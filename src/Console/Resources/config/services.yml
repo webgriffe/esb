@@ -20,7 +20,6 @@ services:
     class: \Twig_Environment
     arguments:
       - '@console.twig.loader'
-    public: true
 
   console.server:
     class: \Webgriffe\Esb\Console\Server
@@ -29,6 +28,7 @@ services:
       - port: '%console_port%'
         username: '%console_username%'
         password: '%console_password%'
+      - '@console.logger'
     calls:
       - [ setContainer, [ '@service_container' ]]
     public: true
