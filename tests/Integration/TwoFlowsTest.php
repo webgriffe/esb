@@ -61,20 +61,35 @@ class TwoFlowsTest extends KernelTestCase
                 );
             }
         );
-        $this->stopWhen(function () use ($workerFile1, $workerFile2) {
-            return ((yield exists($workerFile1)) && count($this->getFileLines($workerFile1)) === 2) &&
-                    ((yield exists($workerFile2)) && count($this->getFileLines($workerFile2)) === 2);
+        $this->stopWhen(function () {
+            $successLog = array_filter(
+                $this->logHandler()->getRecords(),
+                function ($log) {
+                    return strpos($log['message'], 'Successfully worked a Job') !== false;
+                }
+            );
+            return count($successLog) >= 4;
         });
 
         self::$kernel->boot();
 
         $workerFileLines = $this->getFileLines($workerFile1);
-        $this->assertContains('job1', $workerFileLines[0]);
-        $this->assertContains('job2', $workerFileLines[1]);
+        $this->assertOneArrayEntryContains('job1', $workerFileLines);
+        $this->assertOneArrayEntryContains('job2', $workerFileLines);
         $this->assertReadyJobsCountInTube(0, self::FLOW1_CODE);
         $workerFileLines = $this->getFileLines($workerFile2);
-        $this->assertContains('job1', $workerFileLines[0]);
-        $this->assertContains('job2', $workerFileLines[1]);
+        $this->assertOneArrayEntryContains('job1', $workerFileLines);
+        $this->assertOneArrayEntryContains('job2', $workerFileLines);
         $this->assertReadyJobsCountInTube(0, self::FLOW1_CODE);
+    }
+
+    private function assertOneArrayEntryContains(string $expected, array $array): void
+    {
+        foreach ($array as $item) {
+            if (strpos($item, $expected) !== false) {
+                return;
+            }
+        }
+        $this->fail(sprintf('Failed asserting that array has one entry that contains "%s".', $expected));
     }
 }

@@ -47,7 +47,7 @@ class ElasticSearch
     {
         return Amp\call(function () use ($uuid, $indexName) {
             try {
-                $response = yield $this->client->getDocument($indexName, $uuid);
+                $response = yield from $this->doFetchJob($uuid, $indexName, 0);
             } catch (Error $error) {
                 if ($error->getCode() === 404) {
                     throw new JobNotFoundException($uuid);
@@ -79,9 +79,36 @@ class ElasticSearch
             $errorType = $errorData['error']['type'] ?? null;
             if ($errorType === 'no_shard_available_action_exception' &&
                 $retry < self::NO_SHARD_AVAILABLE_INDEX_MAX_RETRY) {
+                // TODO Log no shard available retrials and refactor
                 yield Amp\delay(1000);
                 yield from $this->doIndexJob($job, $indexName, ++$retry);
                 return;
+            }
+            throw $error;
+        }
+    }
+
+    /**
+     * @param string $uuid
+     * @param string $indexName
+     * @param int $retry
+     * @return Generator
+     */
+    private function doFetchJob(string $uuid, string $indexName, int $retry): Generator
+    {
+        try {
+            return yield $this->client->getDocument(
+                $indexName,
+                $uuid
+            );
+        } catch (Error $error) {
+            $errorData = $error->getData();
+            $errorType = $errorData['error']['type'] ?? null;
+            if ($errorType === 'no_shard_available_action_exception' &&
+                $retry < self::NO_SHARD_AVAILABLE_INDEX_MAX_RETRY) {
+                // TODO Log no shard available retrials and refactor
+                yield Amp\delay(1000);
+                return yield from $this->doFetchJob($uuid, $indexName, ++$retry);
             }
             throw $error;
         }
