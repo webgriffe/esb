@@ -27,22 +27,21 @@ class TubeController extends AbstractController
     private $elasticSearchClient;
 
     public function __construct(
-        Request $request,
         Environment $twig,
         BeanstalkClient $beanstalkClient,
         Client $elasticSearchClient
     ) {
-        parent::__construct($request, $twig, $beanstalkClient);
+        parent::__construct($twig, $beanstalkClient);
         $this->elasticSearchClient = $elasticSearchClient;
     }
 
-    public function __invoke(string $tube): Promise
+    public function __invoke(Request $request, string $tube): Promise
     {
-        return call(function () use ($tube) {
+        return call(function () use ($request, $tube) {
             /** @var Tube $tube */
             $tube = yield $this->getBeanstalkClient()->getTubeStats($tube);
             $queryParams = [];
-            parse_str($this->getRequest()->getUri()->getQuery(), $queryParams);
+            parse_str($request->getUri()->getQuery(), $queryParams);
             $foundJobs = [];
             $query = '';
             if (array_key_exists('query', $queryParams)) {

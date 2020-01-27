@@ -11,10 +11,6 @@ use Twig\Environment;
 abstract class AbstractController
 {
     /**
-     * @var Request
-     */
-    private $request;
-    /**
      * @var Environment
      */
     private $twig;
@@ -23,19 +19,10 @@ abstract class AbstractController
      */
     private $beanstalkClient;
 
-    public function __construct(Request $request, Environment $twig, BeanstalkClient $beanstalkClient)
+    public function __construct(Environment $twig, BeanstalkClient $beanstalkClient)
     {
-        $this->request = $request;
         $this->twig = $twig;
         $this->beanstalkClient = $beanstalkClient;
-    }
-
-    /**
-     * @return Request
-     */
-    public function getRequest(): Request
-    {
-        return $this->request;
     }
 
     /**

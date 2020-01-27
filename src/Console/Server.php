@@ -118,6 +118,7 @@ class Server implements ContainerAwareInterface
             case Dispatcher::FOUND:
                 $handler = $routeInfo[1];
                 $vars = $routeInfo[2];
+                array_unshift($vars, $request);
                 /** @var Response $response */
                 $response = yield \call_user_func_array($handler, $vars);
                 $response->addHeader('Cache-Control', 'no-cache, no-store, must-revalidate');

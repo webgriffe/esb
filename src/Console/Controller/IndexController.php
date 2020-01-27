@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Webgriffe\Esb\Console\Controller;
 
+use Amp\Http\Server\Request;
 use function Amp\call;
 use Amp\Http\Server\Response;
 use Amp\Http\Status;
@@ -16,7 +17,7 @@ class IndexController extends AbstractController
     /**
      * @return Promise
      */
-    public function __invoke(): Promise
+    public function __invoke(Request $request): Promise
     {
         return call(function () {
             $tubes = yield array_map(

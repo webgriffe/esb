@@ -1,12 +1,9 @@
 services:
-  console.controller.request:
-    synthetic: true
 
   console.controller.abstract:
     abstract: true
     class: '\Webgriffe\Esb\Console\Controller\AbstractController'
     arguments:
-      - '@console.controller.request'
       - '@console.twig'
       - '@Amp\Beanstalk\BeanstalkClient'
     public: true
