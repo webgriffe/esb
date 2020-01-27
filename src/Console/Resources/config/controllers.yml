@@ -18,6 +18,8 @@ services:
   console.controller.tube:
     parent: console.controller.abstract
     class: '\Webgriffe\Esb\Console\Controller\TubeController'
+    arguments:
+      - '@Webgriffe\AmpElasticsearch\Client'
 
   console.controller.job:
     parent: console.controller.abstract

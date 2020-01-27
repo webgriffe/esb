@@ -3,10 +3,14 @@ declare(strict_types=1);
 
 namespace Webgriffe\Esb\Console\Controller;
 
+use Amp\Beanstalk\BeanstalkClient;
 use Amp\Beanstalk\NotFoundException;
 use Amp\Beanstalk\Stats\Job;
 use Amp\Beanstalk\Stats\System;
 use Amp\Beanstalk\Stats\Tube;
+use Amp\Http\Server\Request;
+use Twig\Environment;
+use Webgriffe\AmpElasticsearch\Client;
 use function Amp\call;
 use Amp\Http\Server\Response;
 use Amp\Http\Status;
@@ -17,6 +21,21 @@ use Amp\Promise;
  */
 class TubeController extends AbstractController
 {
+    /**
+     * @var Client
+     */
+    private $elasticSearchClient;
+
+    public function __construct(
+        Request $request,
+        Environment $twig,
+        BeanstalkClient $beanstalkClient,
+        Client $elasticSearchClient
+    ) {
+        parent::__construct($request, $twig, $beanstalkClient);
+        $this->elasticSearchClient = $elasticSearchClient;
+    }
+
     public function __invoke(string $tube): Promise
     {
         return call(function () use ($tube) {
@@ -49,31 +68,11 @@ class TubeController extends AbstractController
     private function findAllTubeJobsByQuery(string $tube, string $query)
     {
         return call(function () use ($tube, $query) {
-            /** @var System $stats */
-            $stats = yield $this->getBeanstalkClient()->getSystemStats();
-            $ready = $stats->currentJobsReady;
-            $reserved = $stats->currentJobsReserved;
-            $delayed = $stats->currentJobsDelayed;
-            $buried = $stats->currentJobsBuried;
-            $deleted = $stats->cmdDelete;
-            $maxJobId = $ready + $reserved + $delayed + $buried + $deleted;
+            $response = yield $this->elasticSearchClient->uriSearchOneIndex($tube, $query);
             $jobs = [];
-            for ($id = 0; $id <= $maxJobId; $id++) {
-                $jobs[$id] = call(function () use ($id, $tube, $query) {
-                    /** @var Job $stats */
-                    $stats = yield $this->getBeanstalkClient()->getJobStats($id);
-                    if ($stats->tube !== $tube) {
-                        throw new \RuntimeException('Not the right tube, skip.');
-                    }
-                    $payload = yield $this->getBeanstalkClient()->peek($id);
-                    if (stripos($payload, $query) === false) {
-                        throw new \RuntimeException('Not matching the query, skip.');
-                    }
-                    return ['stats' => $stats, 'payload' => $payload];
-                });
+            foreach ($response['hits']['hits'] as $rawJob) {
+                $jobs[] = $rawJob['_source'];
             }
-
-            list(, $jobs) = yield Promise\any($jobs);
             return $jobs;
         });
     }
