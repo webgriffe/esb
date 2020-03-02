@@ -21,6 +21,8 @@ services:
   console.controller.job:
     parent: console.controller.abstract
     class: '\Webgriffe\Esb\Console\Controller\JobController'
+    arguments:
+      - '@Webgriffe\AmpElasticsearch\Client'
 
   console.controller.kick:
     parent: console.controller.abstract

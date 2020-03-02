@@ -1,71 +1,14 @@
 {% extends '_layout.html.twig' %}
 
 {% block content %}
-    <h2 class="my-4">
-        Job <small class="text-muted">{{ stats.id }}</small>
-        <a class="btn btn-secondary btn-sm float-right" role="button" href="/tube/{{ stats.tube }}">&laquo; Back</a>
-    </h2>
+    <h2 class="my-4">Job <small class="text-muted">{{ job.uuid }}</small></h2>
 
     <div class="row">
-        <div class="col-sm-6">
-            <h4>Job stats</h4>
-            <table class="table table-sm">
-                <tr>
-                    <th scope="row">Tube</th>
-                    <td>{{ stats.tube }}</td>
-                </tr>
-                <tr>
-                    <th scope="row">State</th>
-                    <td>{{ stats.state}}</td>
-                </tr>
-                <tr>
-                    <th scope="row">Priority</th>
-                    <td>{{ stats.priority }}</td>
-                </tr>
-                <tr>
-                    <th scope="row">Age</th>
-                    <td>{{ stats.age }}</td>
-                </tr>
-                <tr>
-                    <th scope="row">Delay</th>
-                    <td>{{ stats.delay }}</td>
-                </tr>
-                <tr>
-                    <th scope="row">TTR</th>
-                    <td>{{ stats.ttr }}</td>
-                </tr>
-                <tr>
-                    <th scope="row">Time left</th>
-                    <td>{{ stats.timeLeft }}</td>
-                </tr>
-                <tr>
-                    <th scope="row">File</th>
-                    <td>{{ stats.file }}</td>
-                </tr>
-                <tr>
-                    <th scope="row">Reserves</th>
-                    <td>{{ stats.reserves }}</td>
-                </tr>
-                <tr>
-                    <th scope="row">Timeouts</th>
-                    <td>{{ stats.timeouts }}</td>
-                </tr>
-                <tr>
-                    <th scope="row">Buries</th>
-                    <td>{{ stats.buries }}</td>
-                </tr>
-                <tr>
-                    <th scope="row">Kicks</th>
-                    <td>{{ stats.kicks }}</td>
-                </tr>
-            </table>
-        </div>
-        <div class="col-sm-6">
+        <div class="col-xs-12">
             <h4>Payload</h4>
-
             <div class="card bg-light my-3">
                 <div class="card-body">
-                    <pre class="mb-0">{{ payload }}</pre>
+                    <pre class="mb-0">{{ job|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre>
                 </div>
             </div>
         </div>
