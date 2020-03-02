@@ -143,9 +143,9 @@ class Server implements ContainerAwareInterface
                 $this->container->set('console.controller.request', $request);
                 $r->addRoute('GET', '/', $this->container->get('console.controller.index'));
                 $r->addRoute('GET', '/tube/{tube}', $this->container->get('console.controller.tube'));
-                $r->addRoute('GET', '/kick/{jobId:\d+}', $this->container->get('console.controller.kick'));
-                $r->addRoute('GET', '/delete/{jobId:\d+}', $this->container->get('console.controller.delete'));
-                $r->addRoute('GET', '/job/{jobId:\d+}', $this->container->get('console.controller.job'));
+                $r->addRoute('GET', '/kick/{jobId}', $this->container->get('console.controller.kick'));
+                $r->addRoute('GET', '/delete/{jobId}', $this->container->get('console.controller.delete'));
+                $r->addRoute('GET', '/job/{jobId}', $this->container->get('console.controller.job'));
             }
         );
     }
