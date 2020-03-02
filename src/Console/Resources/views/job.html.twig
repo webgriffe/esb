@@ -1,7 +1,10 @@
 {% extends '_layout.html.twig' %}
 
 {% block content %}
-    <h2 class="my-4">Job <small class="text-muted">{{ job.uuid }}</small></h2>
+    <h2 class="my-4">
+        Job <small class="text-muted">{{ job.uuid }}</small>
+        <a class="btn btn-secondary btn-sm float-right" role="button" href="/flow/{{ flow }}">&laquo; Back</a>
+    </h2>
 
     <div class="row">
         <div class="col-xs-12">

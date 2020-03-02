@@ -58,7 +58,7 @@
     <hr />
 
     <h4>Search</h4>
-    <form action="/tube/{{ tube.name }}" method="get">
+    <form action="/flow/{{ tube.name }}" method="get">
         <div class="form-group">
             <input type="search" class="form-control form-control-lg" id="query" aria-describedby="queryHelp"
                    placeholder="Enter a query" name="query" value="{{ query }}">
@@ -86,7 +86,7 @@
                         <td><pre>{{ job.lastEvent.type }}</pre></td>
                         <td>
                             <div class="btn-group btn-group-sm" role="group" aria-label="Actions">
-                                <a class="btn btn-secondary" href="/job/{{ job.uuid }}">
+                                <a class="btn btn-secondary" href="/flow/{{ flow }}/job/{{ job.uuid }}">
                                     <span class="oi oi-eye"></span>
                                     View
                                 </a>

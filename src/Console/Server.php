@@ -24,7 +24,7 @@ use Webgriffe\Esb\Console\Controller\DeleteController;
 use Webgriffe\Esb\Console\Controller\IndexController;
 use Webgriffe\Esb\Console\Controller\JobController;
 use Webgriffe\Esb\Console\Controller\KickController;
-use Webgriffe\Esb\Console\Controller\TubeController;
+use Webgriffe\Esb\Console\Controller\FlowController;
 use function Amp\call;
 
 /**
@@ -142,10 +142,10 @@ class Server implements ContainerAwareInterface
             function (RouteCollector $r) use ($request) {
                 $this->container->set('console.controller.request', $request);
                 $r->addRoute('GET', '/', $this->container->get('console.controller.index'));
-                $r->addRoute('GET', '/tube/{tube}', $this->container->get('console.controller.tube'));
+                $r->addRoute('GET', '/flow/{flow}', $this->container->get('console.controller.flow'));
                 $r->addRoute('GET', '/kick/{jobId}', $this->container->get('console.controller.kick'));
                 $r->addRoute('GET', '/delete/{jobId}', $this->container->get('console.controller.delete'));
-                $r->addRoute('GET', '/job/{jobId}', $this->container->get('console.controller.job'));
+                $r->addRoute('GET', '/flow/{flow}/job/{jobId}', $this->container->get('console.controller.job'));
             }
         );
     }

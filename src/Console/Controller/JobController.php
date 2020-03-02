@@ -28,17 +28,20 @@ class JobController extends AbstractController
     }
 
 
-    public function __invoke(Request $request, string $jobId)
+    public function __invoke(Request $request, string $flow, string $jobId)
     {
-        return call(function () use ($jobId) {
-            $result = yield $this->elasticSearchClient->search(['term' => ['uuid.keyword' => ['value' => $jobId]]]);
+        return call(function () use ($jobId, $flow) {
+            $result = yield $this->elasticSearchClient->search(
+                ['term' => ['uuid.keyword' => ['value' => $jobId]]],
+                $flow
+            );
             $document = $result['hits']['hits'][0];
             $job = $document['_source'];
 
             return new Response(
                 Status::OK,
                 [],
-                $this->getTwig()->render('job.html.twig', ['job' => $job])
+                $this->getTwig()->render('job.html.twig', ['flow' => $flow, 'job' => $job])
             );
         });
     }

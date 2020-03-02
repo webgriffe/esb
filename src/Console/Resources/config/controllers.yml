@@ -12,9 +12,9 @@ services:
     parent: console.controller.abstract
     class: '\Webgriffe\Esb\Console\Controller\IndexController'
 
-  console.controller.tube:
+  console.controller.flow:
     parent: console.controller.abstract
-    class: '\Webgriffe\Esb\Console\Controller\TubeController'
+    class: '\Webgriffe\Esb\Console\Controller\FlowController'
     arguments:
       - '@Webgriffe\AmpElasticsearch\Client'
 

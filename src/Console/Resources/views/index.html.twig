@@ -17,7 +17,7 @@
         <tbody>
         {% for tube in tubes %}
             <tr>
-                <th scope="row"><a href="/tube/{{ tube.name }}">{{ tube.name }}</a></th>
+                <th scope="row"><a href="/flow/{{ tube.name }}">{{ tube.name }}</a></th>
                 <td>{{ tube.currentJobsUrgent }}</td>
                 <td>{{ tube.currentJobsReady }}</td>
                 <td>{{ tube.currentJobsReserved }}</td>

@@ -19,7 +19,7 @@ use Amp\Promise;
 /**
  * @internal
  */
-class TubeController extends AbstractController
+class FlowController extends AbstractController
 {
     /**
      * @var Client
@@ -35,11 +35,11 @@ class TubeController extends AbstractController
         $this->elasticSearchClient = $elasticSearchClient;
     }
 
-    public function __invoke(Request $request, string $tube): Promise
+    public function __invoke(Request $request, string $flow): Promise
     {
-        return call(function () use ($request, $tube) {
+        return call(function () use ($request, $flow) {
             /** @var Tube $tube */
-            $tube = yield $this->getBeanstalkClient()->getTubeStats($tube);
+            $tube = yield $this->getBeanstalkClient()->getTubeStats($flow);
             $queryParams = [];
             parse_str($request->getUri()->getQuery(), $queryParams);
             $foundJobs = [];
@@ -52,8 +52,9 @@ class TubeController extends AbstractController
                 Status::OK,
                 [],
                 $this->getTwig()->render(
-                    'tube.html.twig',
+                    'flow.html.twig',
                     [
+                        'flow' => $flow,
                         'tube' => $tube,
                         'foundJobs' => $foundJobs,
                         'query' => $query,
