@@ -21,7 +21,7 @@ class Flow
      */
     private $producerInstance;
     /**
-     * @var WorkerInstance[]
+     * @var WorkerInstanceInterface[]
      */
     private $workerInstances;
     /**
@@ -65,5 +65,16 @@ class Flow
     public function getDescription(): string
     {
         return $this->flowConfig->getDescription();
+    }
+
+    public function getProducerClassName(): string
+    {
+        return get_class($this->producerInstance->getProducer());
+    }
+
+    public function getWorkerClassName(): string
+    {
+        $workerInstance = $this->workerInstances[0];
+        return get_class($workerInstance->getWorker());
     }
 }

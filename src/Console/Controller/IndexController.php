@@ -27,6 +27,8 @@ class IndexController extends AbstractController
                 $flowView[$flowCode] = [
                     'code' => $flowCode,
                     'description' => $flow->getDescription(),
+                    'producer' => $flow->getProducerClassName(),
+                    'worker' => $flow->getWorkerClassName(),
                     'erroredJobs' => yield $this->getErroredJobs($flowCode),
                     'totalJobs' => yield $this->getTotalJobs($flowCode),
                 ];

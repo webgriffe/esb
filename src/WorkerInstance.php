@@ -156,4 +156,12 @@ final class WorkerInstance implements WorkerInstanceInterface
             }
         });
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function getWorker(): WorkerInterface
+    {
+        return $this->worker;
+    }
 }

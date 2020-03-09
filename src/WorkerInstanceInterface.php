@@ -11,4 +11,9 @@ interface WorkerInstanceInterface
      * @return Promise
      */
     public function boot(): Promise;
+
+    /**
+     * @return WorkerInterface
+     */
+    public function getWorker(): WorkerInterface;
 }
