@@ -27,17 +27,29 @@ class IndexController extends AbstractController
                 $flowView[$flowCode] = [
                     'code' => $flowCode,
                     'description' => $flow->getDescription(),
-                    'jobsCount' => yield $this->getJobsCount($flowCode),
+                    'erroredJobs' => yield $this->getErroredJobs($flowCode),
+                    'totalJobs' => yield $this->getTotalJobs($flowCode),
                 ];
             }
             return new Response(Status::OK, [], $this->getTwig()->render('index.html.twig', ['flows' => $flowView]));
         });
     }
 
-    private function getJobsCount(string $flowCode): Promise
+    private function getTotalJobs(string $flowCode): Promise
     {
         return call(function () use ($flowCode) {
             $response = yield $this->getElasticsearchClient()->search(['match_all' => new \stdClass()], $flowCode);
+            return $response['hits']['total']['value'];
+        });
+    }
+
+    private function getErroredJobs(string $flowCode): Promise
+    {
+        return call(function () use ($flowCode) {
+            $response = yield $this->getElasticsearchClient()->search(
+                ['term' => ['lastEvent.type.keyword' => 'errored']],
+                $flowCode
+            );
             return $response['hits']['total']['value'];
         });
     }
