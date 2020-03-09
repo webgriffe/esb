@@ -26,12 +26,8 @@ class FlowController extends AbstractController
         return call(function () use ($request, $flowCode) {
             $queryParams = [];
             parse_str($request->getUri()->getQuery(), $queryParams);
-            $foundJobs = [];
-            $query = '';
-            if (array_key_exists('query', $queryParams)) {
-                $query = $queryParams['query'];
-                $foundJobs = yield $this->findAllTubeJobsByQuery($flowCode, $query);
-            }
+            $query = $queryParams['query'] ?? '';
+            $foundJobs = yield $this->findAllTubeJobsByQuery($flowCode, $query);
             return new Response(
                 Status::OK,
                 [],
