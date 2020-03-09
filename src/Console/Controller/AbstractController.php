@@ -16,10 +16,6 @@ abstract class AbstractController
      */
     private $twig;
     /**
-     * @var BeanstalkClient
-     */
-    private $beanstalkClient;
-    /**
      * @var FlowManager
      */
     private $flowManager;
@@ -30,12 +26,10 @@ abstract class AbstractController
 
     public function __construct(
         Environment $twig,
-        BeanstalkClient $beanstalkClient,
         FlowManager $flowManager,
         Client $elasticsearchClient
     ) {
         $this->twig = $twig;
-        $this->beanstalkClient = $beanstalkClient;
         $this->flowManager = $flowManager;
         $this->elasticsearchClient = $elasticsearchClient;
     }
@@ -46,14 +40,6 @@ abstract class AbstractController
     public function getTwig(): Environment
     {
         return $this->twig;
-    }
-
-    /**
-     * @return BeanstalkClient
-     */
-    public function getBeanstalkClient(): BeanstalkClient
-    {
-        return $this->beanstalkClient;
     }
 
     /**

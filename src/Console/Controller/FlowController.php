@@ -21,18 +21,16 @@ use Amp\Promise;
  */
 class FlowController extends AbstractController
 {
-    public function __invoke(Request $request, string $flow): Promise
+    public function __invoke(Request $request, string $flowCode): Promise
     {
-        return call(function () use ($request, $flow) {
-            /** @var Tube $tube */
-            $tube = yield $this->getBeanstalkClient()->getTubeStats($flow);
+        return call(function () use ($request, $flowCode) {
             $queryParams = [];
             parse_str($request->getUri()->getQuery(), $queryParams);
             $foundJobs = [];
             $query = '';
             if (array_key_exists('query', $queryParams)) {
                 $query = $queryParams['query'];
-                $foundJobs = yield $this->findAllTubeJobsByQuery($tube->name, $query);
+                $foundJobs = yield $this->findAllTubeJobsByQuery($flowCode, $query);
             }
             return new Response(
                 Status::OK,
@@ -40,55 +38,24 @@ class FlowController extends AbstractController
                 $this->getTwig()->render(
                     'flow.html.twig',
                     [
-                        'flow' => $flow,
-                        'tube' => $tube,
+                        'flowCode' => $flowCode,
                         'foundJobs' => $foundJobs,
                         'query' => $query,
-                        'peeks' => yield $this->getTubePeeks($tube->name),
                     ]
                 )
             );
         });
     }
 
-    private function findAllTubeJobsByQuery(string $tube, string $query)
+    private function findAllTubeJobsByQuery(string $flowCode, string $query)
     {
-        return call(function () use ($tube, $query) {
-            $response = yield $this->getElasticsearchClient()->uriSearchOneIndex($tube, $query);
+        return call(function () use ($flowCode, $query) {
+            $response = yield $this->getElasticsearchClient()->uriSearchOneIndex($flowCode, $query);
             $jobs = [];
             foreach ($response['hits']['hits'] as $rawJob) {
                 $jobs[] = $rawJob['_source'];
             }
             return $jobs;
-        });
-    }
-
-    private function getTubePeeks(string $tube): Promise
-    {
-        return call(function () use ($tube) {
-            yield $this->getBeanstalkClient()->use($tube);
-            try {
-                $peekReady = yield $this->getBeanstalkClient()->peekReady();
-            } catch (NotFoundException $e) {
-                $peekReady = false;
-            }
-            try {
-                $peekDelayed = yield $this->getBeanstalkClient()->peekDelayed();
-            } catch (NotFoundException $e) {
-                $peekDelayed = false;
-            }
-            try {
-                $peekBuried = yield $this->getBeanstalkClient()->peekBuried();
-            } catch (NotFoundException $e) {
-                $peekBuried = false;
-            }
-            $peeks = ['ready' => $peekReady, 'delayed' => $peekDelayed, 'buried' => $peekBuried];
-            foreach ($peeks as $state => $peek) {
-                if ($peek !== false && @unserialize($peek) !== false) {
-                    $peeks[$state] = print_r(unserialize($peek), true);
-                }
-            }
-            return $peeks;
         });
     }
 }

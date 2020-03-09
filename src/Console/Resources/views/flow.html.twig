@@ -2,67 +2,20 @@
 
 {% block content %}
     <h2 class="my-4">
-        Tube <small class="text-muted">{{ tube.name }}</small>
+        Flow <small class="text-muted">{{ flowCode }}</small>
         <a class="btn btn-secondary btn-sm float-right" role="button" href="/">&laquo; Back</a>
     </h2>
 
-    <div class="row">
-
-        <div class="col-sm-6">
-            <h4>Tube stats</h4>
-            <table class="table">
-                <tr>
-                    <th scope="row">Urgent Jobs</th>
-                    <td>{{ tube.currentJobsUrgent }}</td>
-                </tr>
-                <tr>
-                    <th scope="row">Ready Jobs</th>
-                    <td>{{ tube.currentJobsReady }}</td>
-                </tr>
-                <tr>
-                    <th scope="row">Reserved Jobs</th>
-                    <td>{{ tube.currentJobsReserved }}</td>
-                </tr>
-                <tr>
-                    <th scope="row">Delayed Jobs</th>
-                    <td>{{ tube.currentJobsDelayed }}</td>
-                </tr>
-                <tr>
-                    <th scope="row">Buried Jobs</th>
-                    <td>{{ tube.currentJobsBuried }}</td>
-                </tr>
-                <tr>
-                    <th scope="row">Total Jobs</th>
-                    <td>{{ tube.totalJobs }}</td>
-                </tr>
-            </table>
-        </div>
-
-        <div class="col-sm-6">
-            {% for state,payload in peeks %}
-                <h4>Next job in <small class="text-muted">{{ state }}</small> state</h4>
-                {% if payload %}
-                    <div class="card bg-light my-3">
-                        <div class="card-body">
-                            <pre class="mb-0">{{ payload }}</pre>
-                        </div>
-                    </div>
-                {% else %}
-                    <p>None</p>
-                {% endif %}
-            {% endfor %}
-        </div>
-
-    </div>
-
-    <hr />
 
     <h4>Search</h4>
-    <form action="/flow/{{ tube.name }}" method="get">
+    <form action="/flow/{{ flowCode }}" method="get">
         <div class="form-group">
             <input type="search" class="form-control form-control-lg" id="query" aria-describedby="queryHelp"
                    placeholder="Enter a query" name="query" value="{{ query }}">
-            <small id="queryHelp" class="form-text text-muted">Search for jobs in this tube.</small>
+            <small id="queryHelp" class="form-text text-muted">
+                Search for jobs in this flow
+                (use <a href="https://lucene.apache.org/core/2_9_4/queryparsersyntax.html">Lucene query syntax</a>).
+            </small>
         </div>
     </form>
 
@@ -86,7 +39,7 @@
                         <td><pre>{{ job.lastEvent.type }}</pre></td>
                         <td>
                             <div class="btn-group btn-group-sm" role="group" aria-label="Actions">
-                                <a class="btn btn-secondary" href="/flow/{{ flow }}/job/{{ job.uuid }}">
+                                <a class="btn btn-secondary" href="/flow/{{ flowCode }}/job/{{ job.uuid }}">
                                     <span class="oi oi-eye"></span>
                                     View
                                 </a>

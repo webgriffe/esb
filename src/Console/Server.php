@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Webgriffe\Esb\Console;
 
-use Amp\Beanstalk\BeanstalkClient;
 use Amp\CallableMaker;
 use Amp\File;
 use Amp\Http\Server\Request;
@@ -11,21 +10,12 @@ use Amp\Http\Server\RequestHandler\CallableRequestHandler;
 use Amp\Http\Server\Response;
 use Amp\Http\Status;
 use Amp\Loop;
-use Amp\Promise;
 use Amp\Socket;
 use FastRoute\Dispatcher;
 use FastRoute\RouteCollector;
-use Monolog\Logger;
 use Psr\Log\LoggerInterface;
-use Psr\Log\NullLogger;
 use Symfony\Component\DependencyInjection\ContainerAwareInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Webgriffe\Esb\Console\Controller\DeleteController;
-use Webgriffe\Esb\Console\Controller\IndexController;
-use Webgriffe\Esb\Console\Controller\JobController;
-use Webgriffe\Esb\Console\Controller\KickController;
-use Webgriffe\Esb\Console\Controller\FlowController;
-use function Amp\call;
 
 /**
  * @internal
@@ -143,8 +133,6 @@ class Server implements ContainerAwareInterface
                 $this->container->set('console.controller.request', $request);
                 $r->addRoute('GET', '/', $this->container->get('console.controller.index'));
                 $r->addRoute('GET', '/flow/{flow}', $this->container->get('console.controller.flow'));
-                $r->addRoute('GET', '/kick/{jobId}', $this->container->get('console.controller.kick'));
-                $r->addRoute('GET', '/delete/{jobId}', $this->container->get('console.controller.delete'));
                 $r->addRoute('GET', '/flow/{flow}/job/{jobId}', $this->container->get('console.controller.job'));
             }
         );

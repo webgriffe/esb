@@ -5,7 +5,6 @@ services:
     class: '\Webgriffe\Esb\Console\Controller\AbstractController'
     arguments:
       - '@console.twig'
-      - '@Amp\Beanstalk\BeanstalkClient'
       - '@Webgriffe\Esb\FlowManager'
       - '@Webgriffe\AmpElasticsearch\Client'
     public: true
@@ -21,12 +20,3 @@ services:
   console.controller.job:
     parent: console.controller.abstract
     class: '\Webgriffe\Esb\Console\Controller\JobController'
-
-  console.controller.kick:
-    parent: console.controller.abstract
-    class: '\Webgriffe\Esb\Console\Controller\KickController'
-
-  console.controller.delete:
-    parent: console.controller.abstract
-    class: '\Webgriffe\Esb\Console\Controller\DeleteController'
-
