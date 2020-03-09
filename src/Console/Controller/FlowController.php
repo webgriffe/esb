@@ -27,7 +27,8 @@ class FlowController extends AbstractController
             $queryParams = [];
             parse_str($request->getUri()->getQuery(), $queryParams);
             $query = $queryParams['query'] ?? '';
-            $foundJobs = yield $this->findAllTubeJobsByQuery($flowCode, $query);
+            $from = (int) ($queryParams['from'] ?? 0);
+            $foundJobs = yield $this->findAllTubeJobsByQuery($flowCode, $query, $from);
             return new Response(
                 Status::OK,
                 [],
@@ -43,13 +44,16 @@ class FlowController extends AbstractController
         });
     }
 
-    private function findAllTubeJobsByQuery(string $flowCode, string $query): Promise
+    private function findAllTubeJobsByQuery(string $flowCode, string $query, int $from): Promise
     {
-        return call(function () use ($flowCode, $query) {
+        return call(function () use ($flowCode, $query, $from) {
             $response = yield $this->getElasticsearchClient()->uriSearchOneIndex(
                 $flowCode,
                 $query,
-                ['sort' => 'lastEvent.time:desc']
+                [
+                    'sort' => 'lastEvent.time:desc',
+                    'from' => $from
+                ]
             );
             $jobs = [];
             foreach ($response['hits']['hits'] as $rawJob) {
