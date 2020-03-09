@@ -9,6 +9,7 @@
             <th scope="col">Description</th>
             <th scope="col">Producer</th>
             <th scope="col">Worker</th>
+            <th scope="col">Worked Jobs</th>
             <th scope="col">Errored Jobs</th>
             <th scope="col">Total Jobs</th>
         </tr>
@@ -20,8 +21,9 @@
                 <td>{{ flow.description }}</td>
                 <td><pre>{{ flow.producer }}</pre></td>
                 <td><pre>{{ flow.worker }}</pre></td>
-                <td>{{ flow.erroredJobs }}</td>
-                <td>{{ flow.totalJobs }}</td>
+                <td><a href="/flow/{{ flow.code }}?query=lastEvent.type.keyword:worked" class="badge badge-success">{{ flow.workedJobs }}</a></td>
+                <td><a href="/flow/{{ flow.code }}?query=lastEvent.type.keyword:errored" class="badge badge-warning">{{ flow.erroredJobs }}</a></td>
+                <td><a href="/flow/{{ flow.code }}" class="badge badge-secondary">{{ flow.totalJobs }}</a></td>
             </tr>
         {% endfor %}
         </tbody>

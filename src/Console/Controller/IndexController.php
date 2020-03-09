@@ -29,6 +29,7 @@ class IndexController extends AbstractController
                     'description' => $flow->getDescription(),
                     'producer' => $flow->getProducerClassName(),
                     'worker' => $flow->getWorkerClassName(),
+                    'workedJobs' => yield $this->getWorkedJobs($flowCode),
                     'erroredJobs' => yield $this->getErroredJobs($flowCode),
                     'totalJobs' => yield $this->getTotalJobs($flowCode),
                 ];
@@ -50,6 +51,16 @@ class IndexController extends AbstractController
         return call(function () use ($flowCode) {
             $response = yield $this->getElasticsearchClient()->search(
                 ['term' => ['lastEvent.type.keyword' => 'errored']],
+                $flowCode
+            );
+            return $response['hits']['total']['value'];
+        });
+    }
+    private function getWorkedJobs(string $flowCode): Promise
+    {
+        return call(function () use ($flowCode) {
+            $response = yield $this->getElasticsearchClient()->search(
+                ['term' => ['lastEvent.type.keyword' => 'worked']],
                 $flowCode
             );
             return $response['hits']['total']['value'];
