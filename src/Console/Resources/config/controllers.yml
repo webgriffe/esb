@@ -6,6 +6,8 @@ services:
     arguments:
       - '@console.twig'
       - '@Amp\Beanstalk\BeanstalkClient'
+      - '@Webgriffe\Esb\FlowManager'
+      - '@Webgriffe\AmpElasticsearch\Client'
     public: true
 
   console.controller.index:
@@ -15,14 +17,10 @@ services:
   console.controller.flow:
     parent: console.controller.abstract
     class: '\Webgriffe\Esb\Console\Controller\FlowController'
-    arguments:
-      - '@Webgriffe\AmpElasticsearch\Client'
 
   console.controller.job:
     parent: console.controller.abstract
     class: '\Webgriffe\Esb\Console\Controller\JobController'
-    arguments:
-      - '@Webgriffe\AmpElasticsearch\Client'
 
   console.controller.kick:
     parent: console.controller.abstract

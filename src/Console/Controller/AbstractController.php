@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace Webgriffe\Esb\Console\Controller;
 
 use Amp\Beanstalk\BeanstalkClient;
-use Amp\Http\Server\Request;
 use Twig\Environment;
+use Webgriffe\AmpElasticsearch\Client;
+use Webgriffe\Esb\FlowManager;
 
 abstract class AbstractController
 {
@@ -18,11 +19,25 @@ abstract class AbstractController
      * @var BeanstalkClient
      */
     private $beanstalkClient;
+    /**
+     * @var FlowManager
+     */
+    private $flowManager;
+    /**
+     * @var Client
+     */
+    private $elasticsearchClient;
 
-    public function __construct(Environment $twig, BeanstalkClient $beanstalkClient)
-    {
+    public function __construct(
+        Environment $twig,
+        BeanstalkClient $beanstalkClient,
+        FlowManager $flowManager,
+        Client $elasticsearchClient
+    ) {
         $this->twig = $twig;
         $this->beanstalkClient = $beanstalkClient;
+        $this->flowManager = $flowManager;
+        $this->elasticsearchClient = $elasticsearchClient;
     }
 
     /**
@@ -39,5 +54,21 @@ abstract class AbstractController
     public function getBeanstalkClient(): BeanstalkClient
     {
         return $this->beanstalkClient;
+    }
+
+    /**
+     * @return FlowManager
+     */
+    public function getFlowManager(): FlowManager
+    {
+        return $this->flowManager;
+    }
+
+    /**
+     * @return Client
+     */
+    public function getElasticsearchClient(): Client
+    {
+        return $this->elasticsearchClient;
     }
 }

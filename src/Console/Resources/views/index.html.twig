@@ -1,29 +1,19 @@
 {% extends '_layout.html.twig' %}
 
 {% block content %}
-    <h2 class="my-4">Tubes</h2>
+    <h2 class="my-4">Flows</h2>
     <table class="table">
         <thead>
         <tr>
-            <th scope="col">Tube</th>
-            <th scope="col">Urgent Jobs</th>
-            <th scope="col">Ready Jobs</th>
-            <th scope="col">Reserved Jobs</th>
-            <th scope="col">Delayed Jobs</th>
-            <th scope="col">Buried Jobs</th>
-            <th scope="col">Total Jobs</th>
+            <th scope="col">Flow</th>
+            <th scope="col">Description</th>
         </tr>
         </thead>
         <tbody>
-        {% for tube in tubes %}
+        {% for flow in flows %}
             <tr>
-                <th scope="row"><a href="/flow/{{ tube.name }}">{{ tube.name }}</a></th>
-                <td>{{ tube.currentJobsUrgent }}</td>
-                <td>{{ tube.currentJobsReady }}</td>
-                <td>{{ tube.currentJobsReserved }}</td>
-                <td>{{ tube.currentJobsDelayed }}</td>
-                <td>{{ tube.currentJobsBuried }}</td>
-                <td>{{ tube.totalJobs }}</td>
+                <th scope="row"><a href="/flow/{{ flow.code }}">{{ flow.code }}</a></th>
+                <td>{{ flow.description }}</td>
             </tr>
         {% endfor %}
         </tbody>

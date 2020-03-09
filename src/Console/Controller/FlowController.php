@@ -21,20 +21,6 @@ use Amp\Promise;
  */
 class FlowController extends AbstractController
 {
-    /**
-     * @var Client
-     */
-    private $elasticSearchClient;
-
-    public function __construct(
-        Environment $twig,
-        BeanstalkClient $beanstalkClient,
-        Client $elasticSearchClient
-    ) {
-        parent::__construct($twig, $beanstalkClient);
-        $this->elasticSearchClient = $elasticSearchClient;
-    }
-
     public function __invoke(Request $request, string $flow): Promise
     {
         return call(function () use ($request, $flow) {
@@ -68,7 +54,7 @@ class FlowController extends AbstractController
     private function findAllTubeJobsByQuery(string $tube, string $query)
     {
         return call(function () use ($tube, $query) {
-            $response = yield $this->elasticSearchClient->uriSearchOneIndex($tube, $query);
+            $response = yield $this->getElasticsearchClient()->uriSearchOneIndex($tube, $query);
             $jobs = [];
             foreach ($response['hits']['hits'] as $rawJob) {
                 $jobs[] = $rawJob['_source'];

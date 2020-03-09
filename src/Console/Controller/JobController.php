@@ -16,22 +16,10 @@ use function Amp\call;
  */
 class JobController extends AbstractController
 {
-    /**
-     * @var Client
-     */
-    private $elasticSearchClient;
-
-    public function __construct(Environment $twig, BeanstalkClient $beanstalkClient, Client $elasticSearchClient)
-    {
-        parent::__construct($twig, $beanstalkClient);
-        $this->elasticSearchClient = $elasticSearchClient;
-    }
-
-
     public function __invoke(Request $request, string $flow, string $jobId)
     {
         return call(function () use ($jobId, $flow) {
-            $result = yield $this->elasticSearchClient->search(
+            $result = yield $this->getElasticsearchClient()->search(
                 ['term' => ['uuid.keyword' => ['value' => $jobId]]],
                 $flow
             );

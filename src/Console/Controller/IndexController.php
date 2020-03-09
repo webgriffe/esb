@@ -20,13 +20,8 @@ class IndexController extends AbstractController
     public function __invoke(Request $request): Promise
     {
         return call(function () {
-            $tubes = yield array_map(
-                function (string $tube) {
-                    return $this->getBeanstalkClient()->getTubeStats($tube);
-                },
-                yield $this->getBeanstalkClient()->listTubes()
-            );
-            return new Response(Status::OK, [], $this->getTwig()->render('index.html.twig', array('tubes' => $tubes)));
+            $flows = $this->getFlowManager()->getFlows();
+            return new Response(Status::OK, [], $this->getTwig()->render('index.html.twig', array('flows' => $flows)));
         });
     }
 }

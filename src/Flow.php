@@ -56,4 +56,14 @@ class Flow
             });
         }
     }
+
+    public function getCode(): string
+    {
+        return $this->flowConfig->getTube();
+    }
+
+    public function getDescription(): string
+    {
+        return $this->flowConfig->getDescription();
+    }
 }
