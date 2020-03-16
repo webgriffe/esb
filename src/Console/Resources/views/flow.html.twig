@@ -19,7 +19,7 @@
         </div>
     </form>
 
-    {% if foundJobs|length > 0 %}
+    {% if pager.getCurrentPageResults|length > 0 %}
         <div class="table-responsive">
             <table class="table table-striped">
                 <thead>
@@ -31,7 +31,7 @@
                 </tr>
                 </thead>
                 <tbody>
-                {% for job in foundJobs %}
+                {% for job in pager.getCurrentPageResults %}
                     <tr>
                         <th scope="row">{{ job.uuid }}</th>
                         {% set payload = job.payloadData|json_encode() %}
@@ -50,5 +50,21 @@
                 </tbody>
             </table>
         </div>
+    {% endif %}
+
+    {% if pager.haveToPaginate %}
+        <nav aria-label="Search results pages">
+            <ul class="pagination">
+                {% if pager.hasPreviousPage %}
+                    <li class="page-item"><a class="page-link" href="/flow/{{ flowCode }}?page={{ pager.previousPage }}">&laquo;</a></li>
+                {% endif %}
+                {% for page in 1..pager.nbPages %}
+                    <li class="page-item{% if pager.currentPage == page %} active{% endif %}"><a class="page-link" href="/flow/{{ flowCode }}?page={{ page }}">{{ page }}</a></li>
+                {% endfor %}
+                {% if pager.hasNextPage %}
+                    <li class="page-item"><a class="page-link" href="/flow/{{ flowCode }}?page={{ pager.nextPage }}">&raquo;</a></li>
+                {% endif %}
+            </ul>
+        </nav>
     {% endif %}
 {% endblock %}

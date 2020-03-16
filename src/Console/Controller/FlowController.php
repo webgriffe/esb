@@ -9,6 +9,8 @@ use Amp\Beanstalk\Stats\Job;
 use Amp\Beanstalk\Stats\System;
 use Amp\Beanstalk\Stats\Tube;
 use Amp\Http\Server\Request;
+use Pagerfanta\Adapter\ArrayAdapter;
+use Pagerfanta\Pagerfanta;
 use Twig\Environment;
 use Webgriffe\AmpElasticsearch\Client;
 use function Amp\call;
@@ -27,7 +29,12 @@ class FlowController extends AbstractController
             $queryParams = [];
             parse_str($request->getUri()->getQuery(), $queryParams);
             $query = $queryParams['query'] ?? '';
+            $page = (int)($queryParams['page'] ?? '1');
             $foundJobs = yield $this->findAllTubeJobsByQuery($flowCode, $query);
+            $adapter = new ArrayAdapter($foundJobs);
+            $pager = new Pagerfanta($adapter);
+            $pager->setMaxPerPage(5);
+            $pager->setCurrentPage($page);
             return new Response(
                 Status::OK,
                 [],
@@ -35,7 +42,7 @@ class FlowController extends AbstractController
                     'flow.html.twig',
                     [
                         'flowCode' => $flowCode,
-                        'foundJobs' => $foundJobs,
+                        'pager' => $pager,
                         'query' => $query,
                     ]
                 )
