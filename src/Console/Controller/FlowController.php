@@ -13,6 +13,7 @@ use Pagerfanta\Adapter\ArrayAdapter;
 use Pagerfanta\Pagerfanta;
 use Twig\Environment;
 use Webgriffe\AmpElasticsearch\Client;
+use Webgriffe\Esb\Console\AmpElasticsearchUriSearchAdapter;
 use function Amp\call;
 use Amp\Http\Server\Response;
 use Amp\Http\Status;
@@ -30,8 +31,12 @@ class FlowController extends AbstractController
             parse_str($request->getUri()->getQuery(), $queryParams);
             $query = $queryParams['query'] ?? '';
             $page = (int)($queryParams['page'] ?? '1');
-            $foundJobs = yield $this->findAllTubeJobsByQuery($flowCode, $query);
-            $adapter = new ArrayAdapter($foundJobs);
+            $adapter = new AmpElasticsearchUriSearchAdapter(
+                $this->getElasticsearchClient(),
+                $flowCode,
+                $query,
+                ['sort' => 'lastEvent.time:desc']
+            );
             $pager = new Pagerfanta($adapter);
             $pager->setMaxPerPage(5);
             $pager->setCurrentPage($page);
@@ -47,22 +52,6 @@ class FlowController extends AbstractController
                     ]
                 )
             );
-        });
-    }
-
-    private function findAllTubeJobsByQuery(string $flowCode, string $query): Promise
-    {
-        return call(function () use ($flowCode, $query) {
-            $response = yield $this->getElasticsearchClient()->uriSearchOneIndex(
-                $flowCode,
-                $query,
-                ['sort' => 'lastEvent.time:desc']
-            );
-            $jobs = [];
-            foreach ($response['hits']['hits'] as $rawJob) {
-                $jobs[] = $rawJob['_source'];
-            }
-            return $jobs;
         });
     }
 }
