@@ -2,12 +2,12 @@
 
 namespace Webgriffe\Esb\Console;
 
-use Pagerfanta\Adapter\AdapterInterface;
+use Amp\Promise;
+use Amp\Success;
 use Webgriffe\AmpElasticsearch\Client;
 use function Amp\call;
-use function Amp\Promise\wait;
 
-class AmpElasticsearchUriSearchAdapter implements AdapterInterface
+class AmpElasticsearchUriSearchAdapter implements AsyncPagerAdapterInterface
 {
     /**
      * @var Client
@@ -46,43 +46,36 @@ class AmpElasticsearchUriSearchAdapter implements AdapterInterface
         $this->options = $options;
     }
 
-    /**
-     * @inheritDoc
-     * @throws \Throwable
-     */
-    public function getNbResults()
+    public function getNbResults(): Promise
     {
         if ($this->totalHits !== null) {
-            return $this->totalHits;
+            return new Success($this->totalHits);
         }
-        $response = wait(
-        $this->client->uriSearchOneIndex(
-            $this->index,
-            $this->query,
-            $this->options
-        )
-    );
-        return $response['hits']['total']['value'];
+
+        return call(function () {
+            $response = yield $this->client->uriSearchOneIndex(
+                $this->index,
+                $this->query,
+                $this->options
+            );
+            return $response['hits']['total']['value'];
+        });
     }
 
-    /**
-     * @inheritDoc
-     * @throws \Throwable
-     */
-    public function getSlice($offset, $length)
+    public function getSlice(int $offset, int $length): Promise
     {
-        $response = wait(
-            $this->client->uriSearchOneIndex(
+        return call(function () use ($offset, $length) {
+            $response = yield $this->client->uriSearchOneIndex(
                 $this->index,
                 $this->query,
                 array_merge($this->options, ['from' => $offset, 'size' => $length])
-            )
-        );
-        $this->totalHits = $response['hits']['total']['value'];
-        $jobs = [];
-        foreach ($response['hits']['hits'] as $rawJob) {
-            $jobs[] = $rawJob['_source'];
-        }
-        return $jobs;
+            );
+            $this->totalHits = $response['hits']['total']['value'];
+            $jobs = [];
+            foreach ($response['hits']['hits'] as $rawJob) {
+                $jobs[] = $rawJob['_source'];
+            }
+            return $jobs;
+        });
     }
 }
