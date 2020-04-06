@@ -13,7 +13,7 @@ class FailingJobHandlingTest extends KernelTestCase
 {
     private const FLOW_CODE = 'failing_jobs_flow';
 
-    public function testFailingJobIsReleasedWithProperDelayAndThenBuriedAftetProperMaxRetries()
+    public function testFailingJobIsReleasedWithProperDelayAndThenDeletedAftetProperMaxRetries()
     {
         self::createKernel([
             'services' => [
@@ -34,16 +34,19 @@ class FailingJobHandlingTest extends KernelTestCase
         ]);
 
         DummyRepeatProducer::$jobs = [new Job(['test'])];
-        $this->stopWhen(function () {
-            return $this->logHandler()->hasErrorThatPasses(
-                function (array $record) {
-                    return $record['message'] === 'A Job reached maximum work retry limit and has been buried' &&
-                        $record['context']['max_retry'] === 2;
-                }
-            );
-        });
+        $this->stopWhen(
+            function () {
+                return $this->logHandler()->hasErrorThatPasses(
+                    function (array $record) {
+                        return $record['message'] === 'A Job reached maximum work retry limit and has been removed ' .
+                            'from queue.' && $record['context']['max_retry'] === 2;
+                    }
+                );
+            }
+        );
         self::$kernel->boot();
 
+        $this->assertDeletedJobsCountInTube(1, self::FLOW_CODE);
         $this->assertTrue(
             $this->logHandler()->hasInfoThatPasses(
                 function (array $record) {
