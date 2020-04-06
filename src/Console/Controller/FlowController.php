@@ -7,8 +7,8 @@ use Amp\Http\Server\Request;
 use Amp\Http\Server\Response;
 use Amp\Http\Status;
 use Amp\Promise;
-use Webgriffe\Esb\Console\AmpElasticsearchUriSearchAdapter;
-use Webgriffe\Esb\Console\AsyncPager;
+use Webgriffe\Esb\Console\Pager\AmpElasticsearchUriSearchAdapter;
+use Webgriffe\Esb\Console\Pager\AsyncPager;
 use function Amp\call;
 
 /**

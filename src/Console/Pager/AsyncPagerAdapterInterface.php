@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Webgriffe\Esb\Console;
+namespace Webgriffe\Esb\Console\Pager;
 
 use Amp\Promise;
 

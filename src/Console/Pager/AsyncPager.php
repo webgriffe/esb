@@ -2,19 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Webgriffe\Esb\Console;
+namespace Webgriffe\Esb\Console\Pager;
 
 use Amp\Promise;
-use Pagerfanta\Exception\LessThan1CurrentPageException;
-use Pagerfanta\Exception\LessThan1MaxPerPageException;
-use Pagerfanta\Exception\LogicException;
-use Pagerfanta\Exception\NotBooleanException;
-use Pagerfanta\Exception\NotIntegerCurrentPageException;
-use Pagerfanta\Exception\NotIntegerException;
-use Pagerfanta\Exception\NotIntegerMaxPerPageException;
-use Pagerfanta\Exception\OutOfRangeCurrentPageException;
 use function Amp\call;
 
+/**
+ * @internal
+ */
 class AsyncPager
 {
     /**
@@ -296,7 +291,13 @@ class AsyncPager
             return $this->getNbPages();
         }
 
-        throw new OutOfRangeCurrentPageException(sprintf('Page "%d" does not exist. The currentPage must be inferior to "%d"', $currentPage, $this->getNbPages()));
+        throw new OutOfRangeCurrentPageException(
+            sprintf(
+                'Page "%d" does not exist. The currentPage must be inferior to "%d"',
+                $currentPage,
+                $this->getNbPages()
+            )
+        );
     }
 
     private function resetForCurrentPageChange()
@@ -428,12 +429,12 @@ class AsyncPager
      *
      * @return integer
      *
-     * @throws LogicException If there is no previous page.
+     * @throws \LogicException If there is no previous page.
      */
     public function getPreviousPage()
     {
         if (!$this->hasPreviousPage()) {
-            throw new LogicException('There is no previous page.');
+            throw new \LogicException('There is no previous page.');
         }
 
         return $this->currentPage - 1;
@@ -454,12 +455,12 @@ class AsyncPager
      *
      * @return integer
      *
-     * @throws LogicException If there is no next page.
+     * @throws \LogicException If there is no next page.
      */
     public function getNextPage()
     {
         if (!$this->hasNextPage()) {
-            throw new LogicException('There is no next page.');
+            throw new \LogicException('There is no next page.');
         }
 
         return $this->currentPage + 1;
@@ -538,7 +539,7 @@ class AsyncPager
         }
 
         if ($this->getNbResults() < $position) {
-            throw new OutOfBoundsException(sprintf(
+            throw new \OutOfBoundsException(sprintf(
                 'Item requested at position %d, but there are only %d items.',
                 $position,
                 $this->getNbResults()

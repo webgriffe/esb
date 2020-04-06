@@ -1,13 +1,14 @@
 <?php
 
-namespace Webgriffe\Esb\Console;
+namespace Webgriffe\Esb\Console\Pager;
 
 use Amp\Promise;
 use Amp\Success;
 use Webgriffe\AmpElasticsearch\Client;
+use Webgriffe\Esb\Console\Pager\AsyncPagerAdapterInterface;
 use function Amp\call;
 
-class AmpElasticsearchUriSearchAdapter implements AsyncPagerAdapterInterface
+final class AmpElasticsearchUriSearchAdapter implements AsyncPagerAdapterInterface
 {
     /**
      * @var Client
