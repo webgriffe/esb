@@ -44,6 +44,12 @@
                                     View
                                 </a>
                             </div>
+                            <div class="btn-group btn-group-sm" role="group" aria-label="Actions">
+                                <a class="btn btn-secondary" href="/flow/{{ flowCode }}/job/{{ job.uuid }}/requeue">
+                                    <span class="oi oi-action-redo"></span>
+                                    Requeue
+                                </a>
+                            </div>
                         </td>
                     </tr>
                 {% endfor %}

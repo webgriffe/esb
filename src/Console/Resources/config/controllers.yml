@@ -20,3 +20,11 @@ services:
   console.controller.job:
     parent: console.controller.abstract
     class: '\Webgriffe\Esb\Console\Controller\JobController'
+
+  console.controller.requeue:
+    parent: console.controller.abstract
+    class: '\Webgriffe\Esb\Console\Controller\RequeueController'
+    arguments:
+      - '@Webgriffe\Esb\Service\ElasticSearch'
+      - '@Psr\Log\LoggerInterface'
+      - '@Amp\Beanstalk\BeanstalkClient'

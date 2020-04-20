@@ -6,14 +6,16 @@
         <a class="btn btn-secondary btn-sm float-right" role="button" href="/flow/{{ flow }}">&laquo; Back</a>
     </h2>
 
-    <div class="row">
-        <div class="col-xs-12">
-            <h4>Payload</h4>
-            <div class="card bg-light my-3">
-                <div class="card-body">
-                    <pre class="mb-0">{{ job|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre>
-                </div>
-            </div>
+    {% if requeued %}
+        <div class="alert alert-success" role="alert">
+            Job <strong>{{ job.uuid }}</strong> has been successfully re-queued!
+        </div>
+    {% endif %}
+
+    <h4>Payload</h4>
+    <div class="card bg-light my-3">
+        <div class="card-body">
+            <pre class="mb-0">{{ job|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre>
         </div>
     </div>
 {% endblock %}

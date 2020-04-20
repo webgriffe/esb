@@ -134,6 +134,11 @@ class Server implements ContainerAwareInterface
                 $r->addRoute('GET', '/', $this->container->get('console.controller.index'));
                 $r->addRoute('GET', '/flow/{flow}', $this->container->get('console.controller.flow'));
                 $r->addRoute('GET', '/flow/{flow}/job/{jobId}', $this->container->get('console.controller.job'));
+                $r->addRoute(
+                    'GET',
+                    '/flow/{flow}/job/{jobId}/requeue',
+                    $this->container->get('console.controller.requeue')
+                );
             }
         );
     }
