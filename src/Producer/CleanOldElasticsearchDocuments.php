@@ -10,13 +10,26 @@ use Webgriffe\Esb\CrontabProducerInterface;
 
 class CleanOldElasticsearchDocuments implements CrontabProducerInterface
 {
+    /**
+     * @var string
+     */
+    private $cronExpression;
+
+    /**
+     * CleanOldElasticsearchDocuments constructor.
+     * @param string $cronExpression
+     */
+    public function __construct(string $cronExpression)
+    {
+        $this->cronExpression = $cronExpression;
+    }
 
     /**
      * @inheritDoc
      */
     public function getCrontab(): string
     {
-        // TODO: Implement getCrontab() method.
+        return $this->cronExpression;
     }
 
     /**
@@ -32,6 +45,6 @@ class CleanOldElasticsearchDocuments implements CrontabProducerInterface
      */
     public function produce($data = null): Iterator
     {
-        return new Success();
+        // TODO: Implement produce() method.
     }
 }

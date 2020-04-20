@@ -10,12 +10,30 @@ use function Amp\Promise\wait;
 
 class CleanOldElasticsearchDocumentsTest extends TestCase
 {
+    const CRONTAB_EXPRESSION = '0 15 10 ? * *';
+    /**
+     * @var CleanOldElasticsearchDocuments
+     */
+    private $producer;
+
+    protected function setUp()
+    {
+        $this->producer = new CleanOldElasticsearchDocuments(self::CRONTAB_EXPRESSION);
+    }
+
     /**
      * @test
      */
     public function it_is_a_crontab_producer()
     {
-        $producer = new CleanOldElasticsearchDocuments();
-        $this->assertInstanceOf(CrontabProducerInterface::class, $producer);
+        $this->assertInstanceOf(CrontabProducerInterface::class, $this->producer);
+    }
+
+    /**
+     * @test
+     */
+    public function it_has_a_crontab_expression()
+    {
+        $this->assertEquals(self::CRONTAB_EXPRESSION, $this->producer->getCrontab());
     }
 }
