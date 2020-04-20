@@ -2,3 +2,4 @@
 /vendor
 /parameters.yml
 /.env
+esb.yml
