@@ -17,7 +17,7 @@ class AsyncPager
      */
     private $adapter;
     /**
-     * @var int
+     * @var int|null
      */
     private $nbResults;
     /**
@@ -41,7 +41,7 @@ class AsyncPager
      */
     private $currentPage;
     /**
-     * @var array|\Traversable
+     * @var array|\Traversable|null
      */
     private $currentPageResults;
 
@@ -479,7 +479,7 @@ class AsyncPager
     /**
      * Implements the \IteratorAggregate interface.
      *
-     * @return \ArrayIterator instance with the current results.
+     * @return \Traversable instance with the current results.
      */
     public function getIterator()
     {
