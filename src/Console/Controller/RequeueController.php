@@ -19,10 +19,6 @@ use function Amp\call;
 class RequeueController extends AbstractController
 {
     /**
-     * @var ElasticSearch
-     */
-    private $elasticSearch;
-    /**
      * @var LoggerInterface
      */
     private $logger;
@@ -34,13 +30,11 @@ class RequeueController extends AbstractController
     public function __construct(
         Environment $twig,
         FlowManager $flowManager,
-        Client $elasticsearchClient,
         ElasticSearch $elasticSearch,
         LoggerInterface $logger,
         BeanstalkClient $beanstalkClient
     ) {
-        parent::__construct($twig, $flowManager, $elasticsearchClient);
-        $this->elasticSearch = $elasticSearch;
+        parent::__construct($twig, $flowManager, $elasticSearch);
         $this->logger = $logger;
         $this->beanstalkClient = $beanstalkClient;
     }
@@ -48,9 +42,9 @@ class RequeueController extends AbstractController
     public function __invoke(Request $request, string $flow, string $jobId)
     {
         return call(function () use ($jobId, $flow) {
-            $job = yield $this->elasticSearch->fetchJob($jobId, $flow);
+            $job = yield $this->getElasticsearch()->fetchJob($jobId, $flow);
             $job->addEvent(new RequeuedJobEvent(new \DateTime()));
-            yield $this->elasticSearch->indexJob($job, $flow);
+            yield $this->getElasticsearch()->indexJob($job, $flow);
 
             yield $this->beanstalkClient->use($flow);
             $jobBeanstalkId = yield $this->beanstalkClient->put(

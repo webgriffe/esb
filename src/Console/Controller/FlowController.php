@@ -24,7 +24,7 @@ class FlowController extends AbstractController
             $query = $queryParams['query'] ?? '';
             $page = (int)($queryParams['page'] ?? '1');
             $adapter = new AmpElasticsearchUriSearchAdapter(
-                $this->getElasticsearchClient(),
+                $this->getElasticsearch()->getClient(),
                 $flowCode,
                 $query,
                 ['sort' => 'lastEvent.time:desc']

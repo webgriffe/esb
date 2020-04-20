@@ -41,7 +41,10 @@ class IndexController extends AbstractController
     private function getTotalJobs(string $flowCode): Promise
     {
         return call(function () use ($flowCode) {
-            $response = yield $this->getElasticsearchClient()->search(['match_all' => new \stdClass()], $flowCode);
+            $response = yield $this->getElasticsearch()->getClient()->search(
+                ['match_all' => new \stdClass()],
+                $flowCode
+            );
             return $response['hits']['total']['value'];
         });
     }
@@ -49,7 +52,7 @@ class IndexController extends AbstractController
     private function getErroredJobs(string $flowCode): Promise
     {
         return call(function () use ($flowCode) {
-            $response = yield $this->getElasticsearchClient()->search(
+            $response = yield $this->getElasticsearch()->getClient()->search(
                 ['term' => ['lastEvent.type.keyword' => 'errored']],
                 $flowCode
             );
@@ -59,7 +62,7 @@ class IndexController extends AbstractController
     private function getWorkedJobs(string $flowCode): Promise
     {
         return call(function () use ($flowCode) {
-            $response = yield $this->getElasticsearchClient()->search(
+            $response = yield $this->getElasticsearch()->getClient()->search(
                 ['term' => ['lastEvent.type.keyword' => 'worked']],
                 $flowCode
             );

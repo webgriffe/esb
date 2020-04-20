@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Webgriffe\Esb\Console\Controller;
 
-use Amp\Beanstalk\BeanstalkClient;
 use Twig\Environment;
 use Webgriffe\AmpElasticsearch\Client;
 use Webgriffe\Esb\FlowManager;
+use Webgriffe\Esb\Service\ElasticSearch;
 
 abstract class AbstractController
 {
@@ -20,18 +20,18 @@ abstract class AbstractController
      */
     private $flowManager;
     /**
-     * @var Client
+     * @var ElasticSearch
      */
-    private $elasticsearchClient;
+    private $elasticSearch;
 
     public function __construct(
         Environment $twig,
         FlowManager $flowManager,
-        Client $elasticsearchClient
+        ElasticSearch $elasticSearch
     ) {
         $this->twig = $twig;
         $this->flowManager = $flowManager;
-        $this->elasticsearchClient = $elasticsearchClient;
+        $this->elasticSearch = $elasticSearch;
     }
 
     /**
@@ -51,10 +51,10 @@ abstract class AbstractController
     }
 
     /**
-     * @return Client
+     * @return ElasticSearch
      */
-    public function getElasticsearchClient(): Client
+    public function getElasticsearch(): ElasticSearch
     {
-        return $this->elasticsearchClient;
+        return $this->elasticSearch;
     }
 }

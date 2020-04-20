@@ -6,7 +6,7 @@ services:
     arguments:
       - '@console.twig'
       - '@Webgriffe\Esb\FlowManager'
-      - '@Webgriffe\AmpElasticsearch\Client'
+      - '@Webgriffe\Esb\Service\ElasticSearch'
     public: true
 
   console.controller.index:
@@ -25,6 +25,5 @@ services:
     parent: console.controller.abstract
     class: '\Webgriffe\Esb\Console\Controller\RequeueController'
     arguments:
-      - '@Webgriffe\Esb\Service\ElasticSearch'
       - '@Psr\Log\LoggerInterface'
       - '@Amp\Beanstalk\BeanstalkClient'

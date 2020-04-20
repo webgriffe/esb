@@ -19,7 +19,7 @@ class JobController extends AbstractController
     public function __invoke(Request $request, string $flow, string $jobId)
     {
         return call(function () use ($jobId, $flow, $request) {
-            $result = yield $this->getElasticsearchClient()->search(
+            $result = yield $this->getElasticsearch()->getClient()->search(
                 ['term' => ['uuid.keyword' => ['value' => $jobId]]],
                 $flow
             );

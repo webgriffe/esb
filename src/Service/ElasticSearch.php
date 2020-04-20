@@ -59,6 +59,11 @@ class ElasticSearch
         });
     }
 
+    public function getClient(): Client
+    {
+        return $this->client;
+    }
+
     /**
      * @param JobInterface $job
      * @param string $indexName
