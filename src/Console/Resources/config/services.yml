@@ -16,10 +16,15 @@ services:
     arguments:
       - '%console.views_dir%'
 
+  console.twig.class_extension:
+    class: \Webgriffe\Esb\Console\ClassTwigExtension
+
   console.twig:
-    class: \Twig_Environment
+    class: \Twig\Environment
     arguments:
       - '@console.twig.loader'
+    calls:
+      - ['addExtension', ['@console.twig.class_extension']]
 
   console.server:
     class: \Webgriffe\Esb\Console\Server

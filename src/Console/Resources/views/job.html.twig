@@ -2,7 +2,7 @@
 
 {% block content %}
     <h2 class="my-4">
-        Job <small class="text-muted">{{ job.uuid }}</small>
+        Job <small class="text-muted">{{ flow }}</small> / <small class="text-muted">{{ job.uuid }}</small>
         <a class="btn btn-secondary btn-sm float-right" role="button" href="/flow/{{ flow }}">&laquo; Back</a>
     </h2>
 
@@ -12,10 +12,89 @@
         </div>
     {% endif %}
 
-    <h4>Payload</h4>
-    <div class="card bg-light my-3">
-        <div class="card-body">
-            <pre class="mb-0">{{ job|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre>
+    <div class="row">
+        <div class="col">
+            <h4>Details</h4>
+            <table class="table table-striped">
+                <tbody>
+                    <tr>
+                        <th>ID</th>
+                        <td>{{ job.uuid }}</td>
+                    </tr>
+                    <tr>
+                        <th>Last event</th>
+                        <td>
+                            {{ job.lastEvent.time|date('Y-m-d H:i:s') }}<br />
+                            <pre>{{ class(job.lastEvent) }}</pre>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Timeout</th>
+                        <td>{{ job.timeout }}</td>
+                    </tr>
+                    <tr>
+                        <th>Delay</th>
+                        <td>{{ job.delay }}</td>
+                    </tr>
+                    <tr>
+                        <th>Priority</th>
+                        <td>{{ job.priority }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="col">
+            <h4>Payload</h4>
+            <div class="card bg-light my-3">
+                <div class="card-body">
+                    <pre class="mb-0">{{ job.payloadData|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre>
+                </div>
+            </div>
         </div>
     </div>
+
+    <div class="row">
+        <div class="col">
+            <h4>Job Events ({{ job.events|length }})</h4>
+
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>
+                        Date/time
+                        <span class="oi oi-sort-descending"></span>
+                    </th>
+                    <th>Event type</th>
+                    <th>Producer / Worker</th>
+                    <th>Error message</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for event in job.events|reverse %}
+                    <tr>
+                        <td>{{ event.time|date('Y-m-d H:i:s') }}</td>
+                        <td><pre>{{ class(event) }}</pre></td>
+                        <td>
+                            {% if event.producerFqcn is defined %}
+                                <pre>{{ event.producerFqcn }}</pre>
+                            {% elseif event.workerFqcn is defined %}
+                                <pre>{{ event.workerFqcn }}</pre>
+                            {% else %}
+                                n/a
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if event.errorMessage is defined %}
+                                {{ event.errorMessage }}
+                            {% else %}
+                                n/a
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
 {% endblock %}

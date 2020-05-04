@@ -9,6 +9,7 @@ use Amp\Http\Server\Response;
 use Amp\Http\Status;
 use Twig\Environment;
 use Webgriffe\AmpElasticsearch\Client;
+use Webgriffe\Esb\Model\JobInterface;
 use function Amp\call;
 
 /**
@@ -19,12 +20,7 @@ class JobController extends AbstractController
     public function __invoke(Request $request, string $flow, string $jobId)
     {
         return call(function () use ($jobId, $flow, $request) {
-            $result = yield $this->getElasticsearch()->getClient()->search(
-                ['term' => ['uuid.keyword' => ['value' => $jobId]]],
-                $flow
-            );
-            $document = $result['hits']['hits'][0];
-            $job = $document['_source'];
+            $job = yield $this->getElasticsearch()->fetchJob($jobId, $flow);
 
             $queryParams = [];
             parse_str($request->getUri()->getQuery(), $queryParams);
