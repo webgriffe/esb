@@ -3,7 +3,12 @@
 {% block content %}
     <h2 class="my-4">
         Job <small class="text-muted">{{ flow }}</small> / <small class="text-muted">{{ job.uuid }}</small>
-        <a class="btn btn-secondary btn-sm float-right" role="button" href="/flow/{{ flow }}">&laquo; Back</a>
+        <div class="float-right">
+            <a class="btn btn-secondary btn-sm" role="button" href="/flow/{{ flow }}">&laquo; Back</a>
+            <a class="btn btn-primary btn-sm" role="button" href="/flow/{{ flow }}/job/{{ job.uuid }}/requeue">
+                <span class="oi oi-action-redo"></span> Requeue
+            </a>
+        </div>
     </h2>
 
     {% if requeued %}
