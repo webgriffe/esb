@@ -51,4 +51,12 @@ class FlowManager
     {
         $this->flows[] = $flow;
     }
+
+    /**
+     * @return Flow[]
+     */
+    public function getFlows(): array
+    {
+        return $this->flows;
+    }
 }

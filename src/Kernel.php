@@ -10,6 +10,7 @@ use Symfony\Component\Config\Exception\FileLocatorFileNotFoundException;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
+use Webgriffe\Esb\Console\ContainerExtension as ConsoleContainerExtension;
 use Webgriffe\Esb\Console\Server;
 
 /**
@@ -44,6 +45,7 @@ class Kernel
         $this->container = new ContainerBuilder();
         $loader = new YamlFileLoader($this->container, new FileLocator(dirname(__DIR__)));
         $this->loadSystemConfiguration($loader);
+        $this->container->registerExtension(new ConsoleContainerExtension());
         $this->container->registerExtension(new FlowExtension());
         $this->loadLocalConfiguration($loader);
         $this->container->compile(true);
@@ -59,7 +61,7 @@ class Kernel
         $flowManager = $this->getContainer()->get(FlowManager::class);
         $flowManager->bootFlows();
         /** @var Server $consoleServer */
-        $consoleServer = $this->getContainer()->get(Server::class);
+        $consoleServer = $this->getContainer()->get('console.server');
         $consoleServer->boot();
         Loop::onSignal(SIGINT, [$this, 'sigintHandler']);
         Loop::run();

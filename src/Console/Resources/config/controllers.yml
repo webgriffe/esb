@@ -1,0 +1,29 @@
+services:
+
+  console.controller.abstract:
+    abstract: true
+    class: '\Webgriffe\Esb\Console\Controller\AbstractController'
+    arguments:
+      - '@console.twig'
+      - '@Webgriffe\Esb\FlowManager'
+      - '@Webgriffe\Esb\Service\ElasticSearch'
+    public: true
+
+  console.controller.index:
+    parent: console.controller.abstract
+    class: '\Webgriffe\Esb\Console\Controller\IndexController'
+
+  console.controller.flow:
+    parent: console.controller.abstract
+    class: '\Webgriffe\Esb\Console\Controller\FlowController'
+
+  console.controller.job:
+    parent: console.controller.abstract
+    class: '\Webgriffe\Esb\Console\Controller\JobController'
+
+  console.controller.requeue:
+    parent: console.controller.abstract
+    class: '\Webgriffe\Esb\Console\Controller\RequeueController'
+    arguments:
+      - '@Psr\Log\LoggerInterface'
+      - '@Amp\Beanstalk\BeanstalkClient'

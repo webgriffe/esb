@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Webgriffe\Esb\Console\Controller;
 
+use Amp\Http\Server\Request;
 use function Amp\call;
 use Amp\Http\Server\Response;
 use Amp\Http\Status;
@@ -11,23 +12,61 @@ use Amp\Promise;
 /**
  * @internal
  */
-class IndexController
+class IndexController extends AbstractController
 {
-    use ControllerTrait;
-
     /**
      * @return Promise
      */
-    public function __invoke(): Promise
+    public function __invoke(Request $request): Promise
     {
         return call(function () {
-            $tubes = yield array_map(
-                function (string $tube) {
-                    return $this->beanstalkClient->getTubeStats($tube);
-                },
-                yield $this->beanstalkClient->listTubes()
+            $flows = $this->getFlowManager()->getFlows();
+            $flowView = [];
+            foreach ($flows as $flow) {
+                $flowCode = $flow->getCode();
+                $flowView[$flowCode] = [
+                    'code' => $flowCode,
+                    'description' => $flow->getDescription(),
+                    'producer' => $flow->getProducerClassName(),
+                    'worker' => $flow->getWorkerClassName(),
+                    'workedJobs' => yield $this->getWorkedJobs($flowCode),
+                    'erroredJobs' => yield $this->getErroredJobs($flowCode),
+                    'totalJobs' => yield $this->getTotalJobs($flowCode),
+                ];
+            }
+            return new Response(Status::OK, [], $this->getTwig()->render('index.html.twig', ['flows' => $flowView]));
+        });
+    }
+
+    private function getTotalJobs(string $flowCode): Promise
+    {
+        return call(function () use ($flowCode) {
+            $response = yield $this->getElasticsearch()->getClient()->search(
+                ['match_all' => new \stdClass()],
+                $flowCode
             );
-            return new Response(Status::OK, [], $this->twig->render('index.html.twig', array('tubes' => $tubes)));
+            return $response['hits']['total']['value'];
+        });
+    }
+
+    private function getErroredJobs(string $flowCode): Promise
+    {
+        return call(function () use ($flowCode) {
+            $response = yield $this->getElasticsearch()->getClient()->search(
+                ['term' => ['lastEvent.type.keyword' => 'errored']],
+                $flowCode
+            );
+            return $response['hits']['total']['value'];
+        });
+    }
+    private function getWorkedJobs(string $flowCode): Promise
+    {
+        return call(function () use ($flowCode) {
+            $response = yield $this->getElasticsearch()->getClient()->search(
+                ['term' => ['lastEvent.type.keyword' => 'worked']],
+                $flowCode
+            );
+            return $response['hits']['total']['value'];
         });
     }
 }

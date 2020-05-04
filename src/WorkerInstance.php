@@ -132,9 +132,9 @@ final class WorkerInstance implements WorkerInstanceInterface
                     );
 
                     if (self::$workCounts[$jobBeanstalkId] >= $this->flowConfig->getWorkerMaxRetry()) {
-                        yield $this->beanstalkClient->bury($jobBeanstalkId);
+                        yield $this->beanstalkClient->delete($jobBeanstalkId);
                         $this->logger->error(
-                            'A Job reached maximum work retry limit and has been buried',
+                            'A Job reached maximum work retry limit and has been removed from queue.',
                             array_merge(
                                 $logContext,
                                 [
@@ -155,5 +155,13 @@ final class WorkerInstance implements WorkerInstanceInterface
                 }
             }
         });
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getWorker(): WorkerInterface
+    {
+        return $this->worker;
     }
 }

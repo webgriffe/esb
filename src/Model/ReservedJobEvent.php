@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Webgriffe\Esb\Model;
 
-class ReservedJobEvent implements JobEventInterface
+final class ReservedJobEvent implements JobEventInterface
 {
     /**
      * @var \DateTime

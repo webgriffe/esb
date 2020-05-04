@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Webgriffe\Esb\Console;
 
-use Amp\Beanstalk\BeanstalkClient;
 use Amp\CallableMaker;
 use Amp\File;
 use Amp\Http\Server\Request;
@@ -11,30 +10,24 @@ use Amp\Http\Server\RequestHandler\CallableRequestHandler;
 use Amp\Http\Server\Response;
 use Amp\Http\Status;
 use Amp\Loop;
-use Amp\Promise;
 use Amp\Socket;
 use FastRoute\Dispatcher;
 use FastRoute\RouteCollector;
 use Psr\Log\LoggerInterface;
-use Psr\Log\NullLogger;
-use Webgriffe\Esb\Console\Controller\DeleteController;
-use Webgriffe\Esb\Console\Controller\IndexController;
-use Webgriffe\Esb\Console\Controller\JobController;
-use Webgriffe\Esb\Console\Controller\KickController;
-use Webgriffe\Esb\Console\Controller\TubeController;
-use function Amp\call;
+use Symfony\Component\DependencyInjection\ContainerAwareInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * @internal
  */
-class Server
+class Server implements ContainerAwareInterface
 {
     use CallableMaker;
 
     /**
-     * @var BeanstalkClient
+     * @var string
      */
-    private $beanstalkClient;
+    private $publicDir;
     /**
      * @var array
      */
@@ -43,12 +36,16 @@ class Server
      * @var LoggerInterface
      */
     private $logger;
+    /**
+     * @var ContainerInterface
+     */
+    private $container;
 
-    public function __construct(BeanstalkClient $beanstalkClient, array $config, LoggerInterface $logger)
+    public function __construct(string $publicDir, array $config, LoggerInterface $logger)
     {
-        $this->beanstalkClient = $beanstalkClient;
-        $this->logger = $logger;
+        $this->publicDir = $publicDir;
         $this->config = $config;
+        $this->logger = $logger;
     }
 
     public function boot()
@@ -70,6 +67,14 @@ class Server
         });
     }
 
+    /**
+     * @inheritDoc
+     */
+    public function setContainer(ContainerInterface $container = null)
+    {
+        $this->container = $container;
+    }
+
     /** @noinspection PhpUnusedPrivateMethodInspection */
     /**
      * @param Request $request
@@ -83,13 +88,12 @@ class Server
         // Fetch method and URI from somewhere
         $httpMethod = $request->getMethod();
         $uri = $request->getUri()->getPath();
-        $filePath = __DIR__ . '/public/' . ltrim($uri, '/');
+        $filePath = $this->publicDir . DIRECTORY_SEPARATOR . ltrim($uri, '/');
         if ((yield File\exists($filePath)) && (yield File\isfile($filePath))) {
             return new Response(Status::OK, [], yield File\get($filePath));
         }
 
-        $twig = yield $this->getTwig();
-        $dispatcher = $this->getDispatcher($request, $twig, $this->beanstalkClient);
+        $dispatcher = $this->getDispatcher($request);
 
         $routeInfo = $dispatcher->dispatch($httpMethod, $uri);
         switch ($routeInfo[0]) {
@@ -104,6 +108,7 @@ class Server
             case Dispatcher::FOUND:
                 $handler = $routeInfo[1];
                 $vars = $routeInfo[2];
+                array_unshift($vars, $request);
                 /** @var Response $response */
                 $response = yield \call_user_func_array($handler, $vars);
                 $response->addHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -117,40 +122,23 @@ class Server
         return $response;
     }
 
-    private function getTwig(): Promise
-    {
-        return call(function () {
-            $templates = [];
-            $viewsPath = __DIR__ . '/views';
-            $files = yield File\scandir($viewsPath);
-            foreach ($files as $file) {
-                if (preg_match('/^.*?\.html\.twig$/', $file)) {
-                    $templates[$file] = yield File\get(rtrim($viewsPath, '/') . '/' . $file);
-                }
-            }
-            $loader = new \Twig_Loader_Array($templates);
-            return new \Twig_Environment($loader);
-        });
-    }
-
     /**
      * @param Request $request
-     * @param \Twig_Environment $twig
-     * @param BeanstalkClient $beanstalkClient
      * @return Dispatcher
      */
-    private function getDispatcher(
-        Request $request,
-        \Twig_Environment $twig,
-        BeanstalkClient $beanstalkClient
-    ): Dispatcher {
+    private function getDispatcher(Request $request): Dispatcher
+    {
         return \FastRoute\simpleDispatcher(
-            function (RouteCollector $r) use ($request, $twig, $beanstalkClient) {
-                $r->addRoute('GET', '/', new IndexController($request, $twig, $beanstalkClient));
-                $r->addRoute('GET', '/tube/{tube}', new TubeController($request, $twig, $beanstalkClient));
-                $r->addRoute('GET', '/kick/{jobId:\d+}', new KickController($request, $twig, $beanstalkClient));
-                $r->addRoute('GET', '/delete/{jobId:\d+}', new DeleteController($request, $twig, $beanstalkClient));
-                $r->addRoute('GET', '/job/{jobId:\d+}', new JobController($request, $twig, $beanstalkClient));
+            function (RouteCollector $r) use ($request) {
+                $this->container->set('console.controller.request', $request);
+                $r->addRoute('GET', '/', $this->container->get('console.controller.index'));
+                $r->addRoute('GET', '/flow/{flow}', $this->container->get('console.controller.flow'));
+                $r->addRoute('GET', '/flow/{flow}/job/{jobId}', $this->container->get('console.controller.job'));
+                $r->addRoute(
+                    'GET',
+                    '/flow/{flow}/job/{jobId}/requeue',
+                    $this->container->get('console.controller.requeue')
+                );
             }
         );
     }

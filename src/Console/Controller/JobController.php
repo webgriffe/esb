@@ -3,31 +3,33 @@ declare(strict_types=1);
 
 namespace Webgriffe\Esb\Console\Controller;
 
-use Amp\Beanstalk\Stats\Job;
-use function Amp\call;
+use Amp\Beanstalk\BeanstalkClient;
+use Amp\Http\Server\Request;
 use Amp\Http\Server\Response;
 use Amp\Http\Status;
+use Twig\Environment;
+use Webgriffe\AmpElasticsearch\Client;
+use Webgriffe\Esb\Model\JobInterface;
+use function Amp\call;
 
 /**
  * @internal
  */
-class JobController
+class JobController extends AbstractController
 {
-    use ControllerTrait;
-
-    public function __invoke(string $jobId)
+    public function __invoke(Request $request, string $flow, string $jobId)
     {
-        return call(function () use ($jobId) {
-            /** @var Job $stats */
-            $stats = yield $this->beanstalkClient->getJobStats((int)$jobId);
-            $payload = yield $this->beanstalkClient->peek((int)$jobId);
-            if (@unserialize($payload) !== false) {
-                $payload = print_r(unserialize($payload), true);
-            }
+        return call(function () use ($jobId, $flow, $request) {
+            $job = yield $this->getElasticsearch()->fetchJob($jobId, $flow);
+
+            $queryParams = [];
+            parse_str($request->getUri()->getQuery(), $queryParams);
+            $requeued = (bool)($queryParams['requeued'] ?? false);
+
             return new Response(
                 Status::OK,
                 [],
-                $this->twig->render('job.html.twig', ['stats' => $stats, 'payload' => $payload])
+                $this->getTwig()->render('job.html.twig', ['flow' => $flow, 'job' => $job, 'requeued' => $requeued])
             );
         });
     }
