@@ -3,6 +3,7 @@
 namespace Webgriffe\Esb;
 
 use Amp\Promise;
+use function Amp\delay;
 use Amp\File;
 use Amp\Success;
 use Webgriffe\Esb\Model\QueuedJob;
@@ -18,9 +19,15 @@ final class DummyFilesystemWorker implements WorkerInterface
      */
     private $filename;
 
-    public function __construct(string $filename)
+    /**
+     * @var int
+     */
+    private $duration;
+
+    public function __construct(string $filename, int $duration = 0)
     {
         $this->filename = $filename;
+        $this->duration = $duration;
     }
 
     /**
@@ -42,6 +49,9 @@ final class DummyFilesystemWorker implements WorkerInterface
             $content = '';
             if (yield File\exists($this->filename)) {
                 $content = yield \Amp\File\get($this->filename);
+            }
+            if ($this->duration) {
+                yield delay($this->duration * 1000);
             }
             //The date() function does not support microseconds, whereas DateTime does.
             $now = new \DateTime('now');

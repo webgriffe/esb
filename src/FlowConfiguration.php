@@ -36,6 +36,7 @@ final class FlowConfiguration implements ConfigurationInterface
                             ->integerNode('max_retry')->min(1)->defaultValue(5)->end()
                         ->end()
                     ->end()
+                    ->arrayNode('depends_on')->scalarPrototype()->end()
                 ->end()
             ->end()
         ;
