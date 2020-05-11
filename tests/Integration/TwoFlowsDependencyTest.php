@@ -38,6 +38,7 @@ class TwoFlowsDependencyTest extends KernelTestCase
                     'description' => 'Two Flows Test Flow 1',
                     'producer' => ['service' => 'producer1'],
                     'worker' => ['service' => 'worker1'],
+                    'depends_on' => [self::FLOW2_CODE], //Flow 1 can only run if flow 2 has already processed everything
                 ],
                 self::FLOW2_CODE => [
                     'description' => 'Two Flows Test Flow 2',
@@ -52,11 +53,18 @@ class TwoFlowsDependencyTest extends KernelTestCase
             function () use ($producerDir1, $producerDir2) {
                 touch($producerDir1 . DIRECTORY_SEPARATOR . 'job1');
                 touch($producerDir2 . DIRECTORY_SEPARATOR . 'job2');
-                Loop::delay(200, function () {
-                    Loop::stop();
-                });
             }
         );
+
+        $this->stopWhen(function () {
+            $successLog = array_filter(
+                $this->logHandler()->getRecords(),
+                function ($log) {
+                    return strpos($log['message'], 'Successfully worked a Job') !== false;
+                }
+            );
+            return count($successLog) >= 2;
+        });
 
         self::$kernel->boot();
 

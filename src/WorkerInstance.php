@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Webgriffe\Esb;
 
 use Amp\Beanstalk\BeanstalkClient;
+use function Amp\delay;
 use Amp\Promise;
 use Psr\Log\LoggerInterface;
 use Webgriffe\Esb\Model\FlowConfig;
@@ -68,7 +69,29 @@ final class WorkerInstance implements WorkerInstanceInterface
                 ]
             );
 
+            $dependencies = $this->flowConfig->getDependsOn();
+
             while ($rawJob = yield $this->beanstalkClient->reserve()) {
+                //If this flow depends on something, then wait until all tubes that this depends on are empty.
+                //Notice that this means that they must all be empty AT THE SAME TIME. This means that it must be
+                //possible to query each dependency tube and ALL of them must be empty in a single pass of the loop.
+                do {
+                    $hadToWaitForSomeDependency = false;
+                    foreach ($dependencies as $dependency) {
+                        $sleepTime = 1000;  //Milliseconds
+                        while (true) {
+                            $tubeStats = yield $this->beanstalkClient->getTubeStats($dependency);
+                            if ($tubeStats->currentJobsReady + $tubeStats->currentJobsReserved == 0) {
+                                break;
+                            }
+                            $hadToWaitForSomeDependency = true;
+
+                            yield delay($sleepTime);
+                            $sleepTime = min($sleepTime*2, 10000);
+                        }
+                    }
+                } while ($hadToWaitForSomeDependency);
+
                 list($jobId, $rawPayload) = $rawJob;
                 $logContext = [
                     'flow' => $this->flowConfig->getDescription(),

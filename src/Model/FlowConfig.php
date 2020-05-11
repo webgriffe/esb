@@ -60,4 +60,9 @@ class FlowConfig
     {
         return $this->config['worker']['max_retry'];
     }
+
+    public function getDependsOn(): array
+    {
+        return $this->config['depends_on'];
+    }
 }
