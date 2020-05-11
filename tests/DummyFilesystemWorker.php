@@ -43,7 +43,9 @@ final class DummyFilesystemWorker implements WorkerInterface
             if (yield File\exists($this->filename)) {
                 $content = yield \Amp\File\get($this->filename);
             }
-            $content .= date('c') . ' - ' . serialize($job->getPayloadData()) . PHP_EOL;
+            //The date() function does not support microseconds, whereas DateTime does.
+            $now = new \DateTime('now');
+            $content .= $now->format('U u') . ' - ' . serialize($job->getPayloadData()) . PHP_EOL;
             yield File\put($this->filename, $content);
         });
     }
