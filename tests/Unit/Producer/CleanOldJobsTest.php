@@ -7,21 +7,21 @@ use Amp\Iterator;
 use Amp\Promise;
 use PHPUnit\Framework\TestCase;
 use Webgriffe\Esb\CrontabProducerInterface;
-use Webgriffe\Esb\Producer\CleanOldElasticsearchDocuments;
+use Webgriffe\Esb\Producer\CleanOldJobs;
 use function Amp\call;
 use function Amp\Promise\wait;
 
-class CleanOldElasticsearchDocumentsTest extends TestCase
+class CleanOldJobsTest extends TestCase
 {
     const CRONTAB_EXPRESSION = '0 15 10 ? * *';
     /**
-     * @var CleanOldElasticsearchDocuments
+     * @var CleanOldJobs
      */
     private $producer;
 
     protected function setUp()
     {
-        $this->producer = new CleanOldElasticsearchDocuments(self::CRONTAB_EXPRESSION);
+        $this->producer = new CleanOldJobs(self::CRONTAB_EXPRESSION);
     }
 
     /**

@@ -10,7 +10,7 @@ use Amp\Success;
 use Webgriffe\Esb\CrontabProducerInterface;
 use Webgriffe\Esb\Model\Job;
 
-class CleanOldElasticsearchDocuments implements CrontabProducerInterface
+class CleanOldJobs implements CrontabProducerInterface
 {
     /**
      * @var string
