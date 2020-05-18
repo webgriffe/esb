@@ -10,6 +10,7 @@ use Webgriffe\Esb\DummyFilesystemRepeatProducer;
 use Webgriffe\Esb\DummyFilesystemWorker;
 use Webgriffe\Esb\KernelTestCase;
 use Webgriffe\Esb\TestUtils;
+use \Exception;
 
 class TwoFlowsDependencyTest extends KernelTestCase
 {
@@ -18,6 +19,9 @@ class TwoFlowsDependencyTest extends KernelTestCase
 
     use TestUtils;
 
+    /**
+     * @throws Exception
+     */
     public function testTwoFlowsWithDependencies()
     {
         $producerDir1 = vfsStream::url('root/producer_dir_1');
@@ -47,16 +51,26 @@ class TwoFlowsDependencyTest extends KernelTestCase
             ]
         ]);
 
+        mkdir($producerDir1);
+        mkdir($producerDir2);
+
         Loop::delay(
             200,
             function () use ($producerDir1, $producerDir2) {
                 touch($producerDir1 . DIRECTORY_SEPARATOR . 'job1');
                 touch($producerDir2 . DIRECTORY_SEPARATOR . 'job2');
-                Loop::delay(200, function () {
-                    Loop::stop();
-                });
             }
         );
+
+        $this->stopWhen(function () {
+            $successLog = array_filter(
+                $this->logHandler()->getRecords(),
+                function ($log) {
+                    return strpos($log['message'], 'Successfully worked a Job') !== false;
+                }
+            );
+            return count($successLog) >= 2;
+        });
 
         self::$kernel->boot();
 
@@ -65,22 +79,32 @@ class TwoFlowsDependencyTest extends KernelTestCase
         $this->assertCount(1, $workerFileLines);
         $worker1Line = $workerFileLines[0];
         $this->assertContains('job1', $worker1Line);
-        $matches = [];
-        $this->assertTrue((bool)preg_match('/^(\d+) (\d+).*/', $worker1Line, $matches));
-        $timestamp1 = $matches[1];
-        $timestamp1 += ((float)$matches[2]) / 1000000;
-
+        $timestamp1 = $this->getLogLineTimestamp($worker1Line);
 
         $this->assertReadyJobsCountInTube(0, self::FLOW2_CODE);
         $workerFileLines = $this->getFileLines($workerFile2);
         $this->assertCount(1, $workerFileLines);
         $worker2Line = $workerFileLines[0];
         $this->assertContains('job2', $worker2Line);
-        $this->assertTrue((bool)preg_match('/^(\d+) (\d+).*/', $worker2Line, $matches));
-        $timestamp2 = $matches[1];
-        $timestamp2 += ((float)$matches[2]) / 1000000;
+        $timestamp2 = $this->getLogLineTimestamp($worker2Line);
 
         //This is hard to read, but it checks that $timestamp1 >= $timestamp2
-        $this->assertGreaterThanOrEqual($timestamp2, $timestamp1);
+        $this->assertGreaterThanOrEqual(
+            $timestamp2,
+            $timestamp1,
+            "Job 1 ({$timestamp1}) was worked before job 2 ({$timestamp2}), ".
+            'but they should have been executed in the reverse order.'
+        );
+    }
+
+    /**
+     * @param string $worker1Line
+     * @return float
+     */
+    private function getLogLineTimestamp(string $worker1Line): float
+    {
+        $matches = [];
+        $this->assertTrue((bool)preg_match('/^(\d+) (\d+).*/', $worker1Line, $matches));
+        return $matches[1] + (((float)$matches[2]) / 1000000);
     }
 }
