@@ -181,15 +181,18 @@ class FlowsDependencyTest extends KernelTestCase
             }
         );
 
-        $this->stopWhen(function () {
-            $successLog = array_filter(
-                $this->logHandler()->getRecords(),
-                function ($log) {
-                    return strpos($log['message'], 'Successfully worked a Job') !== false;
-                }
-            );
-            return count($successLog) >= 3;
-        });
+        $this->stopWhen(
+            function () {
+                $successLog = array_filter(
+                    $this->logHandler()->getRecords(),
+                    function ($log) {
+                        return strpos($log['message'], 'Successfully worked a Job') !== false;
+                    }
+                );
+                return count($successLog) >= 3;
+            },
+            20
+        );
 
         self::$kernel->boot();
 
