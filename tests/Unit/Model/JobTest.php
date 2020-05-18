@@ -52,16 +52,23 @@ class JobTest extends TestCase
      */
     public function it_should_not_allow_to_add_event_happened_before_the_last_one()
     {
-        $job = new Job([]);
-        $job->addEvent(new DummyJobEvent(new \DateTime('2019-10-29 19:40:00')));
-        $job->addEvent(new DummyJobEvent(new \DateTime('2019-10-29 19:41:00')));
+        $tz = date_default_timezone_get();
+        date_default_timezone_set('UTC');
 
-        $this->expectExceptionObject(
-            new \InvalidArgumentException(
-                'Cannot add event happened before the last one. Last event happened at "2019-10-29T19:41:00+00:00", ' .
-                'an event happened at "2019-10-29T19:39:00+00:00" has been given.'
-            )
-        );
-        $job->addEvent(new DummyJobEvent(new \DateTime('2019-10-29 19:39:00')));
+        try {
+            $job = new Job([]);
+            $job->addEvent(new DummyJobEvent(new \DateTime('2019-10-29 19:40:00')));
+            $job->addEvent(new DummyJobEvent(new \DateTime('2019-10-29 19:41:00')));
+
+            $this->expectExceptionObject(
+                new \InvalidArgumentException(
+                    'Cannot add event happened before the last one. Last event happened at '.
+                    '"2019-10-29T19:41:00+00:00", an event happened at "2019-10-29T19:39:00+00:00" has been given.'
+                )
+            );
+            $job->addEvent(new DummyJobEvent(new \DateTime('2019-10-29 19:39:00')));
+        } finally {
+            date_default_timezone_set($tz);
+        }
     }
 }
