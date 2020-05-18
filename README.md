@@ -10,7 +10,8 @@ Introduction
 
 Webgriffe ESB is a PHP framework that aims to speed up the development of [Enterprise Service Buses](https://en.wikipedia.org/wiki/Enterprise_service_bus).
 
-It uses [Beanstalkd](http://kr.github.io/beanstalkd/) as a queue engine and it's built on top of popular open-sourced libraries like:
+It uses [Beanstalkd](http://kr.github.io/beanstalkd/) as a queue engine and [Elasticsearch](https://www.elastic.co/elasticsearch/) as jobs persistence layer. 
+It's built on top of popular open-sourced PHP libraries like:
 
 * [Amp](http://amphp.org/)
 * [Symfony's Dependency Injection](http://symfony.com/doc/current/components/dependency_injection.html)
@@ -24,6 +25,12 @@ Integrating different systems together is a matter of data flows. With Webgriffe
 With Webgriffe ESB you integrate different systems by only implementing workers and producers. The framework will take care about the rest.
 
 Webgriffe ESB is designed to use a single binary which is used as a main entry point of the whole application; all the producers and workers are started and executed by a single PHP binary. This is possible by using [Amp](http://amphp.org/) concurrency framework.
+
+Requirements
+------------
+* PHP 7.1, 7.2, 7.3
+* Beanstalk
+* Elasticsearch 7.*
 
 Installation
 ------------
@@ -67,10 +74,11 @@ flows:
       max_retry: 5                  # The number of maximum work retries for a job in this tube/flow before being buried
 
 ```
-
 The `services` section is where you have to define your worker and producer services using the syntax of the [Symfony Dependency Injection](http://symfony.com/doc/current/components/dependency_injection.html) component.
+In the `services` section you also find two services Webgriffe\Esb\Producer\CleanOldJobs and Webgriffe\Esb\Worker\CleanOldJobs that you should keep if you want to enable the flow that periodically deletes old jobs
 
 The `flows` section is where you have to define your ESB flows. Every flow must refer to a producer and a worker service defined in the `services` section.
+In the `flows` section you also find the definition of the clean_old_jobs_flow: you should keep it if you want old jobs to be periodically deleted.
 
 You also have to define some parameters under the `parameters` section, refer to the `esb.yml.sample` file for more informations about required parameters. Usually it's better to isolate parameters in a `parameters.yml` file which can be included in the `esb.yml` as follows:
 

@@ -74,7 +74,6 @@ services:
       $classMetadataFactory: '@serializer.class_metadata_factory'
       $propertyTypeExtractor: '@serializer.object_normalizer.reflection_extractor'
   serializer:
-    public: true # Serializer is public on for testing purpose. Never get serializer directly from the container.
     class: \Symfony\Component\Serializer\Serializer
     arguments:
       - ['@serializer.array_denormalizer', '@serializer.date_time_normalizer', '@serializer.object_normalizer']
