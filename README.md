@@ -23,11 +23,6 @@ Integrating different systems together is a matter of data flows. With Webgriffe
 
 With Webgriffe ESB you integrate different systems by only implementing workers and producers. The framework will take care about the rest.
 
-It is possible to specify **dependencies** across flows. When one such dependency is specified so that flow A depends on flow B, whenever flow B is working some job or it has queued jobs, then flow A will still produce and queue new jobs, but it will not process them. When flow B finishes processing its last job and its tube is empty, then flow A begins to work through its jobs.
-Dependencies can also be multiple, meaning that flow A can depend on both flow B and flow C (and more, if needed). In this case flow A will wait until **all** its dependencies finish working their jobs and **all** their tubes are empty.
-If a new job is created for any of the dependencies while flow A is working, flow A will complete the jobs it's currently working and then it will stop until all its dependencies are idle (empty tube and no jobs being worked).
-Indirect dependencies are **not** honored. This means that if flow A depends on flow B, which in turn depends on flow C, a job for flow C will **not** stop flow A. Flow A will only check flow B. If you want this indirect behavior, simply make the dependency between flow A and flow C explicit by saying that flow A depends on both flows B and C.
-
 Webgriffe ESB is designed to use a single binary which is used as a main entry point of the whole application; all the producers and workers are started and executed by a single PHP binary. This is possible by using [Amp](http://amphp.org/) concurrency framework.
 
 Installation
@@ -51,32 +46,42 @@ The `esb.yml` file is the main configuration of your ESB application, where you 
 ```yaml
 services:
   _defaults:
-    autowire: true                  # This is optional (see https://symfony.com/doc/current/service_container/autowiring.html)
+    autowire: true                    # This is optional (see https://symfony.com/doc/current/service_container/autowiring.html)
 
-  My\Esb\Producer:                  # A producer service definition
+  My\Esb\Producer:                    # A producer service definition
     arguments: []
 
-  My\Esb\Worker:                    # A worker service definition
+  My\Esb\Worker:                      # A worker service definition
     arguments: []
 
 
 flows:
-  sample_flow:                      # The flow "code" and will be the Beanstalkd tube name
-    description: Sample Flow        # The flow description
+  sample_flow:                        # The flow "code" and will be the Beanstalkd tube name
+    description: Sample Flow          # The flow description
     producer:
-      service: My\Esb\Producer      # A producer service ID defined above
+      service: My\Esb\Producer        # A producer service ID defined above
     worker:
-      service: My\Esb\Worker        # A worker service ID defined above
-      instances: 1                  # The number of worker instances to spawn for this flow
-      release_delay: 0              # The jobs release delay in seconds for this flow (see the Beanstalkd protocol here https://github.com/beanstalkd/beanstalkd/blob/master/doc/protocol.txt)
-      max_retry: 5                  # The number of maximum work retries for a job in this tube/flow before being buried
-    depends_on: ['other_flow', 'other_flow_2']  # Optional: dependencies of this flow toward other flow(s)
+      service: My\Esb\Worker          # A worker service ID defined above
+      instances: 1                    # The number of worker instances to spawn for this flow
+      release_delay: 0                # The jobs release delay in seconds for this flow (see the Beanstalkd protocol here https://github.com/beanstalkd/beanstalkd/blob/master/doc/protocol.txt)
+      max_retry: 5                    # The number of maximum work retries for a job in this tube/flow before being buried
+    depends_on: ['other_flow_1', 'other_flow_2']  # Optional: dependencies of this flow toward other flow(s)
+    delay_after_idle_time: 1000       # Delay that a worker with dependencies waits before working the first job received after the tube was empty
+    initial_polling_interval: 1000    # Initial polling delay that a worker waits when it has to wait for a dependency that is not idle
+    maximum_polling_interval: 60000   # Maximum polling delay that a worker waits when it has to wait for a dependency that is not idle
+    polling_interval_multiplier: 2    # Polling delay increase factor whenever a worker is waiting for a dependency that is not idle
 
+  other_flow_1:
+    # ...
+    
+  other_flow_2:
+    # ...
 ```
 
 The `services` section is where you have to define your worker and producer services using the syntax of the [Symfony Dependency Injection](http://symfony.com/doc/current/components/dependency_injection.html) component.
 
 The `flows` section is where you have to define your ESB flows. Every flow must refer to a producer and a worker service defined in the `services` section.
+This is also the section where dependencies between flows are defined. See the **Dependencies** section for details.
 
 You also have to define some parameters under the `parameters` section, refer to the `esb.yml.sample` file for more informations about required parameters. Usually it's better to isolate parameters in a `parameters.yml` file which can be included in the `esb.yml` as follows:
 
@@ -100,6 +105,38 @@ parameters:
 ```
 
 Refer to the [sample configuration file](https://github.com/webgriffe/esb/blob/master/esb.yml.sample) for the complete list of parameters and for more information about the configuration of your ESB.
+
+Dependencies
+------------
+
+It is possible to specify **dependencies** across flows. This is done by using the `depends_on` parameter: if wou want flow A to depend on flow B, you specify the `depends_on` parameter in flow A's configuration to list flow B:
+
+```yaml
+# esb.yml
+# ...
+ 
+flows:
+  flow_B:
+    #...
+
+  flow_A:
+    #...
+    depends_on: ['flow_B']
+```
+
+When one such dependency is specified so that flow A depends on flow B, whenever flow B is working some job and/or it has queued jobs, then flow A will still produce and queue new jobs, but it will not work them. When flow B finishes processing its last job and its tube is empty, then flow A begins to work through its jobs.
+If a new job is created for flow B while flow A is working, flow A will complete the job (or jobs, if there are multiple workers) that was already being worked and then it will stop until all its dependencies are idle (empty tube and no jobs being worked).
+Dependencies can also be multiple, meaning that flow A can depend on both flow B and flow C (and more, if needed). In this case flow A will wait until **all** its dependencies are idle. To declare multiple dependencies, simply list all dependencies in the `depends_on` field.
+Indirect dependencies are **not** honored. This means that if flow A depends on flow B, which in turn depends on flow C, a job for flow C will **not** stop flow A. Flow A will only check flow B. If you want flow A to also check flow C, simply make the dependency between flow A and flow C explicit by saying that flow A depends on both flows B and C.
+
+When a flow depends on another, such as flow A depending on flow B, whenever flow A's worker extracts a job from its queue it will check all dependencies to ensure that they are all idle. If one is found that is not idle, flow A will begin polling that dependency to see when it finishes.
+If desired, the timing of this polling action can be controlled with a few configuration parameters:
+* `initial_polling_interval` (default 1000ms) is the number of milliseconds that flow A will *first* wait before rechecking flow B's status
+* `polling_interval_multiplier` (default: 2) after the first delay, each subsequent delay is obtained by multiplying the previous one by this parameter. The default value of 2 means that each time the delay doubles, so the first time the wait fill be 1000ms, the second 2000ms, then 4000ms etc. Setting this value to 1 forces the system to keep on using the initial delay value without change.
+* `maximum_polling_interval` (default: 60000ms) the exponential increase imposed by `polling_interval_multiplier` is capped by this value, which is the maximum possible polling interval.
+* `delay_after_idle_time` (default: 1000ms) sometimes it may happen that flow A's and flow B's producers *begin* producing new jobs at the same time. If flow A was idle, it may begin working the new job before flow B's producer has had time to produce its job, and so the dependency would be violated. To solve this, whenever a flow with some dependencies (flow A in our example) has been waiting for some time for new jobs to arrive, it will wait a time specified by `delay_after_idle_time` before resuming operation. This gives flow B's producer enough time to publish its job in flow B's queue, which will ensure that flow A will wait for its dependency when the timeout expires.
+
+Notice that the exponential polling time increase is reset for each dependency: if a flow depends on multiple other flows, each time a dependency goes idle the timing parameters are reset before checking the next dependency.
 
 Producers
 ---------
