@@ -69,11 +69,10 @@ final class WorkerInstance implements WorkerInstanceInterface
                 ]
             );
 
-            $dependencies = $this->flowConfig->getDependsOn();
             $lastProcessTimestamp = 0;
 
             while ($rawJob = yield $this->beanstalkClient->reserve()) {
-                yield $this->waitForDependencies($dependencies, $lastProcessTimestamp);
+                yield $this->waitForDependencies($lastProcessTimestamp);
 
                 list($jobBeanstalkId, $rawPayload) = $rawJob;
 
@@ -148,14 +147,13 @@ final class WorkerInstance implements WorkerInstanceInterface
     }
 
     /**
-     * @param array $dependencies
      * @param float $lastProcessTimestamp
      * @return Promise
      */
-    private function waitForDependencies(array $dependencies, float $lastProcessTimestamp): Promise
+    private function waitForDependencies(float $lastProcessTimestamp): Promise
     {
-        return call(function () use ($dependencies, $lastProcessTimestamp) {
-            if (count($dependencies) > 0) {
+        return call(function () use ($lastProcessTimestamp) {
+            if (count($this->flowConfig->getDependsOn()) > 0) {
                 if ((microtime(true) - $lastProcessTimestamp) > 1) {
                     //If more than one second has passed since the last job finished processing and if this flow depends
                     //on something, then do not start processing the new job right away but wait for a bit.
@@ -168,7 +166,7 @@ final class WorkerInstance implements WorkerInstanceInterface
                     //to the tube, so that it can then stop flow A from running for as long as needed by flow B.
                     //However, if flow A is processing a long sequence of jobs, then this delay is avoided for
                     //performance reasons
-                    yield delay(1000);
+                    yield delay($this->flowConfig->getDelayAfterIdleTime());
                 }
 
                 //If this flow depends on something, then wait until all tubes that this depends on are empty.
@@ -176,8 +174,8 @@ final class WorkerInstance implements WorkerInstanceInterface
                 //possible to query each dependency tube and ALL of them must be empty in a single pass of the loop.
                 do {
                     $hadToWaitForSomeDependency = false;
-                    foreach ($dependencies as $dependency) {
-                        $sleepTime = 1000;  //Milliseconds
+                    foreach ($this->flowConfig->getDependsOn() as $dependency) {
+                        $sleepTime = $this->flowConfig->getInitialPollingInterval();
                         while (true) {
                             $tubeStats = yield $this->beanstalkClient->getTubeStats($dependency);
                             if ($tubeStats->currentJobsReady + $tubeStats->currentJobsReserved === 0) {
@@ -188,7 +186,10 @@ final class WorkerInstance implements WorkerInstanceInterface
                             yield delay($sleepTime);
 
                             //Exponentially increase the wait time up to one minute after every failed check
-                            $sleepTime = min($sleepTime*2, 60000);
+                            $sleepTime = min(
+                                (int)($sleepTime*$this->flowConfig->getPollingIntervalMultiplier()),
+                                $this->flowConfig->getMaximumPollingInterval()
+                            );
                         }
                     }
                 } while ($hadToWaitForSomeDependency);
