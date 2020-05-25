@@ -73,10 +73,10 @@ flows:
       release_delay: 0                # The jobs release delay in seconds for this flow (see the Beanstalkd protocol here https://github.com/beanstalkd/beanstalkd/blob/master/doc/protocol.txt)
       max_retry: 5                    # The number of maximum work retries for a job in this tube/flow before being buried
     depends_on: ['other_flow_1', 'other_flow_2']  # Optional: dependencies of this flow toward other flow(s)
-    delay_after_idle_time: 1000       # Delay that a worker with dependencies waits before working the first job received after the tube was empty
-    initial_polling_interval: 1000    # Initial polling delay that a worker waits when it has to wait for a dependency that is not idle
-    maximum_polling_interval: 60000   # Maximum polling delay that a worker waits when it has to wait for a dependency that is not idle
-    polling_interval_multiplier: 2    # Polling delay increase factor whenever a worker is waiting for a dependency that is not idle
+    delay_after_idle_time: 1000       # Optional: delay that a worker with dependencies waits before working the first job received after the tube was empty
+    initial_polling_interval: 1000    # Optional: initial polling delay that a worker waits when it has to wait for a dependency that is not idle
+    maximum_polling_interval: 60000   # Optional: maximum polling delay that a worker waits when it has to wait for a dependency that is not idle
+    polling_interval_multiplier: 2    # Optional: polling delay increase factor whenever a worker is waiting for a dependency that is not idle
 
   other_flow_1:
     # ...
@@ -138,7 +138,7 @@ Dependencies can also be multiple, meaning that flow A can depend on both flow B
 Indirect dependencies are **not** honored. This means that if flow A depends on flow B, which in turn depends on flow C, a job for flow C will **not** stop flow A. Flow A will only check flow B. If you want flow A to also check flow C, simply make the dependency between flow A and flow C explicit by saying that flow A depends on both flows B and C.
 
 When a flow depends on another, such as flow A depending on flow B, whenever flow A's worker extracts a job from its queue it will check all dependencies to ensure that they are all idle. If one is found that is not idle, flow A will begin polling that dependency to see when it finishes.
-If desired, the timing of this polling action can be controlled with a few configuration parameters:
+If desired, the timing of this polling action can be controlled with a few configuration parameters (these are all optional):
 * `initial_polling_interval` (default 1000ms) is the number of milliseconds that flow A will *first* wait before rechecking flow B's status
 * `polling_interval_multiplier` (default: 2) after the first delay, each subsequent delay is obtained by multiplying the previous one by this parameter. The default value of 2 means that each time the delay doubles, so the first time the wait fill be 1000ms, the second 2000ms, then 4000ms etc. Setting this value to 1 forces the system to keep on using the initial delay value without change.
 * `maximum_polling_interval` (default: 60000ms) the exponential increase imposed by `polling_interval_multiplier` is capped by this value, which is the maximum possible polling interval.
