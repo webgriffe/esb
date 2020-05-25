@@ -84,42 +84,7 @@ final class WorkerInstance implements WorkerInstanceInterface
             $lastProcessTimestamp = 0;
 
             while ($rawJob = yield $this->beanstalkClient->reserve()) {
-                if (count($dependencies) > 0 && ((microtime(true) - $lastProcessTimestamp) > 1)) {
-                    //If more than one second has passed since the last job finished processing and if this flow depends
-                    //on something, then do not start processing the new job right away but wait for a bit.
-                    //Suppose that there are two flows, flow A and flow B, and that flow A depends on flow B. Also
-                    //suppose that the two producers are given data to generate one job each at the same time. Due to
-                    //unpredictable timing issues, flow A's producer may generate a job first and the worker may
-                    //retrieve it before flow B's producer has had a chance to produce its job and add it to its tube.
-                    //So flow A may start working its job before flow B has a chance to stop it.
-                    //This delay is intended to give flow B's producer enough time to generate its job and to send it
-                    //to the tube, so that it can then stop flow A from running for as long as needed by flow B.
-                    //However, if flow A is processing a long sequence of jobs, then this delay is avoided for
-                    //performance reasons
-                    yield delay(1000);
-                }
-
-                //If this flow depends on something, then wait until all tubes that this depends on are empty.
-                //Notice that this means that they must all be empty AT THE SAME TIME. This means that it must be
-                //possible to query each dependency tube and ALL of them must be empty in a single pass of the loop.
-                do {
-                    $hadToWaitForSomeDependency = false;
-                    foreach ($dependencies as $dependency) {
-                        $sleepTime = 1000;  //Milliseconds
-                        while (true) {
-                            $tubeStats = yield $this->beanstalkClient->getTubeStats($dependency);
-                            if ($tubeStats->currentJobsReady + $tubeStats->currentJobsReserved == 0) {
-                                break;
-                            }
-                            $hadToWaitForSomeDependency = true;
-
-                            yield delay($sleepTime);
-
-                            //Exponentially increase the wait time up to one minute after every failed check
-                            $sleepTime = min($sleepTime*2, 60000);
-                        }
-                    }
-                } while ($hadToWaitForSomeDependency);
+                yield $this->waitForDependencies($dependencies, $lastProcessTimestamp);
 
                 list($jobBeanstalkId, $jobUuid) = $rawJob;
                 $logContext = [
@@ -208,5 +173,54 @@ final class WorkerInstance implements WorkerInstanceInterface
     public function getWorker(): WorkerInterface
     {
         return $this->worker;
+    }
+
+    /**
+     * @param array $dependencies
+     * @param float $lastProcessTimestamp
+     * @return Promise
+     */
+    private function waitForDependencies(array $dependencies, float $lastProcessTimestamp): Promise
+    {
+        return call(function () use ($dependencies, $lastProcessTimestamp) {
+            if (count($dependencies) > 0) {
+                if ((microtime(true) - $lastProcessTimestamp) > 1) {
+                    //If more than one second has passed since the last job finished processing and if this flow depends
+                    //on something, then do not start processing the new job right away but wait for a bit.
+                    //Suppose that there are two flows, flow A and flow B, and that flow A depends on flow B. Also
+                    //suppose that the two producers are given data to generate one job each at the same time. Due to
+                    //unpredictable timing issues, flow A's producer may generate a job first and the worker may
+                    //retrieve it before flow B's producer has had a chance to produce its job and add it to its tube.
+                    //So flow A may start working its job before flow B has a chance to stop it.
+                    //This delay is intended to give flow B's producer enough time to generate its job and to send it
+                    //to the tube, so that it can then stop flow A from running for as long as needed by flow B.
+                    //However, if flow A is processing a long sequence of jobs, then this delay is avoided for
+                    //performance reasons
+                    yield delay(1000);
+                }
+
+                //If this flow depends on something, then wait until all tubes that this depends on are empty.
+                //Notice that this means that they must all be empty AT THE SAME TIME. This means that it must be
+                //possible to query each dependency tube and ALL of them must be empty in a single pass of the loop.
+                do {
+                    $hadToWaitForSomeDependency = false;
+                    foreach ($dependencies as $dependency) {
+                        $sleepTime = 1000;  //Milliseconds
+                        while (true) {
+                            $tubeStats = yield $this->beanstalkClient->getTubeStats($dependency);
+                            if ($tubeStats->currentJobsReady + $tubeStats->currentJobsReserved === 0) {
+                                break;
+                            }
+                            $hadToWaitForSomeDependency = true;
+
+                            yield delay($sleepTime);
+
+                            //Exponentially increase the wait time up to one minute after every failed check
+                            $sleepTime = min($sleepTime*2, 60000);
+                        }
+                    }
+                } while ($hadToWaitForSomeDependency);
+            }
+        });
     }
 }
