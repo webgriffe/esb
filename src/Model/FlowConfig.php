@@ -65,4 +65,24 @@ class FlowConfig
     {
         return $this->config['depends_on'];
     }
+
+    public function getDelayAfterIdleTime(): int
+    {
+        return $this->config['delay_after_idle_time'];
+    }
+
+    public function getInitialPollingInterval(): int
+    {
+        return $this->config['initial_polling_interval'];
+    }
+
+    public function getMaximumPollingInterval(): int
+    {
+        return $this->config['maximum_polling_interval'];
+    }
+
+    public function getPollingIntervalMultiplier(): float
+    {
+        return $this->config['polling_interval_multiplier'];
+    }
 }
