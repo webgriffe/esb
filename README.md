@@ -24,9 +24,10 @@ Integrating different systems together is a matter of data flows. With Webgriffe
 
 With Webgriffe ESB you integrate different systems by only implementing workers and producers. The framework will take care about the rest.
 
-It is possible to specify dependencies across flows. When one such dependency is specified so that flow A depends on flow B, whenever flow B is working some job or it has queued jobs, then flow A will still produce and queue new jobs, but it will not process them. When flow B finishes processing its last job and its tube is empty, then flow A begins to work through its jobs.
-Dependencies can also be multiple, meaning that flow A can depend on both flow B and flow C (and more, if needed). In this case flow A will wait until all its dependencies finish working their jobs.
-Indirect dependencies are not honored, so if flow A depends on flow B, which in turn depends on flow C, a job for flow C will not stop flow A. Flow A will only check flow B. If you want this indirect behavior, simply make the dependency between flow A and flow C explicit by saying that flow A depends on both flows B and C.
+It is possible to specify **dependencies** across flows. When one such dependency is specified so that flow A depends on flow B, whenever flow B is working some job or it has queued jobs, then flow A will still produce and queue new jobs, but it will not process them. When flow B finishes processing its last job and its tube is empty, then flow A begins to work through its jobs.
+Dependencies can also be multiple, meaning that flow A can depend on both flow B and flow C (and more, if needed). In this case flow A will wait until **all** its dependencies finish working their jobs and **all** their tubes are empty.
+If a new job is created for any of the dependencies while flow A is working, flow A will complete the jobs it's currently working and then it will stop until all its dependencies are idle (empty tube and no jobs being worked).
+Indirect dependencies are **not** honored. This means that if flow A depends on flow B, which in turn depends on flow C, a job for flow C will **not** stop flow A. Flow A will only check flow B. If you want this indirect behavior, simply make the dependency between flow A and flow C explicit by saying that flow A depends on both flows B and C.
 
 Webgriffe ESB is designed to use a single binary which is used as a main entry point of the whole application; all the producers and workers are started and executed by a single PHP binary. This is possible by using [Amp](http://amphp.org/) concurrency framework.
 
@@ -76,7 +77,7 @@ flows:
       instances: 1                  # The number of worker instances to spawn for this flow
       release_delay: 0              # The jobs release delay in seconds for this flow (see the Beanstalkd protocol here https://github.com/beanstalkd/beanstalkd/blob/master/doc/protocol.txt)
       max_retry: 5                  # The number of maximum work retries for a job in this tube/flow before being buried
-    depends_on: ['other_flow']      # Optional: dependencies of this flow toward other flows
+    depends_on: ['other_flow', 'other_flow_2']  # Optional: dependencies of this flow toward other flow(s)
 
 ```
 The `services` section is where you have to define your worker and producer services using the syntax of the [Symfony Dependency Injection](http://symfony.com/doc/current/components/dependency_injection.html) component.
