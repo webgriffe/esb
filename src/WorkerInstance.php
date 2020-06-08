@@ -83,8 +83,6 @@ final class WorkerInstance implements WorkerInstanceInterface
             $lastProcessTimestamp = 0;
 
             while ($rawJob = yield $this->beanstalkClient->reserve()) {
-                yield $this->waitForDependencies($lastProcessTimestamp);
-
                 list($jobBeanstalkId, $jobUuid) = $rawJob;
                 $logContext = [
                     'flow' => $this->flowConfig->getDescription(),
@@ -93,6 +91,8 @@ final class WorkerInstance implements WorkerInstanceInterface
                     'job_beanstalk_id' => $jobBeanstalkId,
                     'job_uuid' => $jobUuid
                 ];
+
+                yield $this->waitForDependencies($lastProcessTimestamp, $logContext);
 
                 try {
                     /** @var Job $job */
@@ -178,9 +178,9 @@ final class WorkerInstance implements WorkerInstanceInterface
      * @param float $lastProcessTimestamp
      * @return Promise
      */
-    private function waitForDependencies(float $lastProcessTimestamp): Promise
+    private function waitForDependencies(float $lastProcessTimestamp, array $logContext): Promise
     {
-        return call(function () use ($lastProcessTimestamp) {
+        return call(function () use ($lastProcessTimestamp, $logContext) {
             if (count($this->flowConfig->getDependsOn()) > 0) {
                 if ((microtime(true) - $lastProcessTimestamp) > 1) {
                     //If more than one second has passed since the last job finished processing and if this flow depends
@@ -200,6 +200,7 @@ final class WorkerInstance implements WorkerInstanceInterface
                 //If this flow depends on something, then wait until all tubes that this depends on are empty.
                 //Notice that this means that they must all be empty AT THE SAME TIME. This means that it must be
                 //possible to query each dependency tube and ALL of them must be empty in a single pass of the loop.
+                $allDependenciesWereIdle = true;
                 do {
                     $hadToWaitForSomeDependency = false;
                     foreach ($this->flowConfig->getDependsOn() as $dependency) {
@@ -209,7 +210,16 @@ final class WorkerInstance implements WorkerInstanceInterface
                             if ($tubeStats->currentJobsReady + $tubeStats->currentJobsReserved === 0) {
                                 break;
                             }
+                            $this->logger->debug(
+                                sprintf(
+                                    'Flow %s has to wait for dependency %s to complete before it can work its jobs.',
+                                    $this->flowConfig->getTube(),
+                                    $dependency
+                                ),
+                                $logContext
+                            );
                             $hadToWaitForSomeDependency = true;
+                            $allDependenciesWereIdle = false;
 
                             yield delay($sleepTime);
 
@@ -221,6 +231,16 @@ final class WorkerInstance implements WorkerInstanceInterface
                         }
                     }
                 } while ($hadToWaitForSomeDependency);
+
+                if (!$allDependenciesWereIdle) {
+                    $this->logger->debug(
+                        sprintf(
+                            'All dependencies of flow %s are idle. Proceeding to work the queued jobs.',
+                            $this->flowConfig->getTube()
+                        ),
+                        $logContext
+                    );
+                }
             }
         });
     }
