@@ -53,30 +53,31 @@ The `esb.yml` file is the main configuration of your ESB application, where you 
 ```yaml
 services:
   _defaults:
-    autowire: true                    # This is optional (see https://symfony.com/doc/current/service_container/autowiring.html)
+    autowire: true                      # This is optional (see https://symfony.com/doc/current/service_container/autowiring.html)
 
-  My\Esb\Producer:                    # A producer service definition
+  My\Esb\Producer:                      # A producer service definition
     arguments: []
 
-  My\Esb\Worker:                      # A worker service definition
+  My\Esb\Worker:                        # A worker service definition
     arguments: []
 
 
 flows:
-  sample_flow:                        # The flow "code" and will be the Beanstalkd tube name
-    description: Sample Flow          # The flow description
+  sample_flow:                          # The flow "code" and will be the Beanstalkd tube name
+    description: Sample Flow            # The flow description
     producer:
-      service: My\Esb\Producer        # A producer service ID defined above
+      service: My\Esb\Producer          # A producer service ID defined above
     worker:
-      service: My\Esb\Worker          # A worker service ID defined above
-      instances: 1                    # The number of worker instances to spawn for this flow
-      release_delay: 0                # The jobs release delay in seconds for this flow (see the Beanstalkd protocol here https://github.com/beanstalkd/beanstalkd/blob/master/doc/protocol.txt)
-      max_retry: 5                    # The number of maximum work retries for a job in this tube/flow before being buried
-    depends_on: ['other_flow_1', 'other_flow_2']  # Optional: dependencies of this flow toward other flow(s)
-    delay_after_idle_time: 1000       # Optional: delay that a worker with dependencies waits before working the first job received after the tube was empty
-    initial_polling_interval: 1000    # Optional: initial polling delay that a worker waits when it has to wait for a dependency that is not idle
-    maximum_polling_interval: 60000   # Optional: maximum polling delay that a worker waits when it has to wait for a dependency that is not idle
-    polling_interval_multiplier: 2    # Optional: polling delay increase factor whenever a worker is waiting for a dependency that is not idle
+      service: My\Esb\Worker            # A worker service ID defined above
+      instances: 1                      # The number of worker instances to spawn for this flow
+      release_delay: 0                  # The jobs release delay in seconds for this flow (see the Beanstalkd protocol here https://github.com/beanstalkd/beanstalkd/blob/master/doc/protocol.txt)
+      max_retry: 5                      # The number of maximum work retries for a job in this tube/flow before being buried
+    dependencies:                       # This whole section can be omitted if no dependencies are to be configured
+      flows: ['other_flow_1', 'other_flow_2']  # Optional: dependencies of this flow toward other flow(s)
+      delay_after_idle_time: 1000       # Optional: delay that a worker with dependencies waits before working the first job received after the tube was empty
+      initial_polling_interval: 1000    # Optional: initial polling delay that a worker waits when it has to wait for a dependency that is not idle
+      maximum_polling_interval: 60000   # Optional: maximum polling delay that a worker waits when it has to wait for a dependency that is not idle
+      polling_interval_multiplier: 2    # Optional: polling delay increase factor whenever a worker is waiting for a dependency that is not idle
 
   other_flow_1:
     # ...
@@ -129,7 +130,8 @@ flows:
 
   flow_A:
     #...
-    depends_on: ['flow_B']
+    dependencies: 
+      flows: ['flow_B']
 ```
 
 When one such dependency is specified so that flow A depends on flow B, whenever flow B is working some job and/or it has queued jobs, then flow A will still produce and queue new jobs, but it will not work them. When flow B finishes processing its last job and its tube is empty, then flow A begins to work through its jobs.
