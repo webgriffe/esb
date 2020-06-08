@@ -52,13 +52,17 @@ class FlowsDependencyTest extends KernelTestCase
                     'description' => 'Two Flows Test Flow 1',
                     'producer' => ['service' => 'producer1'],
                     'worker' => ['service' => 'worker1'],
-                    'depends_on' => [self::FLOW2_CODE],
+                    'dependencies' => [
+                        'flows' => [self::FLOW2_CODE]
+                    ],
                 ],
                 self::FLOW2_CODE => [
                     'description' => 'Two Flows Test Flow 2',
                     'producer' => ['service' => 'producer2'],
                     'worker' => ['service' => 'worker2'],
-                    'depends_on' => [self::FLOW3_CODE],
+                    'dependencies' => [
+                        'flows' => [self::FLOW3_CODE]
+                    ],
                 ],
                 self::FLOW3_CODE => [
                     'description' => 'Two Flows Test Flow 3',
@@ -152,13 +156,17 @@ class FlowsDependencyTest extends KernelTestCase
                     'description' => 'Two Flows Test Flow 1',
                     'producer' => ['service' => 'producer1'],
                     'worker' => ['service' => 'worker1'],
-                    'depends_on' => [self::FLOW2_CODE],
+                    'dependencies' => [
+                        'flows' => [self::FLOW2_CODE]
+                    ],
                 ],
                 self::FLOW2_CODE => [
                     'description' => 'Two Flows Test Flow 2',
                     'producer' => ['service' => 'producer2'],
                     'worker' => ['service' => 'worker2'],
-                    'depends_on' => [self::FLOW3_CODE],
+                    'dependencies' => [
+                        'flows' => [self::FLOW3_CODE]
+                    ],
                 ],
                 self::FLOW3_CODE => [
                     'description' => 'Two Flows Test Flow 3',
