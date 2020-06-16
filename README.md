@@ -110,7 +110,7 @@ Refer to the [sample configuration file](https://github.com/webgriffe/esb/blob/m
 Dependencies
 ------------
 
-It is possible to specify **dependencies** across flows. This is done by using the `depends_on` parameter: if wou want flow A to depend on flow B, you specify the `depends_on` parameter in flow A's configuration to list flow B:
+It is possible to specify **dependencies** across flows. This is done by using the `dependencies` configuration section: if you want flow A to depend on flow B, you specify the `dependencies` section in flow A's configuration to list flow B:
 
 ```yaml
 # esb.yml
@@ -126,9 +126,9 @@ flows:
       flows: ['flow_B']
 ```
 
-When one such dependency is specified so that flow A depends on flow B, whenever flow B is working some job and/or it has queued jobs, then flow A will still produce and queue new jobs, but it will not work them. When flow B finishes processing its last job and its tube is empty, then flow A begins to work through its jobs.
+When one such dependency is specified so that flow A depends on flow B, whenever flow B is working some job and/or it has queued jobs, then flow A will still produce and queue new jobs, but it will not work them. When flow B finishes processing its last job and its Beanstalk tube is empty, then flow A begins to work through its jobs.
 If a new job is created for flow B while flow A is working, flow A will complete the job (or jobs, if there are multiple workers) that was already being worked and then it will stop until all its dependencies are idle (empty tube and no jobs being worked).
-Dependencies can also be multiple, meaning that flow A can depend on both flow B and flow C (and more, if needed). In this case flow A will wait until **all** its dependencies are idle. To declare multiple dependencies, simply list all dependencies in the `depends_on` field.
+Dependencies can also be multiple, meaning that flow A can depend on both flow B and flow C (and more, if needed). In this case flow A will wait until **all** its dependencies are idle. To declare multiple dependencies, simply list all dependencies in the `dependencies.flows` field.
 Indirect dependencies are **not** honored. This means that if flow A depends on flow B, which in turn depends on flow C, a job for flow C will **not** stop flow A. Flow A will only check flow B. If you want flow A to also check flow C, simply make the dependency between flow A and flow C explicit by saying that flow A depends on both flows B and C.
 
 When a flow depends on another, such as flow A depending on flow B, whenever flow A's worker extracts a job from its queue it will check all dependencies to ensure that they are all idle. If one is found that is not idle, flow A will begin polling that dependency to see when it finishes.
