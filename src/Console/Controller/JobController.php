@@ -3,13 +3,9 @@ declare(strict_types=1);
 
 namespace Webgriffe\Esb\Console\Controller;
 
-use Amp\Beanstalk\BeanstalkClient;
 use Amp\Http\Server\Request;
 use Amp\Http\Server\Response;
 use Amp\Http\Status;
-use Twig\Environment;
-use Webgriffe\AmpElasticsearch\Client;
-use Webgriffe\Esb\Model\JobInterface;
 use function Amp\call;
 
 /**

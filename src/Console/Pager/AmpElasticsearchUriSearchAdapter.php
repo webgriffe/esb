@@ -5,7 +5,7 @@ namespace Webgriffe\Esb\Console\Pager;
 use Amp\Promise;
 use Amp\Success;
 use Webgriffe\AmpElasticsearch\Client;
-use Webgriffe\Esb\Console\Pager\AsyncPagerAdapterInterface;
+use Webgriffe\AmpElasticsearch\Error as AmpElasticsearchError;
 use function Amp\call;
 
 final class AmpElasticsearchUriSearchAdapter implements AsyncPagerAdapterInterface
@@ -14,18 +14,22 @@ final class AmpElasticsearchUriSearchAdapter implements AsyncPagerAdapterInterfa
      * @var Client
      */
     private $client;
+
     /**
      * @var string
      */
     private $index;
+
     /**
      * @var string
      */
     private $query;
+
     /**
      * @var array
      */
     private $options;
+
     /**
      * @var int|null
      */
@@ -54,23 +58,39 @@ final class AmpElasticsearchUriSearchAdapter implements AsyncPagerAdapterInterfa
         }
 
         return call(function () {
-            $response = yield $this->client->uriSearchOneIndex(
-                $this->index,
-                $this->query,
-                $this->options
-            );
-            return $response['hits']['total']['value'];
+            try {
+                $response = yield $this->client->uriSearchOneIndex(
+                    $this->index,
+                    $this->query,
+                    $this->options
+                );
+                return $response['hits']['total']['value'];
+            } catch (AmpElasticsearchError $e) {
+                if ($this->isIndexNotFoundException($e)) {
+                    return 0;
+                }
+                throw $e;
+            }
         });
     }
 
     public function getSlice(int $offset, int $length): Promise
     {
         return call(function () use ($offset, $length) {
-            $response = yield $this->client->uriSearchOneIndex(
-                $this->index,
-                $this->query,
-                array_merge($this->options, ['from' => $offset, 'size' => $length])
-            );
+            try {
+                $response = yield $this->client->uriSearchOneIndex(
+                    $this->index,
+                    $this->query,
+                    array_merge($this->options, ['from' => $offset, 'size' => $length])
+                );
+            } catch (AmpElasticsearchError $e) {
+                if ($this->isIndexNotFoundException($e)) {
+                    $this->totalHits = 0;
+                    return [];
+                }
+                throw $e;
+            }
+
             $this->totalHits = $response['hits']['total']['value'];
             $jobs = [];
             foreach ($response['hits']['hits'] as $rawJob) {
@@ -78,5 +98,16 @@ final class AmpElasticsearchUriSearchAdapter implements AsyncPagerAdapterInterfa
             }
             return $jobs;
         });
+    }
+
+    private function isIndexNotFoundException(AmpElasticsearchError $e): bool
+    {
+        $exceptionData = $e->getData();
+        return (
+            $exceptionData &&
+            isset($exceptionData['error']) &&
+            isset($exceptionData['error']['type']) &&
+            $exceptionData['error']['type'] === 'index_not_found_exception'
+        );
     }
 }
