@@ -8,6 +8,7 @@ use function Amp\call;
 use Amp\Http\Server\Response;
 use Amp\Http\Status;
 use Amp\Promise;
+use Webgriffe\AmpElasticsearch\Error as AmpElasticsearchError;
 
 /**
  * @internal
@@ -41,32 +42,65 @@ class IndexController extends AbstractController
     private function getTotalJobs(string $flowCode): Promise
     {
         return call(function () use ($flowCode) {
-            $response = yield $this->getElasticsearch()->getClient()->search(
-                ['match_all' => new \stdClass()],
-                $flowCode
-            );
-            return $response['hits']['total']['value'];
+            try {
+                $response = yield $this->getElasticsearch()->getClient()->search(
+                    ['match_all' => new \stdClass()],
+                    $flowCode
+                );
+                return $response['hits']['total']['value'];
+            } catch (AmpElasticsearchError $e) {
+                if ($this->isIndexNotFoundException($e)) {
+                    return 0;
+                }
+                throw $e;
+            }
         });
     }
 
     private function getErroredJobs(string $flowCode): Promise
     {
         return call(function () use ($flowCode) {
-            $response = yield $this->getElasticsearch()->getClient()->search(
-                ['term' => ['lastEvent.type.keyword' => 'errored']],
-                $flowCode
-            );
-            return $response['hits']['total']['value'];
+            try {
+                $response = yield $this->getElasticsearch()->getClient()->search(
+                    ['term' => ['lastEvent.type.keyword' => 'errored']],
+                    $flowCode
+                );
+                return $response['hits']['total']['value'];
+            } catch (AmpElasticsearchError $e) {
+                if ($this->isIndexNotFoundException($e)) {
+                    return 0;
+                }
+                throw $e;
+            }
         });
     }
+
     private function getWorkedJobs(string $flowCode): Promise
     {
         return call(function () use ($flowCode) {
-            $response = yield $this->getElasticsearch()->getClient()->search(
-                ['term' => ['lastEvent.type.keyword' => 'worked']],
-                $flowCode
-            );
-            return $response['hits']['total']['value'];
+            try {
+                $response = yield $this->getElasticsearch()->getClient()->search(
+                    ['term' => ['lastEvent.type.keyword' => 'worked']],
+                    $flowCode
+                );
+                return $response['hits']['total']['value'];
+            } catch (AmpElasticsearchError $e) {
+                if ($this->isIndexNotFoundException($e)) {
+                    return 0;
+                }
+                throw $e;
+            }
         });
+    }
+
+    private function isIndexNotFoundException(AmpElasticsearchError $e): bool
+    {
+        $exceptionData = $e->getData();
+        return (
+            $exceptionData &&
+            isset($exceptionData['error']) &&
+            isset($exceptionData['error']['type']) &&
+            $exceptionData['error']['type'] === 'index_not_found_exception'
+        );
     }
 }

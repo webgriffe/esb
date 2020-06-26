@@ -9,7 +9,6 @@ use Amp\Http\Server\Request;
 use Amp\Http\Server\Response;
 use Psr\Log\LoggerInterface;
 use Twig\Environment;
-use Webgriffe\AmpElasticsearch\Client;
 use Webgriffe\Esb\FlowManager;
 use Webgriffe\Esb\Model\RequeuedJobEvent;
 use Webgriffe\Esb\NonUtf8Cleaner;
@@ -22,6 +21,7 @@ class RequeueController extends AbstractController
      * @var LoggerInterface
      */
     private $logger;
+
     /**
      * @var BeanstalkClient
      */
