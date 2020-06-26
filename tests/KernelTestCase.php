@@ -71,7 +71,7 @@ class KernelTestCase extends BeanstalkTestCase
     protected function stopWhen(callable $stopCondition, int $timeoutInSeconds = 10)
     {
         $start = Loop::now();
-        Loop::repeat(1, function ($watcherId) use ($start, $stopCondition, $timeoutInSeconds) {
+        Loop::repeat(1000, function ($watcherId) use ($start, $stopCondition, $timeoutInSeconds) {
             if (yield call($stopCondition)) {
                 Loop::cancel($watcherId);
                 Loop::stop();
