@@ -43,11 +43,8 @@ class IndexController extends AbstractController
     {
         return call(function () use ($flowCode) {
             try {
-                $response = yield $this->getElasticsearch()->getClient()->search(
-                    ['match_all' => new \stdClass()],
-                    $flowCode
-                );
-                return $response['hits']['total']['value'];
+                $response = yield $this->getElasticsearch()->getClient()->count($flowCode);
+                return $response['count'];
             } catch (AmpElasticsearchError $e) {
                 if ($this->isIndexNotFoundException($e)) {
                     return 0;
@@ -61,11 +58,12 @@ class IndexController extends AbstractController
     {
         return call(function () use ($flowCode) {
             try {
-                $response = yield $this->getElasticsearch()->getClient()->search(
-                    ['term' => ['lastEvent.type.keyword' => 'errored']],
-                    $flowCode
+                $response = yield $this->getElasticsearch()->getClient()->count(
+                    $flowCode,
+                    [],
+                    ['term' => ['lastEvent.type.keyword' => 'errored']]
                 );
-                return $response['hits']['total']['value'];
+                return $response['count'];
             } catch (AmpElasticsearchError $e) {
                 if ($this->isIndexNotFoundException($e)) {
                     return 0;
@@ -79,11 +77,12 @@ class IndexController extends AbstractController
     {
         return call(function () use ($flowCode) {
             try {
-                $response = yield $this->getElasticsearch()->getClient()->search(
-                    ['term' => ['lastEvent.type.keyword' => 'worked']],
-                    $flowCode
+                $response = yield $this->getElasticsearch()->getClient()->count(
+                    $flowCode,
+                    [],
+                    ['term' => ['lastEvent.type.keyword' => 'worked']]
                 );
-                return $response['hits']['total']['value'];
+                return $response['count'];
             } catch (AmpElasticsearchError $e) {
                 if ($this->isIndexNotFoundException($e)) {
                     return 0;
