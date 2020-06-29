@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Webgriffe\Esb;
 
 use Amp\Beanstalk\BeanstalkClient;
+use function Amp\delay;
 use Amp\Loop;
 use Amp\Promise;
 use Psr\Log\LoggerInterface;
@@ -66,14 +67,12 @@ final class ProducerInstance implements ProducerInstanceInterface
                 ['flow' => $this->flowConfig->getDescription(), 'producer' => \get_class($this->producer)]
             );
             if ($this->producer instanceof RepeatProducerInterface) {
-                Loop::repeat(
-                    $this->producer->getInterval(),
-                    function ($watcherId) {
-                        Loop::disable($watcherId);
-                        yield $this->produceAndQueueJobs();
-                        Loop::enable($watcherId);
-                    }
-                );
+                do {
+                    yield $this->produceAndQueueJobs();
+                    yield delay($this->producer->getInterval());
+
+                    $info = Loop::getInfo();
+                } while ($info['running']);
             } elseif ($this->producer instanceof  HttpRequestProducerInterface) {
                 if (!$this->httpProducersServer->isStarted()) {
                     yield $this->httpProducersServer->start();
