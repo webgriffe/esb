@@ -7,17 +7,13 @@ namespace Webgriffe\Esb\Console\Pager;
 use Amp\Promise;
 use Pagerfanta\Exception\LessThan1CurrentPageException;
 use Pagerfanta\Exception\LessThan1MaxPerPageException;
-use Pagerfanta\Exception\NotBooleanException;
-use Pagerfanta\Exception\NotIntegerCurrentPageException;
-use Pagerfanta\Exception\NotIntegerException;
-use Pagerfanta\Exception\NotIntegerMaxPerPageException;
+use Pagerfanta\Exception\NotValidCurrentPageException;
+use Pagerfanta\Exception\NotValidMaxPerPageException;
 use Pagerfanta\Exception\OutOfRangeCurrentPageException;
 use Pagerfanta\Pagerfanta;
+use Webmozart\Assert\Assert;
 use function Amp\call;
 
-/**
- * @internal
- */
 class AsyncPager extends Pagerfanta
 {
     /**
@@ -53,9 +49,12 @@ class AsyncPager extends Pagerfanta
      */
     private $currentPageResults;
 
+    /**
+     * @noinspection MagicMethodsValidityInspection
+     * @noinspection PhpMissingParentConstructorInspection
+     */
     public function __construct(AsyncPagerAdapterInterface $adapter, int $maxPerPage = 10, int $currentPage = 1)
     {
-        parent::__construct($adapter);
         $this->adapter = $adapter;
         $this->allowOutOfRangePages = false;
         $this->normalizeOutOfRangePages = false;
@@ -133,9 +132,7 @@ class AsyncPager extends Pagerfanta
 
     private function filterBoolean($value)
     {
-        if (!is_bool($value)) {
-            throw new NotBooleanException();
-        }
+        Assert::boolean($value);
 
         return $value;
     }
@@ -149,7 +146,7 @@ class AsyncPager extends Pagerfanta
      *
      * @return self
      *
-     * @throws NotIntegerMaxPerPageException If the max per page is not an integer even converting.
+     * @throws NotValidMaxPerPageException If the max per page is not an integer even converting.
      * @throws LessThan1MaxPerPageException  If the max per page is less than 1.
      */
     public function setMaxPerPage($maxPerPage)
@@ -171,7 +168,7 @@ class AsyncPager extends Pagerfanta
     private function checkMaxPerPage($maxPerPage)
     {
         if (!is_int($maxPerPage)) {
-            throw new NotIntegerMaxPerPageException();
+            throw new NotValidMaxPerPageException();
         }
 
         if ($maxPerPage < 1) {
@@ -204,7 +201,7 @@ class AsyncPager extends Pagerfanta
      *
      * @return self
      *
-     * @throws NotIntegerCurrentPageException If the current page is not an integer even converting.
+     * @throws NotValidCurrentPageException If the current page is not an integer even converting.
      * @throws LessThan1CurrentPageException  If the current page is less than 1.
      * @throws OutOfRangeCurrentPageException If It is not allowed out of range pages and they are not normalized.
      */
@@ -259,7 +256,7 @@ class AsyncPager extends Pagerfanta
     private function checkCurrentPage($currentPage)
     {
         if (!is_int($currentPage)) {
-            throw new NotIntegerCurrentPageException();
+            throw new NotValidCurrentPageException();
         }
 
         if ($currentPage < 1) {
@@ -543,9 +540,7 @@ class AsyncPager extends Pagerfanta
      */
     public function getPageNumberForItemAtPosition($position)
     {
-        if (!is_int($position)) {
-            throw new NotIntegerException();
-        }
+        Assert::integer($position);
 
         if ($this->getNbResults() < $position) {
             throw new \OutOfBoundsException(sprintf(

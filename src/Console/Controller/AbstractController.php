@@ -8,9 +8,6 @@ use Twig\Environment;
 use Webgriffe\Esb\FlowManager;
 use Webgriffe\Esb\Service\ElasticSearch;
 
-/**
- * @internal
- */
 abstract class AbstractController
 {
     /**

@@ -5,12 +5,8 @@ declare(strict_types=1);
 namespace Webgriffe\Esb\Console\Pager;
 
 use Amp\Promise;
-use Pagerfanta\Adapter\AdapterInterface;
 
-/**
- * @internal
- */
-interface AsyncPagerAdapterInterface extends AdapterInterface
+interface AsyncPagerAdapterInterface
 {
     /**
      * Returns the number of results.
@@ -22,10 +18,10 @@ interface AsyncPagerAdapterInterface extends AdapterInterface
     /**
      * Returns an slice of the results.
      *
-     * @param integer $offset The offset.
-     * @param integer $length The length.
+     * @param int $offset The offset.
+     * @param int $length The length.
      *
      * @return Promise which resolve array|\Traversable The slice.
      */
-    public function getSlice($offset, $length): Promise;
+    public function getSlice(int $offset, int $length): Promise;
 }
