@@ -5,12 +5,11 @@ declare(strict_types=1);
 namespace Webgriffe\Esb\Console\Twig;
 
 use Pagerfanta\Pagerfanta;
-use Pagerfanta\View\TwitterBootstrap4View;
 use Pagerfanta\View\ViewInterface;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
 
-class PagerfantaExtension extends AbstractExtension
+final class PagerfantaExtension extends AbstractExtension
 {
     /**
      * @var ViewInterface
