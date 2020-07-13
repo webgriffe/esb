@@ -5,12 +5,20 @@ declare(strict_types=1);
 namespace Webgriffe\Esb\Console\Pager;
 
 use Amp\Promise;
+use Pagerfanta\Exception\LessThan1CurrentPageException;
+use Pagerfanta\Exception\LessThan1MaxPerPageException;
+use Pagerfanta\Exception\NotBooleanException;
+use Pagerfanta\Exception\NotIntegerCurrentPageException;
+use Pagerfanta\Exception\NotIntegerException;
+use Pagerfanta\Exception\NotIntegerMaxPerPageException;
+use Pagerfanta\Exception\OutOfRangeCurrentPageException;
+use Pagerfanta\Pagerfanta;
 use function Amp\call;
 
 /**
  * @internal
  */
-class AsyncPager
+class AsyncPager extends Pagerfanta
 {
     /**
      * @var AsyncPagerAdapterInterface
@@ -47,6 +55,7 @@ class AsyncPager
 
     public function __construct(AsyncPagerAdapterInterface $adapter, int $maxPerPage = 10, int $currentPage = 1)
     {
+        parent::__construct($adapter);
         $this->adapter = $adapter;
         $this->allowOutOfRangePages = false;
         $this->normalizeOutOfRangePages = false;

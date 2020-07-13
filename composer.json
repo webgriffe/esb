@@ -32,7 +32,8 @@
         "symfony/property-info": "^4.3",
         "doctrine/annotations": "^1.8",
         "ramsey/uuid": "^3.8",
-        "webgriffe/amp-elasticsearch": "^1.1"
+        "webgriffe/amp-elasticsearch": "^1.1",
+        "babdev/pagerfanta": "^2.3"
     },
     "autoload": {
         "psr-4": {
