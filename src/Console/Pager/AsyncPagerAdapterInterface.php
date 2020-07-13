@@ -7,6 +7,9 @@ namespace Webgriffe\Esb\Console\Pager;
 use Amp\Promise;
 use Pagerfanta\Adapter\AdapterInterface;
 
+/**
+ * @internal
+ */
 interface AsyncPagerAdapterInterface extends AdapterInterface
 {
     /**
