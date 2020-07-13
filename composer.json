@@ -10,7 +10,7 @@
         }
     ],
     "require": {
-        "php": "~7.1.0|~7.2.0|~7.3.0",
+        "php": "~7.2.0|~7.3.0",
         "ext-pcntl": "*",
         "symfony/dependency-injection": "^3.3",
         "symfony/config": "^3.3",
