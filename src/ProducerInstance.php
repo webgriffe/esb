@@ -131,7 +131,7 @@ final class ProducerInstance implements ProducerInstanceInterface
                             )
                         );
                     }
-                    yield $this->elasticSearch->indexJob($job, $this->flowConfig->getTube());
+                    yield $this->elasticSearch->bulkIndexJobs([$job], $this->flowConfig->getTube());
                     $jobId = yield $this->beanstalkClient->put(
                         $job->getUuid(),
                         $job->getTimeout(),
