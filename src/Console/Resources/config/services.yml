@@ -20,7 +20,7 @@ services:
     class: \Webgriffe\Esb\Console\ClassTwigExtension
 
   console.twig.pagerfanta_extension:
-    class: \Webgriffe\Esb\Console\Twig\PagerfantaExtension
+    class: \Webgriffe\Esb\Console\PagerfantaTwigExtension
     arguments:
       - '@console.pagerfanta.view.bootstrap4'
 

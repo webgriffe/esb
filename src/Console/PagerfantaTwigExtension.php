@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Webgriffe\Esb\Console\Twig;
+namespace Webgriffe\Esb\Console;
 
 use Pagerfanta\Pagerfanta;
 use Pagerfanta\View\ViewInterface;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
 
-final class PagerfantaExtension extends AbstractExtension
+final class PagerfantaTwigExtension extends AbstractExtension
 {
     /**
      * @var ViewInterface
