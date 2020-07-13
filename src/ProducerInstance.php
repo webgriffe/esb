@@ -116,6 +116,7 @@ final class ProducerInstance implements ProducerInstanceInterface
             $jobsCount = 0;
             $job = null;
             $test = false;
+            $batch = [];
             try {
                 $jobs = $this->producer->produce($data);
                 while (yield $jobs->advance()) {
@@ -131,23 +132,15 @@ final class ProducerInstance implements ProducerInstanceInterface
                             )
                         );
                     }
-                    yield $this->elasticSearch->bulkIndexJobs([$job], $this->flowConfig->getTube());
-                    $jobId = yield $this->beanstalkClient->put(
-                        $job->getUuid(),
-                        $job->getTimeout(),
-                        $job->getDelay(),
-                        $job->getPriority()
-                    );
-                    $this->logger->info(
-                        'Successfully produced a new Job',
-                        [
-                            'producer' => \get_class($this->producer),
-                            'job_beanstalk_id' => $jobId,
-                            'job_uuid' => $job->getUuid(),
-                            'payload_data' => NonUtf8Cleaner::clean($job->getPayloadData())
-                        ]
-                    );
-                    $jobsCount++;
+                    $batch[] = $job;
+                    $jobsCount++; // TODO: Add jobsCount to bulk operations?
+                    if (count($batch) >= 1000) { // TODO: 1000 should be a config parameters
+                        yield from $this->processBatch($batch);
+                        $batch = [];
+                    }
+                }
+                if (count($batch) > 0) {
+                    yield from $this->processBatch($batch);
                 }
             } catch (\Throwable $error) {
                 $this->logger->error(
@@ -179,5 +172,33 @@ final class ProducerInstance implements ProducerInstanceInterface
             }
             return true;
         });
+    }
+
+    /**
+     * @param array $batch
+     * @return \Generator
+     */
+    private function processBatch(array $batch): \Generator
+    {
+        $this->logger->debug('Processing batch');
+        yield $this->elasticSearch->bulkIndexJobs($batch, $this->flowConfig->getTube());
+
+        foreach ($batch as $singleJob) {
+            $jobId = yield $this->beanstalkClient->put(
+                $singleJob->getUuid(),
+                $singleJob->getTimeout(),
+                $singleJob->getDelay(),
+                $singleJob->getPriority()
+            );
+            $this->logger->info(
+                'Successfully produced a new Job',
+                [
+                    'producer' => \get_class($this->producer),
+                    'job_beanstalk_id' => $jobId,
+                    'job_uuid' => $singleJob->getUuid(),
+                    'payload_data' => NonUtf8Cleaner::clean($singleJob->getPayloadData())
+                ]
+            );
+        }
     }
 }
