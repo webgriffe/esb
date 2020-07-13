@@ -74,7 +74,7 @@ final class AmpElasticsearchUriSearchAdapter implements AsyncPagerAdapterInterfa
         });
     }
 
-    public function getSlice(int $offset, int $length): Promise
+    public function getSlice($offset, $length): Promise
     {
         return call(function () use ($offset, $length) {
             try {
