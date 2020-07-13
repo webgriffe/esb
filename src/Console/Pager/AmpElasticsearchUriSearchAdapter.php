@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Webgriffe\Esb\Console\Pager;
 
 use Amp\Promise;
