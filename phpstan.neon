@@ -4,3 +4,4 @@ parameters:
 		- '/Method Webgriffe\\Esb\\FlowExtension::getNamespace\(\) should return string but returns false\./'
 		- '/Method Webgriffe\\Esb\\FlowExtension::getXsdValidationBasePath\(\) should return string but returns false\./'
 		- '/Call to an undefined method Symfony\\Component\\Config\\Definition\\Builder\\NodeDefinition::useAttributeAsKey\(\)\./'
+		- '/Webgriffe\\Esb\\Console\\Pager\\AsyncPager::__construct\(\) does not call parent constructor from Pagerfanta\\Pagerfanta\./'
