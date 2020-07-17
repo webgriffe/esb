@@ -14,6 +14,9 @@ use Pagerfanta\Pagerfanta;
 use Webmozart\Assert\Assert;
 use function Amp\call;
 
+/**
+ * @internal
+ */
 class AsyncPager extends Pagerfanta
 {
     /**
