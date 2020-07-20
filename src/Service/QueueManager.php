@@ -36,14 +36,14 @@ class QueueManager
     private $batch = [];
 
     public function __construct(
+        FlowConfig $flowConfig,
         BeanstalkClient $beanstalkClient,
         ElasticSearch $elasticSearch,
-        FlowConfig $flowConfig,
         LoggerInterface $logger
     ) {
+        $this->flowConfig = $flowConfig;
         $this->beanstalkClient = $beanstalkClient;
         $this->elasticSearch = $elasticSearch;
-        $this->flowConfig = $flowConfig;
         $this->logger = $logger;
     }
 
@@ -68,12 +68,20 @@ class QueueManager
         $this->batch[] = $job;
         $count = count($this->batch);
         $jobsCount = 0;
-        if ($count >= 1000) {
+        if ($count >= 1000) { //TODO: should be a parameter
             yield from $this->processBatch($this->batch);
             $jobsCount = $count;
             $this->batch = [];
         }
         return $jobsCount;
+    }
+
+    /**
+     * @return string
+     */
+    public function getFlowDescription()
+    {
+        return $this->flowConfig->getDescription();
     }
 
 

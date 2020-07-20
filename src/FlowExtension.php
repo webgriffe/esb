@@ -12,6 +12,7 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
 use Symfony\Component\DependencyInjection\Reference;
 use Webgriffe\Esb\Model\FlowConfig;
+use Webgriffe\Esb\Service\QueueManager;
 
 final class FlowExtension implements ExtensionInterface, CompilerPassInterface
 {
@@ -80,13 +81,24 @@ final class FlowExtension implements ExtensionInterface, CompilerPassInterface
                 $producerDefinition = $container->findDefinition($flowConfig->getProducerServiceId());
                 $producerDefinition->setShared(false);
 
+                $queueManagerDefinition = new Definition();
+                $queueManagerDefinition
+                    ->setShared(false)
+                    ->setAutowired(true)
+                    ->setClass(QueueManager::class)
+                    ->setArgument('$flowConfig', $flowConfig)
+                ;
+                $queueManagerServiceId = 'queue_manager.' . $flowTube;
+                $container->setDefinition($queueManagerServiceId, $queueManagerDefinition);
+
                 $producerInstanceDefinition = new Definition();
                 $producerInstanceDefinition
                     ->setAutowired(true)
                     ->setClass(ProducerInstance::class)
-                    ->setArgument('$flowConfig', $flowConfig)
                     ->setArgument('$producer', new Reference($flowConfig->getProducerServiceId()))
+                    ->setArgument('$queueManager', new Reference($queueManagerServiceId))
                 ;
+
                 $flowDefinition->setArgument('$producerInstance', $producerInstanceDefinition);
             } catch (ServiceNotFoundException $e) {
                 throw new InvalidConfigurationException(

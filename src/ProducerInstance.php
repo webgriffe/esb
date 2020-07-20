@@ -6,7 +6,6 @@ namespace Webgriffe\Esb;
 use Amp\Loop;
 use Amp\Promise;
 use Psr\Log\LoggerInterface;
-use Webgriffe\Esb\Model\FlowConfig;
 use Webgriffe\Esb\Model\Job;
 use Webgriffe\Esb\Model\ProducedJobEvent;
 use Webgriffe\Esb\Service\CronProducersServer;
@@ -17,10 +16,6 @@ use function Amp\call;
 final class ProducerInstance implements ProducerInstanceInterface
 {
     /**
-     * @var FlowConfig
-     */
-    private $flowConfig;
-        /**
      * @var ProducerInterface
      */
     private $producer;
@@ -42,14 +37,12 @@ final class ProducerInstance implements ProducerInstanceInterface
     private $queueManager;
 
     public function __construct(
-        FlowConfig $flowConfig,
         ProducerInterface $producer,
         LoggerInterface $logger,
         HttpProducersServer $httpProducersServer,
         CronProducersServer $cronProducersServer,
         QueueManager $queueManager
     ) {
-        $this->flowConfig = $flowConfig;
         $this->producer = $producer;
         $this->logger = $logger;
         $this->httpProducersServer = $httpProducersServer;
@@ -64,7 +57,7 @@ final class ProducerInstance implements ProducerInstanceInterface
             yield $this->queueManager->boot();
             $this->logger->info(
                 'A Producer has been successfully initialized',
-                ['flow' => $this->flowConfig->getDescription(), 'producer' => \get_class($this->producer)]
+                ['flow' => $this->queueManager->getFlowDescription(), 'producer' => \get_class($this->producer)]
             );
             if ($this->producer instanceof RepeatProducerInterface) {
                 Loop::repeat(
@@ -90,7 +83,7 @@ final class ProducerInstance implements ProducerInstanceInterface
                     sprintf(
                         'Unknown producer type "%s" for flow "%s".',
                         \get_class($this->producer),
-                        $this->flowConfig->getDescription()
+                        $this->queueManager->getFlowDescription()
                     )
                 );
             }
