@@ -133,14 +133,16 @@ final class ProducerInstance implements ProducerInstanceInterface
                         );
                     }
                     $batch[] = $job;
-                    $jobsCount++; // TODO: Add jobsCount to bulk operations?
-                    if (count($batch) >= 1000) { // TODO: 1000 should be a config parameters
+                    if (count($batch) >= 1000) {
                         yield from $this->processBatch($batch);
+                        $jobsCount += count($batch);
                         $batch = [];
                     }
                 }
-                if (count($batch) > 0) {
+                $remainder = count($batch);
+                if ($remainder > 0) {
                     yield from $this->processBatch($batch);
+                    $jobsCount += $remainder;
                 }
             } catch (\Throwable $error) {
                 $this->logger->error(
