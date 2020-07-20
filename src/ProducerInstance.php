@@ -3,18 +3,15 @@ declare(strict_types=1);
 
 namespace Webgriffe\Esb;
 
-use Amp\Beanstalk\BeanstalkClient;
 use Amp\Loop;
 use Amp\Promise;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Serializer\SerializerInterface;
-use Webgriffe\Esb\Exception\ElasticSearch\JobNotFoundException;
 use Webgriffe\Esb\Model\FlowConfig;
 use Webgriffe\Esb\Model\Job;
 use Webgriffe\Esb\Model\ProducedJobEvent;
 use Webgriffe\Esb\Service\CronProducersServer;
-use Webgriffe\Esb\Service\ElasticSearch;
 use Webgriffe\Esb\Service\HttpProducersServer;
+use Webgriffe\Esb\Service\QueueManager;
 use function Amp\call;
 
 final class ProducerInstance implements ProducerInstanceInterface
@@ -28,10 +25,6 @@ final class ProducerInstance implements ProducerInstanceInterface
      */
     private $producer;
     /**
-     * @var BeanstalkClient
-     */
-    private $beanstalkClient;
-    /**
      * @var LoggerInterface
      */
     private $logger;
@@ -44,33 +37,31 @@ final class ProducerInstance implements ProducerInstanceInterface
      */
     private $cronProducersServer;
     /**
-     * @var ElasticSearch
+     * @var QueueManager
      */
-    private $elasticSearch;
+    private $queueManager;
 
     public function __construct(
         FlowConfig $flowConfig,
         ProducerInterface $producer,
-        BeanstalkClient $beanstalkClient,
         LoggerInterface $logger,
         HttpProducersServer $httpProducersServer,
         CronProducersServer $cronProducersServer,
-        ElasticSearch $elasticSearch
+        QueueManager $queueManager
     ) {
         $this->flowConfig = $flowConfig;
         $this->producer = $producer;
-        $this->beanstalkClient = $beanstalkClient;
         $this->logger = $logger;
         $this->httpProducersServer = $httpProducersServer;
         $this->cronProducersServer = $cronProducersServer;
-        $this->elasticSearch = $elasticSearch;
+        $this->queueManager = $queueManager;
     }
 
     public function boot(): Promise
     {
         return call(function () {
             yield $this->producer->init();
-            yield $this->beanstalkClient->use($this->flowConfig->getTube());
+            yield $this->queueManager->boot();
             $this->logger->info(
                 'A Producer has been successfully initialized',
                 ['flow' => $this->flowConfig->getDescription(), 'producer' => \get_class($this->producer)]
@@ -116,34 +107,24 @@ final class ProducerInstance implements ProducerInstanceInterface
             $jobsCount = 0;
             $job = null;
             $test = false;
-            $batch = [];
             try {
                 $jobs = $this->producer->produce($data);
                 while (yield $jobs->advance()) {
                     /** @var Job $job */
                     $job = $jobs->getCurrent();
                     $job->addEvent(new ProducedJobEvent(new \DateTime(), \get_class($this->producer)));
-                    $jobExists = yield $this->jobExists($job->getUuid());
-                    if ($jobExists) {
-                        throw new \RuntimeException(
-                            sprintf(
-                                'A job with UUID "%s" already exists but this should be a new job.',
-                                $job->getUuid()
-                            )
-                        );
-                    }
-                    $batch[] = $job;
-                    if (count($batch) >= 1000) {
-                        yield from $this->processBatch($batch);
-                        $jobsCount += count($batch);
-                        $batch = [];
-                    }
+                    $jobsCount += yield $this->queueManager->enqueue($job);
+                    $this->logger->info(
+                        'Successfully produced a new Job',
+                        [
+                            'producer' => \get_class($this->producer),
+                            'job_uuid' => $job->getUuid(),
+                            'payload_data' => NonUtf8Cleaner::clean($job->getPayloadData())
+                        ]
+                    );
                 }
-                $remainder = count($batch);
-                if ($remainder > 0) {
-                    yield from $this->processBatch($batch);
-                    $jobsCount += $remainder;
-                }
+
+                $jobsCount += yield $this->queueManager->flush();
             } catch (\Throwable $error) {
                 $this->logger->error(
                     'An error occurred producing/queueing jobs.',
@@ -162,45 +143,5 @@ final class ProducerInstance implements ProducerInstanceInterface
     public function getProducer(): ProducerInterface
     {
         return $this->producer;
-    }
-
-    private function jobExists(string $jobUuid): Promise
-    {
-        return call(function () use ($jobUuid) {
-            try {
-                yield $this->elasticSearch->fetchJob($jobUuid, $this->flowConfig->getTube());
-            } catch (JobNotFoundException $exception) {
-                return false;
-            }
-            return true;
-        });
-    }
-
-    /**
-     * @param array $batch
-     * @return \Generator
-     */
-    private function processBatch(array $batch): \Generator
-    {
-        $this->logger->debug('Processing batch');
-        yield $this->elasticSearch->bulkIndexJobs($batch, $this->flowConfig->getTube());
-
-        foreach ($batch as $singleJob) {
-            $jobId = yield $this->beanstalkClient->put(
-                $singleJob->getUuid(),
-                $singleJob->getTimeout(),
-                $singleJob->getDelay(),
-                $singleJob->getPriority()
-            );
-            $this->logger->info(
-                'Successfully produced a new Job',
-                [
-                    'producer' => \get_class($this->producer),
-                    'job_beanstalk_id' => $jobId,
-                    'job_uuid' => $singleJob->getUuid(),
-                    'payload_data' => NonUtf8Cleaner::clean($singleJob->getPayloadData())
-                ]
-            );
-        }
     }
 }
