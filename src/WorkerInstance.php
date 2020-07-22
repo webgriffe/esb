@@ -179,7 +179,9 @@ final class WorkerInstance implements WorkerInstanceInterface
                         $sleepTime = $this->flowConfig->getInitialPollingInterval();
                         while (true) {
                             $tubeStats = yield $this->beanstalkClient->getTubeStats($dependency);
-                            if ($tubeStats->currentJobsReady + $tubeStats->currentJobsReserved === 0) {
+                            if ($tubeStats->currentJobsReady +
+                                $tubeStats->currentJobsReserved +
+                                $tubeStats->currentJobsDelayed === 0) {
                                 break;
                             }
                             $this->logger->debug(
