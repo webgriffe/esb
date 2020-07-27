@@ -71,6 +71,13 @@ final class FlowExtension implements ExtensionInterface, CompilerPassInterface
      */
     public function process(ContainerBuilder $container)
     {
+        //These clasees are defined manually. Remove the default definitions otherwise the container generates errors
+        //trying to autowire them
+        $container->removeDefinition(QueueManager::class);
+        $container->removeDefinition(FlowConfig::class);
+        $container->removeDefinition(ProducerInstance::class);
+        $container->removeDefinition(WorkerInstance::class);
+
         $definition = $container->findDefinition(FlowManager::class);
         foreach ($this->flowsConfig as $flowTube => $flowConfigData) {
             $flowConfig = new FlowConfig($flowTube, $flowConfigData);
@@ -88,15 +95,13 @@ final class FlowExtension implements ExtensionInterface, CompilerPassInterface
                     ->setClass(QueueManager::class)
                     ->setArgument('$flowConfig', $flowConfig)
                 ;
-                $queueManagerServiceId = 'queue_manager.' . $flowTube;
-                $container->setDefinition($queueManagerServiceId, $queueManagerDefinition);
 
                 $producerInstanceDefinition = new Definition();
                 $producerInstanceDefinition
                     ->setAutowired(true)
                     ->setClass(ProducerInstance::class)
-                    ->setArgument('$producer', new Reference($flowConfig->getProducerServiceId()))
-                    ->setArgument('$queueManager', new Reference($queueManagerServiceId))
+                    ->setArgument('$producer', $producerDefinition)
+                    ->setArgument('$queueManager', $queueManagerDefinition)
                 ;
 
                 $flowDefinition->setArgument('$producerInstance', $producerInstanceDefinition);
