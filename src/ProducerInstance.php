@@ -106,7 +106,7 @@ final class ProducerInstance implements ProducerInstanceInterface
                     /** @var Job $job */
                     $job = $jobs->getCurrent();
                     $job->addEvent(new ProducedJobEvent(new \DateTime(), \get_class($this->producer)));
-                    $jobsCount += yield $this->queueManager->enqueue($job);
+                    $jobsCount += yield from $this->queueManager->enqueue($job);
                     $this->logger->info(
                         'Successfully produced a new Job',
                         [
@@ -117,7 +117,7 @@ final class ProducerInstance implements ProducerInstanceInterface
                     );
                 }
 
-                $jobsCount += yield $this->queueManager->flush();
+                $jobsCount += yield from $this->queueManager->flush();
             } catch (\Throwable $error) {
                 $this->logger->error(
                     'An error occurred producing/queueing jobs.',
