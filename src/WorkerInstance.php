@@ -7,13 +7,16 @@ use Amp\Beanstalk\BeanstalkClient;
 use function Amp\delay;
 use Amp\Promise;
 use Psr\Log\LoggerInterface;
+use Webgriffe\Esb\Exception\ElasticSearch\JobNotFoundException;
 use Webgriffe\Esb\Model\ErroredJobEvent;
 use Webgriffe\Esb\Model\FlowConfig;
 use Webgriffe\Esb\Model\Job;
+use Webgriffe\Esb\Model\JobInterface;
 use Webgriffe\Esb\Model\ReservedJobEvent;
 use Webgriffe\Esb\Model\WorkedJobEvent;
 use Webgriffe\Esb\Service\ElasticSearch;
 use function Amp\call;
+use Webgriffe\Esb\Service\QueueManager;
 
 final class WorkerInstance implements WorkerInstanceInterface
 {
@@ -43,6 +46,11 @@ final class WorkerInstance implements WorkerInstanceInterface
     private $elasticSearch;
 
     /**
+     * @var QueueManager
+     */
+    private $queueManager;
+
+    /**
      * @var array
      */
     private static $workCounts = [];
@@ -53,7 +61,8 @@ final class WorkerInstance implements WorkerInstanceInterface
         WorkerInterface $worker,
         BeanstalkClient $beanstalkClient,
         LoggerInterface $logger,
-        ElasticSearch $elasticSearch
+        ElasticSearch $elasticSearch,
+        QueueManager $queueManager
     ) {
         $this->flowConfig = $flowConfig;
         $this->instanceId = $instanceId;
@@ -61,6 +70,7 @@ final class WorkerInstance implements WorkerInstanceInterface
         $this->beanstalkClient = $beanstalkClient;
         $this->logger = $logger;
         $this->elasticSearch = $elasticSearch;
+        $this->queueManager = $queueManager;
     }
 
     public function boot(): Promise
@@ -82,50 +92,54 @@ final class WorkerInstance implements WorkerInstanceInterface
 
             $lastProcessTimestamp = 0;
 
-            while ($rawJob = yield $this->beanstalkClient->reserve()) {
-                list($jobBeanstalkId, $jobUuid) = $rawJob;
-                $logContext = [
-                    'flow' => $this->flowConfig->getDescription(),
-                    'worker' => $workerFqcn,
-                    'instance_id' => $this->instanceId,
-                    'job_beanstalk_id' => $jobBeanstalkId,
-                    'job_uuid' => $jobUuid
-                ];
+            $globalLogContext = [
+                'flow' => $this->queueManager->getFlowDescription(),
+                'worker' => $workerFqcn,
+                'instance_id' => $this->instanceId,
+            ];
 
-                yield $this->waitForDependencies($lastProcessTimestamp, $logContext);
-
+            while (true) {
                 try {
-                    /** @var Job $job */
-                    $job = yield $this->elasticSearch->fetchJob($jobUuid, $this->flowConfig->getTube());
-                } catch (\Throwable $exception) {
-                    yield $this->beanstalkClient->bury($jobBeanstalkId);
-                    $this->logger->critical(
-                        'Cannot fetch job from ElasticSearch. Job has been buried.',
-                        array_merge($logContext, ['exception_message' => $exception->getMessage()])
-                    );
+                    /** @var JobInterface $job */
+                    $job = yield from $this->queueManager->getNextJob();
+                    if (!$job) {
+                        break;
+                    }
+                } catch (\Exception $ex) {
+                    $this->logger->critical($ex->getMessage(), $logContext);
+
+                    //@todo: is it correct to do this for every exception?
                     $lastProcessTimestamp = microtime(true);
                     continue;
                 }
+
+                $jobUuid = $job->getUuid();
+                $logContext = $globalLogContext;
+                $logContext['job_uuid'] = $jobUuid;
+
+                yield $this->waitForDependencies($lastProcessTimestamp, $logContext);
+
                 $job->addEvent(new ReservedJobEvent(new \DateTime(), $workerFqcn));
-                yield $this->elasticSearch->indexJob($job, $this->flowConfig->getTube());
+                yield $this->queueManager->updateJob($job);
                 $payloadData = $job->getPayloadData();
                 $logContext['payload_data'] = NonUtf8Cleaner::clean($payloadData);
 
                 $this->logger->info('Worker reserved a Job', $logContext);
 
                 try {
-                    if (!array_key_exists($jobBeanstalkId, self::$workCounts)) {
-                        self::$workCounts[$jobBeanstalkId] = 0;
+                    if (!array_key_exists($jobUuid, self::$workCounts)) {
+                        self::$workCounts[$jobUuid] = 0;
                     }
-                    ++self::$workCounts[$jobBeanstalkId];
+                    ++self::$workCounts[$jobUuid];
 
                     yield $this->worker->work($job);
+
                     $job->addEvent(new WorkedJobEvent(new \DateTime(), $workerFqcn));
-                    yield $this->elasticSearch->indexJob($job, $this->flowConfig->getTube());
+                    yield $this->queueManager->updateJob($job);
                     $this->logger->info('Successfully worked a Job', $logContext);
 
-                    yield $this->beanstalkClient->delete($jobBeanstalkId);
-                    unset(self::$workCounts[$jobBeanstalkId]);
+                    yield $this->queueManager->dequeue($job);
+                    unset(self::$workCounts[$jobUuid]);
                 } catch (\Throwable $e) {
                     $job->addEvent(new ErroredJobEvent(new \DateTime(), $workerFqcn, $e->getMessage()));
                     yield $this->elasticSearch->indexJob($job, $this->flowConfig->getTube());
@@ -133,12 +147,12 @@ final class WorkerInstance implements WorkerInstanceInterface
                         'An error occurred while working a Job.',
                         array_merge(
                             $logContext,
-                            ['work_count' => self::$workCounts[$jobBeanstalkId], 'error' => $e->getMessage()]
+                            ['work_count' => self::$workCounts[$jobUuid], 'error' => $e->getMessage()]
                         )
                     );
 
-                    if (self::$workCounts[$jobBeanstalkId] >= $this->flowConfig->getWorkerMaxRetry()) {
-                        yield $this->beanstalkClient->delete($jobBeanstalkId);
+                    if (self::$workCounts[$jobUuid] >= $this->flowConfig->getWorkerMaxRetry()) {
+                        yield $this->beanstalkClient->delete($jobUuid);
                         $this->logger->error(
                             'A Job reached maximum work retry limit and has been removed from queue.',
                             array_merge(
@@ -149,12 +163,12 @@ final class WorkerInstance implements WorkerInstanceInterface
                                 ]
                             )
                         );
-                        unset(self::$workCounts[$jobBeanstalkId]);
+                        unset(self::$workCounts[$jobUuid]);
                         $lastProcessTimestamp = microtime(true);
                         continue;
                     }
 
-                    yield $this->beanstalkClient->release($jobBeanstalkId, $this->flowConfig->getWorkerReleaseDelay());
+                    yield $this->beanstalkClient->release($jobUuid, $this->flowConfig->getWorkerReleaseDelay());
                     $this->logger->info(
                         'Worker released a Job',
                         array_merge($logContext, ['release_delay' => $this->flowConfig->getWorkerReleaseDelay()])

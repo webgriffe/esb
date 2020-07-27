@@ -8,6 +8,7 @@ use Amp\Promise;
 use Psr\Log\LoggerInterface;
 use Webgriffe\Esb\Exception\ElasticSearch\JobNotFoundException;
 use Webgriffe\Esb\Model\FlowConfig;
+use Webgriffe\Esb\Model\Job;
 use Webgriffe\Esb\Model\JobInterface;
 use function Amp\call;
 
@@ -17,14 +18,17 @@ class QueueManager
      * @var BeanstalkClient
      */
     private $beanstalkClient;
+
     /**
      * @var ElasticSearch
      */
     private $elasticSearch;
+
     /**
      * @var FlowConfig
      */
     private $flowConfig;
+
     /**
      * @var LoggerInterface
      */
@@ -84,7 +88,6 @@ class QueueManager
         return $this->flowConfig->getDescription();
     }
 
-
     /**
      * @return int
      */
@@ -96,6 +99,42 @@ class QueueManager
             $this->batch = [];
         }
         return $jobsCount;
+    }
+
+    /**
+     * @return JobInterface
+     */
+    public function getNextJob()
+    {
+        $rawJob = yield $this->beanstalkClient->reserve();
+        list($jobBeanstalkId, $jobUuid) = $rawJob;
+
+        try {
+            /** @var Job $job */
+            $job = yield $this->elasticSearch->fetchJob($jobUuid, $this->flowConfig->getTube());
+        } catch (\Throwable $exception) {
+            yield $this->beanstalkClient->bury($jobBeanstalkId);
+
+            throw new JobNotFoundException(
+                sprintf('Cannot fetch job %s from ElasticSearch. Job has been buried.', $jobUuid),
+                0,
+                $exception
+            );
+        }
+
+        return $job;
+    }
+
+    public function updateJob(JobInterface $job)
+    {
+        yield $this->elasticSearch->indexJob($job, $this->flowConfig->getTube());
+    }
+
+    public function dequeue(JobInterface $job)
+    {
+        $jobBeanstalkId = $job->getPayloadData()[''];
+
+        yield $this->beanstalkClient->delete($jobBeanstalkId);
     }
 
     private function jobExists(string $jobUuid): Promise
