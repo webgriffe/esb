@@ -108,7 +108,7 @@ final class ProducerInstance implements ProducerInstanceInterface
 
     /**
      * @param mixed $data
-     * @return Promise
+     * @return Promise<null>
      */
     public function produceAndQueueJobs($data = null): Promise
     {
@@ -169,6 +169,10 @@ final class ProducerInstance implements ProducerInstanceInterface
         return $this->producer;
     }
 
+    /**
+     * @param string $jobUuid
+     * @return Promise<bool>
+     */
     private function jobExists(string $jobUuid): Promise
     {
         return call(function () use ($jobUuid) {
