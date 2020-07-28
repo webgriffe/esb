@@ -32,7 +32,7 @@ class CleanOldJobs implements CrontabProducerInterface
     public function produce($data = null): Iterator
     {
         return new Producer(
-            function (callable $emit) {
+            function (callable $emit): \Generator {
                 yield $emit(new Job([]));
             }
         );

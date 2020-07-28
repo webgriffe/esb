@@ -10,6 +10,10 @@ use Monolog\Utils;
  */
 class NonUtf8Cleaner
 {
+    /**
+     * @param array<string, mixed> $data
+     * @return array<string, mixed>
+     */
     public static function clean(array $data): array
     {
         array_walk_recursive($data, [Utils::class, 'detectAndCleanUtf8']);

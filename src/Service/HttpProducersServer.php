@@ -37,7 +37,7 @@ class HttpProducersServer
      */
     private $producerInstances = [];
     /**
-     * @var Server
+     * @var Server|null
      */
     private $httpServer;
 
@@ -48,7 +48,7 @@ class HttpProducersServer
     }
 
     /**
-     * @return Promise
+     * @return Promise<null>
      */
     public function start(): Promise
     {
@@ -80,7 +80,7 @@ class HttpProducersServer
         return ($state === Server::STARTING || $state === Server::STARTED);
     }
 
-    public function addProducerInstance(ProducerInstance $producerInstance)
+    public function addProducerInstance(ProducerInstance $producerInstance): void
     {
         $this->producerInstances[] = $producerInstance;
     }
@@ -88,7 +88,7 @@ class HttpProducersServer
     /** @noinspection PhpUnusedPrivateMethodInspection */
     /**
      * @param Request $request
-     * @return Response
+     * @return \Generator<Promise>
      */
     private function requestHandler(Request $request)
     {

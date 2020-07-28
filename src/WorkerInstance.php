@@ -43,7 +43,7 @@ final class WorkerInstance implements WorkerInstanceInterface
     private $elasticSearch;
 
     /**
-     * @var array
+     * @var array<int>
      */
     private static $workCounts = [];
 
@@ -176,7 +176,8 @@ final class WorkerInstance implements WorkerInstanceInterface
 
     /**
      * @param float $lastProcessTimestamp
-     * @return Promise
+     * @param array<string, mixed> $logContext
+     * @return Promise<void>
      */
     private function waitForDependencies(float $lastProcessTimestamp, array $logContext): Promise
     {

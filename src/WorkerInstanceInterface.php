@@ -8,7 +8,7 @@ use Amp\Promise;
 interface WorkerInstanceInterface
 {
     /**
-     * @return Promise
+     * @return Promise<void>
      */
     public function boot(): Promise;
 

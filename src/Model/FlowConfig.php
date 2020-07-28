@@ -13,10 +13,14 @@ class FlowConfig
      */
     private $tube;
     /**
-     * @var array
+     * @var array<string, mixed>
      */
     private $config;
 
+    /**
+     * @param string $tube
+     * @param array<string, mixed> $config
+     */
     public function __construct(string $tube, array $config)
     {
         $this->tube = $tube;
@@ -61,6 +65,9 @@ class FlowConfig
         return $this->config['worker']['max_retry'];
     }
 
+    /**
+     * @return array<string>
+     */
     public function getDependsOn(): array
     {
         return $this->config['dependencies']['flows'];

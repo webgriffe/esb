@@ -9,13 +9,13 @@ use Webgriffe\Esb\Model\JobInterface;
 interface WorkerInterface
 {
     /**
-     * @return Promise
+     * @return Promise<null>
      */
     public function init(): Promise;
 
     /**
      * @param JobInterface $job
-     * @return Promise
+     * @return Promise<null>
      */
     public function work(JobInterface $job): Promise;
 }

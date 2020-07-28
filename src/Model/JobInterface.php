@@ -11,7 +11,7 @@ interface JobInterface
     public function getUuid(): string;
 
     /**
-     * @return array
+     * @return array<string, mixed>
      */
     public function getPayloadData(): array;
 
