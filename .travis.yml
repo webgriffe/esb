@@ -38,4 +38,4 @@ after_failure:
   - sudo bash ./upload-textfiles "/var/log/elasticsearch/*.log"
 
 after_success:
-  - docker run --rm -v $(pwd):/app nyholm/roave-bc-check roave-backwards-compatibility-check:assert-backwards-compatible --from=$(git describe --tags $(git rev-list --tags --max-count=1))
+  - docker run --rm -v $(pwd):/app nyholm/roave-bc-check roave-backwards-compatibility-check:assert-backwards-compatible --from=$(git tag | sort -V | tail -1)
