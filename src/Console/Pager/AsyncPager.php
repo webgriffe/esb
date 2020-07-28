@@ -10,14 +10,14 @@ use Pagerfanta\Exception\LessThan1MaxPerPageException;
 use Pagerfanta\Exception\NotValidCurrentPageException;
 use Pagerfanta\Exception\NotValidMaxPerPageException;
 use Pagerfanta\Exception\OutOfRangeCurrentPageException;
-use Pagerfanta\Pagerfanta;
+use Pagerfanta\PagerfantaInterface;
 use Webmozart\Assert\Assert;
 use function Amp\call;
 
 /**
  * @internal
  */
-class AsyncPager extends Pagerfanta
+class AsyncPager implements PagerfantaInterface
 {
     /**
      * @var AsyncPagerAdapterInterface

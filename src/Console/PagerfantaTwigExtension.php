@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Webgriffe\Esb\Console;
 
-use Pagerfanta\Pagerfanta;
+use Pagerfanta\PagerfantaInterface;
 use Pagerfanta\View\ViewInterface;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
@@ -29,7 +29,7 @@ final class PagerfantaTwigExtension extends AbstractExtension
     }
 
     public function renderPagerfanta(
-        Pagerfanta $pagerfanta,
+        PagerfantaInterface $pagerfanta,
         string $route,
         array $options = []
     ): string {
