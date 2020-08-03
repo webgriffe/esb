@@ -10,12 +10,14 @@ use Amp\Http\Server\RequestHandler\CallableRequestHandler;
 use Amp\Http\Server\Response;
 use Amp\Http\Status;
 use Amp\Loop;
+use Amp\Promise;
 use Amp\Socket;
 use FastRoute\Dispatcher;
 use FastRoute\RouteCollector;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerAwareInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Webmozart\Assert\Assert;
 
 /**
  * @internal
@@ -29,7 +31,7 @@ class Server implements ContainerAwareInterface
      */
     private $publicDir;
     /**
-     * @var array
+     * @var array<string, string>
      */
     private $config;
     /**
@@ -37,10 +39,15 @@ class Server implements ContainerAwareInterface
      */
     private $logger;
     /**
-     * @var ContainerInterface
+     * @var ContainerInterface|null
      */
     private $container;
 
+    /**
+     * @param string $publicDir
+     * @param array<string, string> $config
+     * @param LoggerInterface $logger
+     */
     public function __construct(string $publicDir, array $config, LoggerInterface $logger)
     {
         $this->publicDir = $publicDir;
@@ -48,7 +55,7 @@ class Server implements ContainerAwareInterface
         $this->logger = $logger;
     }
 
-    public function boot()
+    public function boot(): void
     {
         Loop::defer(function () {
             $port = $this->config['port'];
@@ -70,7 +77,7 @@ class Server implements ContainerAwareInterface
     /**
      * @inheritDoc
      */
-    public function setContainer(ContainerInterface $container = null)
+    public function setContainer(ContainerInterface $container = null): void
     {
         $this->container = $container;
     }
@@ -78,7 +85,7 @@ class Server implements ContainerAwareInterface
     /** @noinspection PhpUnusedPrivateMethodInspection */
     /**
      * @param Request $request
-     * @return \Generator
+     * @return \Generator<Promise>
      */
     private function requestHandler(Request $request): \Generator
     {
@@ -130,6 +137,9 @@ class Server implements ContainerAwareInterface
     {
         return \FastRoute\simpleDispatcher(
             function (RouteCollector $r) use ($request) {
+                if (null === $this->container) {
+                    throw new \RuntimeException('Container must be set on HTTP Server service.');
+                }
                 $this->container->set('console.controller.request', $request);
                 $r->addRoute('GET', '/', $this->container->get('console.controller.index'));
                 $r->addRoute('GET', '/flow/{flow}', $this->container->get('console.controller.flow'));

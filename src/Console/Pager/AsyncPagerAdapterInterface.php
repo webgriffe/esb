@@ -11,7 +11,7 @@ interface AsyncPagerAdapterInterface
     /**
      * Returns the number of results.
      *
-     * @return Promise which resolve integer The number of results.
+     * @return Promise<int> which resolve integer The number of results.
      */
     public function getNbResults(): Promise;
 
@@ -21,7 +21,7 @@ interface AsyncPagerAdapterInterface
      * @param int $offset The offset.
      * @param int $length The length.
      *
-     * @return Promise which resolve array|\Traversable The slice.
+     * @return Promise<iterable<mixed>>
      */
     public function getSlice(int $offset, int $length): Promise;
 }

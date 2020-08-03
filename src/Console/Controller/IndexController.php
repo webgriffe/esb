@@ -16,7 +16,7 @@ use Webgriffe\AmpElasticsearch\Error as AmpElasticsearchError;
 class IndexController extends AbstractController
 {
     /**
-     * @return Promise
+     * @return Promise<Response>
      */
     public function __invoke(Request $request): Promise
     {
@@ -39,6 +39,9 @@ class IndexController extends AbstractController
         });
     }
 
+    /**
+     * @return Promise<int>
+     */
     private function getTotalJobs(string $flowCode): Promise
     {
         return call(function () use ($flowCode) {
@@ -54,6 +57,9 @@ class IndexController extends AbstractController
         });
     }
 
+    /**
+     * @return Promise<int>
+     */
     private function getErroredJobs(string $flowCode): Promise
     {
         return call(function () use ($flowCode) {
@@ -73,6 +79,9 @@ class IndexController extends AbstractController
         });
     }
 
+    /**
+     * @return Promise<int>
+     */
     private function getWorkedJobs(string $flowCode): Promise
     {
         return call(function () use ($flowCode) {

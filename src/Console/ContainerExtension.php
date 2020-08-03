@@ -19,7 +19,7 @@ final class ContainerExtension implements ExtensionInterface, PrependExtensionIn
      * @inheritDoc
      * @throws \Exception
      */
-    public function prepend(ContainerBuilder $container)
+    public function prepend(ContainerBuilder $container): void
     {
         $loader = new YamlFileLoader($container, new FileLocator(self::getConfigDir()));
         $loader->load('services.yml');
@@ -27,15 +27,15 @@ final class ContainerExtension implements ExtensionInterface, PrependExtensionIn
     }
 
     /**
-     * @inheritDoc
-     * @throws \Exception
+     * @param array<int, array> $configs
+     * @param ContainerBuilder $container
      */
-    public function load(array $configs, ContainerBuilder $container)
+    public function load(array $configs, ContainerBuilder $container): void
     {
     }
 
     /**
-     * @inheritDoc
+     * @return false|string
      */
     public function getNamespace()
     {
@@ -61,7 +61,7 @@ final class ContainerExtension implements ExtensionInterface, PrependExtensionIn
     /**
      * @inheritDoc
      */
-    public function process(ContainerBuilder $container)
+    public function process(ContainerBuilder $container): void
     {
         $container->setParameter('console.root_dir', self::getRootDir());
         $container->setParameter('console.public_dir', self::getPublicDir());

@@ -28,7 +28,7 @@ final class AmpElasticsearchUriSearchAdapter implements AsyncPagerAdapterInterfa
     private $query;
 
     /**
-     * @var array
+     * @var array<string, string|int>
      */
     private $options;
 
@@ -43,7 +43,7 @@ final class AmpElasticsearchUriSearchAdapter implements AsyncPagerAdapterInterfa
      * @param Client $client
      * @param string $index
      * @param string $query
-     * @param array $options
+     * @param array<string, string|int> $options
      */
     public function __construct(Client $client, string $index, string $query, array $options = [])
     {
