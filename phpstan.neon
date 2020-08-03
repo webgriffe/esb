@@ -1,8 +1,6 @@
 parameters:
 	ignoreErrors:
 		- '/Parameter #2 \$headers of class Amp\\Http\\Server\\Response constructor expects array<array<string>>, array<string, string> given\./'
-		- '/Method Webgriffe\\Esb\\FlowExtension::getNamespace\(\) should return string but returns false\./'
-		- '/Method Webgriffe\\Esb\\FlowExtension::getXsdValidationBasePath\(\) should return string but returns false\./'
 		- '/Call to an undefined method Symfony\\Component\\Config\\Definition\\Builder\\NodeDefinition::useAttributeAsKey\(\)\./'
 		- '/Unable to resolve the template type .*? in call to function Amp\\call/'
 		- '/Unable to resolve the template type .*? in instantiation of class Amp\\Producer/'

@@ -16,17 +16,17 @@ use Webgriffe\Esb\Model\FlowConfig;
 final class FlowExtension implements ExtensionInterface, CompilerPassInterface
 {
     /**
-     * @var array
+     * @var array<string, array>
      */
     private $flowsConfig = [];
 
     /**
      * Loads a specific configuration.
      *
-     * @param array $configs
+     * @param array<int, array> $configs
      * @param ContainerBuilder $container
      */
-    public function load(array $configs, ContainerBuilder $container)
+    public function load(array $configs, ContainerBuilder $container): void
     {
         $configuration = new FlowConfiguration();
         $processor = new Processor();
@@ -34,9 +34,7 @@ final class FlowExtension implements ExtensionInterface, CompilerPassInterface
     }
 
     /**
-     * Returns the namespace to be used for this extension (XML namespace).
-     *
-     * @return string The XML namespace
+     * @return string|false
      */
     public function getNamespace()
     {
@@ -44,9 +42,7 @@ final class FlowExtension implements ExtensionInterface, CompilerPassInterface
     }
 
     /**
-     * Returns the base path for the XSD files.
-     *
-     * @return string The XSD base path
+     * {@inheritDoc}
      */
     public function getXsdValidationBasePath()
     {
@@ -54,21 +50,17 @@ final class FlowExtension implements ExtensionInterface, CompilerPassInterface
     }
 
     /**
-     * Returns the recommended alias to use in XML.
-     *
-     * This alias is also the mandatory prefix to use when using YAML.
-     *
-     * @return string The alias
+     * {@inheritDoc}
      */
-    public function getAlias()
+    public function getAlias(): string
     {
         return 'flows';
     }
 
     /**
-     * You can modify the container here before it is dumped to PHP code.
+     * {@inheritDoc}
      */
-    public function process(ContainerBuilder $container)
+    public function process(ContainerBuilder $container): void
     {
         $definition = $container->findDefinition(FlowManager::class);
         foreach ($this->flowsConfig as $flowTube => $flowConfigData) {

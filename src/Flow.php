@@ -29,6 +29,12 @@ class Flow
      */
     private $logger;
 
+    /**
+     * @param FlowConfig $flowConfig
+     * @param ProducerInstance $producerInstance
+     * @param array<WorkerInstanceInterface> $workerInstances
+     * @param LoggerInterface $logger
+     */
     public function __construct(
         FlowConfig $flowConfig,
         ProducerInstance $producerInstance,
@@ -41,7 +47,7 @@ class Flow
         $this->logger = $logger;
     }
 
-    public function boot()
+    public function boot(): void
     {
         $this->logger->info(
             'Booting flow',

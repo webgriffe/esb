@@ -16,6 +16,9 @@ use function Amp\call;
  */
 class FlowController extends AbstractController
 {
+    /**
+     * @return Promise<Response>
+     */
     public function __invoke(Request $request, string $flowCode): Promise
     {
         return call(function () use ($request, $flowCode) {

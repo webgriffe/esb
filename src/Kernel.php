@@ -23,7 +23,7 @@ class Kernel
      */
     private $container;
     /**
-     * @var string
+     * @var string|null
      */
     private $environment;
     /**
@@ -54,7 +54,7 @@ class Kernel
     /**
      * @throws \Exception
      */
-    public function boot()
+    public function boot(): void
     {
         Loop::setErrorHandler([$this, 'errorHandler']);
         /** @var FlowManager $flowManager */
@@ -79,7 +79,7 @@ class Kernel
      * @param \Throwable $exception
      * @throws \Throwable
      */
-    public function errorHandler(\Throwable $exception)
+    public function errorHandler(\Throwable $exception): void
     {
         /** @var LoggerInterface $logger */
         $logger = $this->getContainer()->get(LoggerInterface::class);
@@ -97,9 +97,9 @@ class Kernel
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getEnvironment(): string
+    public function getEnvironment(): ?string
     {
         return $this->environment;
     }
@@ -107,7 +107,7 @@ class Kernel
     /**
      * @throws \Exception
      */
-    public function sigintHandler()
+    public function sigintHandler(): void
     {
         /** @var LoggerInterface $logger */
         $logger = $this->getContainer()->get(LoggerInterface::class);
@@ -115,7 +115,7 @@ class Kernel
         $this->shutdown();
     }
 
-    public function shutdown()
+    public function shutdown(): void
     {
         Loop::stop(); // TODO it should be a more gracefully shutdown...
     }
@@ -124,7 +124,7 @@ class Kernel
      * @param YamlFileLoader $loader
      * @throws \Exception
      */
-    private function loadSystemConfiguration(YamlFileLoader $loader)
+    private function loadSystemConfiguration(YamlFileLoader $loader): void
     {
         if (!$this->environment) {
             $loader->load('services.yml');
@@ -142,7 +142,7 @@ class Kernel
      * @param YamlFileLoader $loader
      * @throws \Exception
      */
-    private function loadLocalConfiguration(YamlFileLoader $loader)
+    private function loadLocalConfiguration(YamlFileLoader $loader): void
     {
         if (!$this->environment) {
             $loader->load($this->localConfigFilePath);
