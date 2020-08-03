@@ -20,10 +20,37 @@
     </form>
 
     {% if pager.getCurrentPageResults|length > 0 %}
+        <form>
+        <div class="navbar navbar-expand-lg navbar-light bg-light sticky-top">
+            <ul class="navbar-nav">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
+                       data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Select
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <a class="dropdown-item" href="#" onclick="selectAll(this); return false;">Toggle All</a>
+                        <a class="dropdown-item" href="#" onclick="selectVisible(this); return false;">Toggle Visible</a>
+                    </div>
+                </li>
+            </ul>
+            <span class="navbar-text">
+                <span id="selected-count">0</span> selected
+            </span>
+            <div class="form-inline">
+                <input type="hidden" name="select-all" value="" />
+                <button type="submit" name="job-select-action" value="requeue" class="btn btn-secondary" disabled="disabled">
+                    <span class="oi oi-action-redo"></span>
+                    Requeue
+                </button>
+            </div>
+        </div>
+
         <div class="table-responsive">
             <table class="table table-striped">
                 <thead>
                 <tr>
+                    <th scope="col"></th>
                     <th scope="col">Job ID</th>
                     <th scope="col">Job Payload</th>
                     <th scope="col">Job Last Event</th>
@@ -33,6 +60,12 @@
                 <tbody>
                 {% for job in pager.getCurrentPageResults %}
                     <tr>
+                        <td>
+                            <div class="form-check">
+                                <input class="form-check-input position-static job-select-control" type="checkbox"
+                                       name="selected[]" value="{{ job.uuid }}" aria-label="...">
+                            </div>
+                        </td>
                         <th scope="row">{{ job.uuid }}</th>
                         {% set payload = job.payloadData|json_encode() %}
                         <td><pre>{{ payload|length > 70 ? payload|slice(0, 70) ~ '...' : payload }}</pre></td>
@@ -56,10 +89,59 @@
                 </tbody>
             </table>
         </div>
+        </form>
     {% endif %}
 
     <div class="d-flex justify-content-center">
         {{ pagerfanta(pager, '/flow/'~ flowCode ~'?page={page}') }}
     </div>
+
+    <script type="text/javascript">
+        var allCount = 10000;
+
+        document.onreadystatechange = function () {
+            if (document.readyState === "complete") {
+                $('.job-select-control').on('change', updateSelectionState);
+            }
+        }
+
+        function updateSelectionState() {
+            var selected = $('.job-select-control:checked').length;
+            $('#selected-count').text(selected);
+            if ($('input[name="select-all"]').val()) {
+                $('#selected-count').text(allCount);
+            }
+            $('button[name="job-select-action"]').attr('disabled', true);
+            if (selected) {
+                $('button[name="job-select-action"]').removeAttr('disabled');
+            }
+        }
+
+        function selectVisible(control) {
+            $('.job-select-control').attr('checked', 'checked');
+            $(control).attr('onclick', 'unselectVisible(this); return false;');
+            updateSelectionState();
+        }
+
+        function unselectVisible(control) {
+            $('.job-select-control').removeAttr('checked');
+            $(control).attr('onclick', 'selectVisible(this); return false;');
+            updateSelectionState();
+        }
+
+        function selectAll(control) {
+            $('.job-select-control').attr('checked', 'checked');
+            $(control).attr('onclick', 'unselectAll(this); return false;');
+            $('input[name="select-all"]').val('1');
+            updateSelectionState();
+        }
+
+        function unselectAll(control) {
+            $('.job-select-control').removeAttr('checked');
+            $(control).attr('onclick', 'selectAll(this); return false;');
+            $('input[name="select-all"]').val('');
+            updateSelectionState();
+        }
+    </script>
 
 {% endblock %}
