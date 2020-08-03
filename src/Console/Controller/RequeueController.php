@@ -16,6 +16,9 @@ use Webgriffe\Esb\NonUtf8Cleaner;
 use Webgriffe\Esb\Service\ElasticSearch;
 use function Amp\call;
 
+/**
+ * @internal
+ */
 class RequeueController extends AbstractController
 {
     /**
