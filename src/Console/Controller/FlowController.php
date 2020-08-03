@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Webgriffe\Esb\Console\Controller;
@@ -16,6 +17,9 @@ use function Amp\call;
  */
 class FlowController extends AbstractController
 {
+    /**
+     * @return Promise<Response>
+     */
     public function __invoke(Request $request, string $flowCode): Promise
     {
         return call(function () use ($request, $flowCode) {

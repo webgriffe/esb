@@ -1,14 +1,15 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Webgriffe\Esb\Console\Controller;
 
 use Amp\Http\Server\Request;
-use function Amp\call;
 use Amp\Http\Server\Response;
 use Amp\Http\Status;
 use Amp\Promise;
 use Webgriffe\AmpElasticsearch\Error as AmpElasticsearchError;
+use function Amp\call;
 
 /**
  * @internal
@@ -16,7 +17,7 @@ use Webgriffe\AmpElasticsearch\Error as AmpElasticsearchError;
 class IndexController extends AbstractController
 {
     /**
-     * @return Promise
+     * @return Promise<Response>
      */
     public function __invoke(Request $request): Promise
     {
@@ -39,6 +40,9 @@ class IndexController extends AbstractController
         });
     }
 
+    /**
+     * @return Promise<int>
+     */
     private function getTotalJobs(string $flowCode): Promise
     {
         return call(function () use ($flowCode) {
@@ -54,6 +58,9 @@ class IndexController extends AbstractController
         });
     }
 
+    /**
+     * @return Promise<int>
+     */
     private function getErroredJobs(string $flowCode): Promise
     {
         return call(function () use ($flowCode) {
@@ -73,6 +80,9 @@ class IndexController extends AbstractController
         });
     }
 
+    /**
+     * @return Promise<int>
+     */
     private function getWorkedJobs(string $flowCode): Promise
     {
         return call(function () use ($flowCode) {
@@ -95,11 +105,11 @@ class IndexController extends AbstractController
     private function isIndexNotFoundException(AmpElasticsearchError $e): bool
     {
         $exceptionData = $e->getData();
-        return (
+        return
             $exceptionData &&
             isset($exceptionData['error']) &&
             isset($exceptionData['error']['type']) &&
             $exceptionData['error']['type'] === 'index_not_found_exception'
-        );
+        ;
     }
 }

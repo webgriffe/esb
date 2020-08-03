@@ -26,7 +26,7 @@ final class ReservedJobEvent implements JobEventInterface
         return $this->time;
     }
 
-    public function getWorkerFqcn()
+    public function getWorkerFqcn(): string
     {
         return $this->workerFqcn;
     }

@@ -2,7 +2,6 @@ sudo: required
 
 language: php
 php:
-  - 7.1
   - 7.2
   - 7.3
 
@@ -32,11 +31,11 @@ install:
 before_script:
   - composer install
   - composer global require maglnet/composer-require-checker && $HOME/.composer/vendor/bin/composer-require-checker --config-file=composer-require-checker.json;
-  - vendor/bin/phpcs
-  - vendor/bin/phpstan analyse --no-progress -l 6 -c phpstan.neon src tests
+  - vendor/bin/ecs check
+  - vendor/bin/phpstan analyse --no-progress -l max -c phpstan.neon src/
 
 after_failure:
   - sudo bash ./upload-textfiles "/var/log/elasticsearch/*.log"
 
 after_success:
-  - docker run --rm -v $(pwd):/app nyholm/roave-bc-check roave-backwards-compatibility-check:assert-backwards-compatible --from=$(git describe --tags $(git rev-list --tags --max-count=1))
+  - docker run --rm -v $(pwd):/app nyholm/roave-bc-check roave-backwards-compatibility-check:assert-backwards-compatible --from=$(git tag | sort -V | tail -1)

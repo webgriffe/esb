@@ -7,6 +7,7 @@ namespace Webgriffe\Esb\Console\Controller;
 use Amp\Beanstalk\BeanstalkClient;
 use Amp\Http\Server\Request;
 use Amp\Http\Server\Response;
+use Amp\Promise;
 use Psr\Log\LoggerInterface;
 use Twig\Environment;
 use Webgriffe\Esb\FlowManager;
@@ -15,6 +16,9 @@ use Webgriffe\Esb\NonUtf8Cleaner;
 use Webgriffe\Esb\Service\ElasticSearch;
 use function Amp\call;
 
+/**
+ * @internal
+ */
 class RequeueController extends AbstractController
 {
     /**
@@ -39,7 +43,10 @@ class RequeueController extends AbstractController
         $this->beanstalkClient = $beanstalkClient;
     }
 
-    public function __invoke(Request $request, string $flow, string $jobId)
+    /**
+     * @return Promise<Response>
+     */
+    public function __invoke(Request $request, string $flow, string $jobId): Promise
     {
         return call(function () use ($jobId, $flow) {
             $job = yield $this->getElasticsearch()->fetchJob($jobId, $flow);

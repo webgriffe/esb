@@ -19,12 +19,18 @@ services:
   console.twig.class_extension:
     class: \Webgriffe\Esb\Console\ClassTwigExtension
 
+  console.twig.pagerfanta_extension:
+    class: \Webgriffe\Esb\Console\PagerfantaTwigExtension
+    arguments:
+      - '@console.pagerfanta.view.bootstrap4'
+
   console.twig:
     class: \Twig\Environment
     arguments:
       - '@console.twig.loader'
     calls:
       - ['addExtension', ['@console.twig.class_extension']]
+      - ['addExtension', ['@console.twig.pagerfanta_extension']]
 
   console.server:
     class: \Webgriffe\Esb\Console\Server
@@ -37,3 +43,6 @@ services:
     calls:
       - [ setContainer, [ '@service_container' ]]
     public: true
+
+  console.pagerfanta.view.bootstrap4:
+    class: \Pagerfanta\View\TwitterBootstrap4View

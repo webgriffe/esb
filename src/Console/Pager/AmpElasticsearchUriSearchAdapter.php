@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Webgriffe\Esb\Console\Pager;
 
 use Amp\Promise;
@@ -26,7 +28,7 @@ final class AmpElasticsearchUriSearchAdapter implements AsyncPagerAdapterInterfa
     private $query;
 
     /**
-     * @var array
+     * @var array<string, string|int>
      */
     private $options;
 
@@ -41,7 +43,7 @@ final class AmpElasticsearchUriSearchAdapter implements AsyncPagerAdapterInterfa
      * @param Client $client
      * @param string $index
      * @param string $query
-     * @param array $options
+     * @param array<string, string|int> $options
      */
     public function __construct(Client $client, string $index, string $query, array $options = [])
     {
@@ -103,11 +105,11 @@ final class AmpElasticsearchUriSearchAdapter implements AsyncPagerAdapterInterfa
     private function isIndexNotFoundException(AmpElasticsearchError $e): bool
     {
         $exceptionData = $e->getData();
-        return (
+        return
             $exceptionData &&
             isset($exceptionData['error']) &&
             isset($exceptionData['error']['type']) &&
             $exceptionData['error']['type'] === 'index_not_found_exception'
-        );
+        ;
     }
 }

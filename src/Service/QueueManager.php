@@ -60,6 +60,9 @@ class QueueManager implements ProducerQueueManagerInterface, WorkerQueueManagerI
         $this->logger = $logger;
     }
 
+    /**
+     * @return {@inheritdoc}
+     */
     public function boot(): Promise
     {
         return call(function () {
@@ -73,8 +76,7 @@ class QueueManager implements ProducerQueueManagerInterface, WorkerQueueManagerI
     }
 
     /**
-     * @param JobInterface $job
-     * @return Promise
+     * @return {@inheritdoc}
      */
     public function enqueue(JobInterface $job): Promise
     {
@@ -101,7 +103,7 @@ class QueueManager implements ProducerQueueManagerInterface, WorkerQueueManagerI
     }
 
     /**
-     * @return Promise
+     * @return {@inheritdoc}
      */
     public function flush(): Promise
     {
@@ -115,7 +117,7 @@ class QueueManager implements ProducerQueueManagerInterface, WorkerQueueManagerI
     }
 
     /**
-     * @return Promise
+     * @return {@inheritdoc}
      */
     public function getNextJob(): Promise
     {
@@ -147,6 +149,9 @@ class QueueManager implements ProducerQueueManagerInterface, WorkerQueueManagerI
         });
     }
 
+    /**
+     * @return {@inheritdoc}
+     */
     public function updateJob(JobInterface $job): Promise
     {
         return call(function () use ($job) {
@@ -154,6 +159,9 @@ class QueueManager implements ProducerQueueManagerInterface, WorkerQueueManagerI
         });
     }
 
+    /**
+     * @return {@inheritdoc}
+     */
     public function requeue(JobInterface $job, int $delay = 0): Promise
     {
         return call(function () use ($job, $delay) {
@@ -163,6 +171,9 @@ class QueueManager implements ProducerQueueManagerInterface, WorkerQueueManagerI
         });
     }
 
+    /**
+     * @return {@inheritdoc}
+     */
     public function dequeue(JobInterface $job): Promise
     {
         return call(function () use ($job) {
@@ -173,8 +184,7 @@ class QueueManager implements ProducerQueueManagerInterface, WorkerQueueManagerI
     }
 
     /**
-     * @param string $queueName
-     * @return Promise
+     * @return {@inheritdoc}
      */
     public function isEmpty(string $queueName): Promise
     {

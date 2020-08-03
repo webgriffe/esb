@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Webgriffe\Esb;
@@ -105,7 +106,7 @@ final class ProducerInstance implements ProducerInstanceInterface
 
     /**
      * @param mixed $data
-     * @return Promise
+     * @return Promise<null>
      */
     public function produceAndQueueJobs($data = null): Promise
     {

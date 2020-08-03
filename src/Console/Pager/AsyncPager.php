@@ -5,12 +5,19 @@ declare(strict_types=1);
 namespace Webgriffe\Esb\Console\Pager;
 
 use Amp\Promise;
+use Pagerfanta\Exception\LessThan1CurrentPageException;
+use Pagerfanta\Exception\LessThan1MaxPerPageException;
+use Pagerfanta\Exception\NotValidCurrentPageException;
+use Pagerfanta\Exception\NotValidMaxPerPageException;
+use Pagerfanta\Exception\OutOfRangeCurrentPageException;
+use Pagerfanta\PagerfantaInterface;
+use Webmozart\Assert\Assert;
 use function Amp\call;
 
 /**
  * @internal
  */
-class AsyncPager
+class AsyncPager implements PagerfantaInterface
 {
     /**
      * @var AsyncPagerAdapterInterface
@@ -21,7 +28,7 @@ class AsyncPager
      */
     private $nbResults;
     /**
-     * @var array|\Traversable
+     * @var iterable<mixed>|null
      */
     private $slice;
     /**
@@ -41,10 +48,14 @@ class AsyncPager
      */
     private $currentPage;
     /**
-     * @var array|\Traversable|null
+     * @var iterable<mixed>|null
      */
     private $currentPageResults;
 
+    /**
+     * @noinspection MagicMethodsValidityInspection
+     * @noinspection PhpMissingParentConstructorInspection
+     */
     public function __construct(AsyncPagerAdapterInterface $adapter, int $maxPerPage = 10, int $currentPage = 1)
     {
         $this->adapter = $adapter;
@@ -54,6 +65,9 @@ class AsyncPager
         $this->currentPage = $currentPage;
     }
 
+    /**
+     * @return Promise<void>
+     */
     public function init(): Promise
     {
         return call(function () {
@@ -93,7 +107,7 @@ class AsyncPager
      *
      * @return boolean
      */
-    public function getAllowOutOfRangePages()
+    public function getAllowOutOfRangePages(): bool
     {
         return $this->allowOutOfRangePages;
     }
@@ -122,11 +136,13 @@ class AsyncPager
         return $this->normalizeOutOfRangePages;
     }
 
-    private function filterBoolean($value)
+    /**
+     * @param mixed $value
+     * @return bool
+     */
+    private function filterBoolean($value): bool
     {
-        if (!is_bool($value)) {
-            throw new NotBooleanException();
-        }
+        Assert::boolean($value);
 
         return $value;
     }
@@ -140,7 +156,7 @@ class AsyncPager
      *
      * @return self
      *
-     * @throws NotIntegerMaxPerPageException If the max per page is not an integer even converting.
+     * @throws NotValidMaxPerPageException If the max per page is not an integer even converting.
      * @throws LessThan1MaxPerPageException  If the max per page is less than 1.
      */
     public function setMaxPerPage($maxPerPage)
@@ -151,7 +167,11 @@ class AsyncPager
         return $this;
     }
 
-    private function filterMaxPerPage($maxPerPage)
+    /**
+     * @param mixed $maxPerPage
+     * @return int
+     */
+    private function filterMaxPerPage($maxPerPage): int
     {
         $maxPerPage = $this->toInteger($maxPerPage);
         $this->checkMaxPerPage($maxPerPage);
@@ -159,10 +179,13 @@ class AsyncPager
         return $maxPerPage;
     }
 
-    private function checkMaxPerPage($maxPerPage)
+    /**
+     * @param mixed $maxPerPage
+     */
+    private function checkMaxPerPage($maxPerPage): void
     {
         if (!is_int($maxPerPage)) {
-            throw new NotIntegerMaxPerPageException();
+            throw new NotValidMaxPerPageException();
         }
 
         if ($maxPerPage < 1) {
@@ -170,7 +193,7 @@ class AsyncPager
         }
     }
 
-    private function resetForMaxPerPageChange()
+    private function resetForMaxPerPageChange(): void
     {
         $this->currentPageResults = null;
         $this->nbResults = null;
@@ -195,7 +218,7 @@ class AsyncPager
      *
      * @return self
      *
-     * @throws NotIntegerCurrentPageException If the current page is not an integer even converting.
+     * @throws NotValidCurrentPageException If the current page is not an integer even converting.
      * @throws LessThan1CurrentPageException  If the current page is less than 1.
      * @throws OutOfRangeCurrentPageException If It is not allowed out of range pages and they are not normalized.
      */
@@ -209,13 +232,19 @@ class AsyncPager
         return $this;
     }
 
-    private function useDeprecatedCurrentPageBooleanArguments($arguments)
+    /**
+     * @param array<bool> $arguments
+     */
+    private function useDeprecatedCurrentPageBooleanArguments($arguments): void
     {
         $this->useDeprecatedCurrentPageAllowOutOfRangePagesBooleanArgument($arguments);
         $this->useDeprecatedCurrentPageNormalizeOutOfRangePagesBooleanArgument($arguments);
     }
 
-    private function useDeprecatedCurrentPageAllowOutOfRangePagesBooleanArgument($arguments)
+    /**
+     * @param array<bool> $arguments
+     */
+    private function useDeprecatedCurrentPageAllowOutOfRangePagesBooleanArgument($arguments): void
     {
         $index = 1;
         $method = 'setAllowOutOfRangePages';
@@ -223,7 +252,10 @@ class AsyncPager
         $this->useDeprecatedBooleanArgument($arguments, $index, $method);
     }
 
-    private function useDeprecatedCurrentPageNormalizeOutOfRangePagesBooleanArgument($arguments)
+    /**
+     * @param array<bool> $arguments
+     */
+    private function useDeprecatedCurrentPageNormalizeOutOfRangePagesBooleanArgument($arguments): void
     {
         $index = 2;
         $method = 'setNormalizeOutOfRangePages';
@@ -231,26 +263,36 @@ class AsyncPager
         $this->useDeprecatedBooleanArgument($arguments, $index, $method);
     }
 
-    private function useDeprecatedBooleanArgument($arguments, $index, $method)
+    /**
+     * @param array<bool> $arguments
+     * @param int $index
+     * @param string $method
+     */
+    private function useDeprecatedBooleanArgument($arguments, $index, $method): void
     {
         if (isset($arguments[$index])) {
             $this->$method($arguments[$index]);
         }
     }
 
-    private function filterCurrentPage($currentPage)
+    /**
+     * @param mixed $currentPage
+     * @return int
+     */
+    private function filterCurrentPage($currentPage): int
     {
         $currentPage = $this->toInteger($currentPage);
         $this->checkCurrentPage($currentPage);
-        $currentPage = $this->filterOutOfRangeCurrentPage($currentPage);
-
-        return $currentPage;
+        return $this->filterOutOfRangeCurrentPage($currentPage);
     }
 
-    private function checkCurrentPage($currentPage)
+    /**
+     * @param mixed $currentPage
+     */
+    private function checkCurrentPage($currentPage): void
     {
         if (!is_int($currentPage)) {
-            throw new NotIntegerCurrentPageException();
+            throw new NotValidCurrentPageException();
         }
 
         if ($currentPage < 1) {
@@ -258,7 +300,7 @@ class AsyncPager
         }
     }
 
-    private function filterOutOfRangeCurrentPage($currentPage)
+    private function filterOutOfRangeCurrentPage(int $currentPage): int
     {
         if ($this->notAllowedCurrentPageOutOfRange($currentPage)) {
             return $this->normalizeOutOfRangeCurrentPage($currentPage);
@@ -267,13 +309,13 @@ class AsyncPager
         return $currentPage;
     }
 
-    private function notAllowedCurrentPageOutOfRange($currentPage)
+    private function notAllowedCurrentPageOutOfRange(int $currentPage): bool
     {
         return !$this->getAllowOutOfRangePages() &&
             $this->currentPageOutOfRange($currentPage);
     }
 
-    private function currentPageOutOfRange($currentPage)
+    private function currentPageOutOfRange(int $currentPage): bool
     {
         return $currentPage > 1 && $currentPage > $this->getNbPages();
     }
@@ -285,7 +327,7 @@ class AsyncPager
      *
      * @throws OutOfRangeCurrentPageException If the page should not be normalized
      */
-    private function normalizeOutOfRangeCurrentPage($currentPage)
+    private function normalizeOutOfRangeCurrentPage($currentPage): int
     {
         if ($this->getNormalizeOutOfRangePages()) {
             return $this->getNbPages();
@@ -300,17 +342,15 @@ class AsyncPager
         );
     }
 
-    private function resetForCurrentPageChange()
+    private function resetForCurrentPageChange(): void
     {
         $this->currentPageResults = null;
     }
 
     /**
-     * Returns the current page.
-     *
-     * @return integer
+     * {@inheritDoc}
      */
-    public function getCurrentPage()
+    public function getCurrentPage(): int
     {
         return $this->currentPage;
     }
@@ -318,7 +358,7 @@ class AsyncPager
     /**
      * Returns the results for the current page.
      *
-     * @return array|\Traversable
+     * @return iterable<mixed>|null
      */
     public function getCurrentPageResults()
     {
@@ -329,27 +369,28 @@ class AsyncPager
         return $this->currentPageResults;
     }
 
-    private function notCachedCurrentPageResults()
+    private function notCachedCurrentPageResults(): bool
     {
         return $this->currentPageResults === null;
     }
 
+    /**
+     * @return iterable<mixed>|null
+     */
     private function getCurrentPageResultsFromAdapter()
     {
         return $this->slice;
     }
 
-    private function calculateOffsetForCurrentPageResults()
+    private function calculateOffsetForCurrentPageResults(): int
     {
         return ($this->getCurrentPage() - 1) * $this->getMaxPerPage();
     }
 
     /**
-     * Calculates the current page offset start
-     *
-     * @return int
+     * {@inheritDoc}
      */
-    public function getCurrentPageOffsetStart()
+    public function getCurrentPageOffsetStart(): int
     {
         return $this->getNbResults() ?
             $this->calculateOffsetForCurrentPageResults() + 1 :
@@ -357,11 +398,9 @@ class AsyncPager
     }
 
     /**
-     * Calculates the current page offset end
-     *
-     * @return int
+     * {@inheritDoc}
      */
-    public function getCurrentPageOffsetEnd()
+    public function getCurrentPageOffsetEnd(): ?int
     {
         return $this->hasNextPage() ?
             $this->getCurrentPage() * $this->getMaxPerPage() :
@@ -369,11 +408,9 @@ class AsyncPager
     }
 
     /**
-     * Returns the number of results.
-     *
-     * @return integer
+     * {@inheritDoc}
      */
-    public function getNbResults()
+    public function getNbResults(): ?int
     {
         return $this->nbResults;
     }
@@ -394,32 +431,28 @@ class AsyncPager
         return $nbPages;
     }
 
-    private function calculateNbPages()
+    private function calculateNbPages(): int
     {
         return (int) ceil($this->getNbResults() / $this->getMaxPerPage());
     }
 
-    private function minimumNbPages()
+    private function minimumNbPages(): int
     {
         return 1;
     }
 
     /**
-     * Returns if the number of results is higher than the max per page.
-     *
-     * @return boolean
+     * {@inheritDoc}
      */
-    public function haveToPaginate()
+    public function haveToPaginate(): bool
     {
         return $this->getNbResults() > $this->maxPerPage;
     }
 
     /**
-     * Returns whether there is previous page or not.
-     *
-     * @return boolean
+     * {@inheritDoc}
      */
-    public function hasPreviousPage()
+    public function hasPreviousPage(): bool
     {
         return $this->currentPage > 1;
     }
@@ -466,20 +499,13 @@ class AsyncPager
         return $this->currentPage + 1;
     }
 
-    /**
-     * Implements the \Countable interface.
-     *
-     * @return integer The number of results.
-     */
-    public function count()
+    public function count(): int
     {
-        return $this->getNbResults();
+        return $this->getNbResults() ?? 0;
     }
 
     /**
-     * Implements the \IteratorAggregate interface.
-     *
-     * @return \Traversable instance with the current results.
+     * @return \Traversable<mixed>
      */
     public function getIterator()
     {
@@ -493,24 +519,42 @@ class AsyncPager
             return $results->getIterator();
         }
 
+        if (null === $results) {
+            return new \ArrayIterator([]);
+        }
+
+        if (!is_array($results)) {
+            throw new \RuntimeException('Invalid current page results.');
+        }
+
         return new \ArrayIterator($results);
     }
 
     /**
-     * Implements the \JsonSerializable interface.
-     *
-     * @return array current page results
+     * @return array<mixed>
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         $results = $this->getCurrentPageResults();
         if ($results instanceof \Traversable) {
             return iterator_to_array($results);
         }
 
+        if (null === $results) {
+            return [];
+        }
+
+        if (!is_array($results)) {
+            throw new \RuntimeException('Invalid current page results.');
+        }
+
         return $results;
     }
 
+    /**
+     * @param mixed $value
+     * @return mixed
+     */
     private function toInteger($value)
     {
         if ($this->needsToIntegerConversion($value)) {
@@ -520,7 +564,11 @@ class AsyncPager
         return $value;
     }
 
-    private function needsToIntegerConversion($value)
+    /**
+     * @param mixed $value
+     * @return bool
+     */
+    private function needsToIntegerConversion($value): bool
     {
         return (is_string($value) || is_float($value)) && (int) $value == $value;
     }
@@ -534,9 +582,7 @@ class AsyncPager
      */
     public function getPageNumberForItemAtPosition($position)
     {
-        if (!is_int($position)) {
-            throw new NotIntegerException();
-        }
+        Assert::integer($position);
 
         if ($this->getNbResults() < $position) {
             throw new \OutOfBoundsException(sprintf(
@@ -546,6 +592,6 @@ class AsyncPager
             ));
         }
 
-        return (int) ceil($position/$this->getMaxPerPage());
+        return (int) ceil($position / $this->getMaxPerPage());
     }
 }

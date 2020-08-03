@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Webgriffe\Esb;
@@ -30,7 +31,7 @@ class FlowManager
         $this->logger = $logger;
     }
 
-    public function bootFlows()
+    public function bootFlows(): void
     {
         Loop::defer(function () {
             if (!\count($this->flows)) {
@@ -45,9 +46,9 @@ class FlowManager
     }
 
     /**
-     * @param \Webgriffe\Esb\Flow $flow
+     * @param Flow $flow
      */
-    public function addFlow(Flow $flow)
+    public function addFlow(Flow $flow): void
     {
         $this->flows[] = $flow;
     }

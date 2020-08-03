@@ -31,12 +31,12 @@ final class ErroredJobEvent implements JobEventInterface
         return $this->time;
     }
 
-    public function getWorkerFqcn()
+    public function getWorkerFqcn(): string
     {
         return $this->workerFqcn;
     }
 
-    public function getErrorMessage()
+    public function getErrorMessage(): string
     {
         return $this->errorMessage;
     }

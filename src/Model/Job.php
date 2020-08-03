@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Webgriffe\Esb\Model;
@@ -12,7 +13,7 @@ final class Job implements JobInterface
      */
     private $uuid;
     /**
-     * @var array
+     * @var array<string, mixed>
      */
     private $payloadData;
     /**
@@ -34,11 +35,11 @@ final class Job implements JobInterface
 
     /**
      * Job constructor.
-     * @param array $payloadData
+     * @param array<string, mixed> $payloadData
      * @param int $timeout
      * @param int $delay
      * @param int $priority
-     * @param array $events
+     * @param array<JobEventInterface> $events
      * @param string|null $uuid
      * @throws \Exception
      *
@@ -75,7 +76,7 @@ final class Job implements JobInterface
     }
 
     /**
-     * @return array
+     * @return array<string, mixed>
      */
     public function getPayloadData(): array
     {
@@ -111,7 +112,7 @@ final class Job implements JobInterface
      */
     public function addEvent(JobEventInterface $event): void
     {
-        if ($this->getLastEvent() && $this->getLastEvent()->getTime() > $event->getTime()) {
+        if ($this->getLastEvent() !== null && $this->getLastEvent()->getTime() > $event->getTime()) {
             throw new \InvalidArgumentException(
                 sprintf(
                     'Cannot add event happened before the last one. Last event happened at "%s", ' .

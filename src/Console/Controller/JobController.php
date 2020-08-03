@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Webgriffe\Esb\Console\Controller;
@@ -6,6 +7,7 @@ namespace Webgriffe\Esb\Console\Controller;
 use Amp\Http\Server\Request;
 use Amp\Http\Server\Response;
 use Amp\Http\Status;
+use Amp\Promise;
 use function Amp\call;
 
 /**
@@ -13,7 +15,10 @@ use function Amp\call;
  */
 class JobController extends AbstractController
 {
-    public function __invoke(Request $request, string $flow, string $jobId)
+    /**
+     * @return Promise<Response>
+     */
+    public function __invoke(Request $request, string $flow, string $jobId): Promise
     {
         return call(function () use ($jobId, $flow, $request) {
             $job = yield $this->getElasticsearch()->fetchJob($jobId, $flow);

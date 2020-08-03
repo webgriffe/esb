@@ -12,7 +12,7 @@ interface ProducerQueueManagerInterface
     /**
      * Initializes this queue manager. Must be called before this can be used
      *
-     * @return Promise
+     * @return Promise<null>
      */
     public function boot(): Promise;
 
@@ -25,7 +25,7 @@ interface ProducerQueueManagerInterface
      * enqueue()
      *
      * @param JobInterface $job The job to add to the queue
-     * @return Promise
+     * @return Promise<int>
      */
     public function enqueue(JobInterface $job): Promise;
 
@@ -33,7 +33,7 @@ interface ProducerQueueManagerInterface
      * Ensures that all buffered jobs are flushed to the underlying queue. Returns a promise that resolves to the number
      * of jobs that were added to the queue.
      *
-     * @return Promise
+     * @return Promise<int>
      */
     public function flush(): Promise;
 }

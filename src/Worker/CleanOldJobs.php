@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Webgriffe\Esb\Worker;
@@ -33,7 +34,7 @@ class CleanOldJobs implements WorkerInterface
     public function work(JobInterface $job): Promise
     {
         return call(function () {
-            $oldDocuments =  yield $this->client->search(
+            $oldDocuments = yield $this->client->search(
                 ['range' => ['lastEvent.time' => ['lte' => sprintf('now-%sd', $this->maxAgeInDays)]]]
             );
             foreach ($oldDocuments['hits']['hits'] as $oldDocument) {

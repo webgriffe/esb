@@ -1,0 +1,11 @@
+parameters:
+    paths:
+        - 'src'
+
+    sets:
+        - 'clean-code'
+        - 'psr12'
+
+    skip:
+        'Class Server contains unused private method requestHandler().': ~
+        'Class HttpProducersServer contains unused private method requestHandler().': ~

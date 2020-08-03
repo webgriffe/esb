@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Webgriffe\Esb\Service;
@@ -17,7 +18,7 @@ use function Amp\call;
  */
 class CronProducersServer
 {
-    const CRON_TICK_SECONDS = 60;
+    public const CRON_TICK_SECONDS = 60;
 
     /**
      * @var ProducerInstance[]
@@ -42,11 +43,14 @@ class CronProducersServer
         $this->logger = $logger;
     }
 
-    public function addProducerInstance(ProducerInstance $producerInstance)
+    public function addProducerInstance(ProducerInstance $producerInstance): void
     {
         $this->producerInstances[] = $producerInstance;
     }
 
+    /**
+     * @return Promise<null>
+     */
     public function start(): Promise
     {
         return call(function () {
@@ -66,6 +70,9 @@ class CronProducersServer
         return $this->cronTickWatcherId !== null;
     }
 
+    /**
+     * @return \Generator<Promise>
+     */
     private function cronTick(): \Generator
     {
         foreach ($this->producerInstances as $producerInstance) {
@@ -75,7 +82,6 @@ class CronProducersServer
                 continue;
             }
             $cronExpression = CronExpression::factory($producer->getCrontab());
-            /** @var DateTimeBuilderInterface $dateTimeBuilder */
             $now = $this->dateTimeBuilder->build();
             if ($cronExpression->isDue($now)) {
                 $this->logger->info(

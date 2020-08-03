@@ -12,7 +12,7 @@ interface WorkerQueueManagerInterface
     /**
      * Initializes this queue manager. Must be called before this can be used
      *
-     * @return Promise
+     * @return Promise<null>
      */
     public function boot(): Promise;
 
@@ -20,7 +20,7 @@ interface WorkerQueueManagerInterface
      * Gets the first ready job in the queue. If no job is ready, then this call waits until one becomes available.
      * Returns a promise that resolves to a JobInterface object
      *
-     * @return Promise
+     * @return Promise<JobInterface>
      */
     public function getNextJob(): Promise;
 
@@ -28,7 +28,7 @@ interface WorkerQueueManagerInterface
      * Updates the data of the specified job in the queue
      *
      * @param JobInterface $job
-     * @return Promise
+     * @return Promise<null>
      */
     public function updateJob(JobInterface $job): Promise;
 
@@ -38,7 +38,7 @@ interface WorkerQueueManagerInterface
      *
      * @param JobInterface $job
      * @param int $delay
-     * @return Promise
+     * @return Promise<null>
      */
     public function requeue(JobInterface $job, int $delay = 0): Promise;
 
@@ -46,7 +46,7 @@ interface WorkerQueueManagerInterface
      * Removes a job from the queue
      *
      * @param JobInterface $job
-     * @return Promise
+     * @return Promise<null>
      */
     public function dequeue(JobInterface $job): Promise;
 
@@ -55,7 +55,7 @@ interface WorkerQueueManagerInterface
      * Returns a promise that resolves to a boolean value
      *
      * @param string $queueName
-     * @return Promise
+     * @return Promise<bool>
      */
     public function isEmpty(string $queueName): Promise;
 }

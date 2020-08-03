@@ -7,13 +7,13 @@ namespace Webgriffe\Esb\Service;
 use Amp;
 use Generator;
 use Symfony\Component\Serializer\Exception\ExceptionInterface;
-use Webgriffe\AmpElasticsearch\Client;
-use Webgriffe\AmpElasticsearch\Error;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
+use Webgriffe\AmpElasticsearch\Client;
+use Webgriffe\AmpElasticsearch\Error;
+use Webgriffe\Esb\Exception\ElasticSearch\JobNotFoundException;
 use Webgriffe\Esb\Model\Job;
 use Webgriffe\Esb\Model\JobInterface;
-use Webgriffe\Esb\Exception\ElasticSearch\JobNotFoundException;
 use Webmozart\Assert\Assert;
 
 class ElasticSearch
@@ -29,13 +29,23 @@ class ElasticSearch
      */
     private $normalizer;
 
+    /**
+     * @param Client $client
+     * @param NormalizerInterface&DenormalizerInterface $normalizer
+     */
     public function __construct(Client $client, $normalizer)
     {
         $this->client = $client;
-        Assert::isInstanceOfAny($normalizer, [NormalizerInterface::class, DenormalizerInterface::class]);
+        Assert::isInstanceOf($normalizer, NormalizerInterface::class);
+        Assert::isInstanceOf($normalizer, DenormalizerInterface::class);
         $this->normalizer = $normalizer;
     }
 
+    /**
+     * @param JobInterface $job
+     * @param string $indexName
+     * @return Amp\Promise<null>
+     */
     public function indexJob(JobInterface $job, string $indexName): Amp\Promise
     {
         return Amp\call(function () use ($job, $indexName) {
@@ -43,6 +53,11 @@ class ElasticSearch
         });
     }
 
+    /**
+     * @param JobInterface[] $jobs
+     * @param string $indexName
+     * @return Amp\Promise<null>
+     */
     public function bulkIndexJobs(array $jobs, string $indexName): Amp\Promise
     {
         return Amp\call(function () use ($jobs, $indexName) {
@@ -50,6 +65,11 @@ class ElasticSearch
         });
     }
 
+    /**
+     * @param string $uuid
+     * @param string $indexName
+     * @return Amp\Promise<JobInterface>
+     */
     public function fetchJob(string $uuid, string $indexName): Amp\Promise
     {
         return Amp\call(function () use ($uuid, $indexName) {
@@ -75,7 +95,7 @@ class ElasticSearch
      * @param JobInterface $job
      * @param string $indexName
      * @param int $retry
-     * @return Generator
+     * @return Generator<Amp\Promise>
      * @throws ExceptionInterface
      */
     private function doIndexJob(JobInterface $job, string $indexName, int $retry): Generator
@@ -88,6 +108,9 @@ class ElasticSearch
             );
         } catch (Error $error) {
             $errorData = $error->getData();
+            if (null === $errorData) {
+                throw $error;
+            }
             $errorType = $errorData['error']['type'] ?? null;
             if ($errorType === 'no_shard_available_action_exception' &&
                 $retry < self::NO_SHARD_AVAILABLE_INDEX_MAX_RETRY) {
@@ -120,7 +143,7 @@ class ElasticSearch
      * @param string $uuid
      * @param string $indexName
      * @param int $retry
-     * @return Generator
+     * @return Generator<Amp\Promise>
      */
     private function doFetchJob(string $uuid, string $indexName, int $retry): Generator
     {
@@ -131,6 +154,9 @@ class ElasticSearch
             );
         } catch (Error $error) {
             $errorData = $error->getData();
+            if (null === $errorData) {
+                throw $error;
+            }
             $errorType = $errorData['error']['type'] ?? null;
             if ($errorType === 'no_shard_available_action_exception' &&
                 $retry < self::NO_SHARD_AVAILABLE_INDEX_MAX_RETRY) {
