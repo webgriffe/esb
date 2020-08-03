@@ -3,18 +3,16 @@ declare(strict_types=1);
 
 namespace Webgriffe\Esb;
 
-use Amp\Beanstalk\BeanstalkClient;
 use function Amp\delay;
 use Amp\Promise;
 use Psr\Log\LoggerInterface;
-use Webgriffe\Esb\Exception\ElasticSearch\JobNotFoundException;
+use Webgriffe\Esb\Exception\FatalQueueException;
 use Webgriffe\Esb\Model\ErroredJobEvent;
 use Webgriffe\Esb\Model\FlowConfig;
 use Webgriffe\Esb\Model\Job;
 use Webgriffe\Esb\Model\JobInterface;
 use Webgriffe\Esb\Model\ReservedJobEvent;
 use Webgriffe\Esb\Model\WorkedJobEvent;
-use Webgriffe\Esb\Service\ElasticSearch;
 use function Amp\call;
 use Webgriffe\Esb\Service\QueueManager;
 
@@ -24,26 +22,21 @@ final class WorkerInstance implements WorkerInstanceInterface
      * @var FlowConfig
      */
     private $flowConfig;
+
     /**
      * @var int
      */
     private $instanceId;
+
     /**
      * @var WorkerInterface
      */
     private $worker;
-    /**
-     * @var BeanstalkClient
-     */
-    private $beanstalkClient;
+
     /**
      * @var LoggerInterface
      */
     private $logger;
-    /**
-     * @var ElasticSearch
-     */
-    private $elasticSearch;
 
     /**
      * @var QueueManager
@@ -59,17 +52,13 @@ final class WorkerInstance implements WorkerInstanceInterface
         FlowConfig $flowConfig,
         int $instanceId,
         WorkerInterface $worker,
-        BeanstalkClient $beanstalkClient,
         LoggerInterface $logger,
-        ElasticSearch $elasticSearch,
         QueueManager $queueManager
     ) {
         $this->flowConfig = $flowConfig;
         $this->instanceId = $instanceId;
         $this->worker = $worker;
-        $this->beanstalkClient = $beanstalkClient;
         $this->logger = $logger;
-        $this->elasticSearch = $elasticSearch;
         $this->queueManager = $queueManager;
     }
 
@@ -77,39 +66,40 @@ final class WorkerInstance implements WorkerInstanceInterface
     {
         return call(function () {
             yield $this->worker->init();
-            yield $this->beanstalkClient->watch($this->flowConfig->getTube());
-            yield $this->beanstalkClient->ignore('default');
+            yield $this->queueManager->boot();
 
             $workerFqcn = \get_class($this->worker);
-            $this->logger->info(
-                'A Worker instance has been successfully initialized',
-                [
-                    'flow' => $this->flowConfig->getDescription(),
-                    'worker' => $workerFqcn,
-                    'instance_id' => $this->instanceId
-                ]
-            );
-
-            $lastProcessTimestamp = 0;
-
             $globalLogContext = [
-                'flow' => $this->queueManager->getFlowDescription(),
+                'flow' => $this->flowConfig->getDescription(),
                 'worker' => $workerFqcn,
                 'instance_id' => $this->instanceId,
             ];
+            $this->logger->info('A Worker instance has been successfully initialized', $globalLogContext);
 
+            $firstIteration = true;
             while (true) {
+                //After processing any job, save the timestamp that the last job finished processing at.
+                //The first time set this to 0 to ensure that the processing starts by assuming that the last job was
+                //processed some time ago. Otherwise there may be race conditions among dependencies when the ESB first
+                //starts up. See the "delay_after_idle_time" worker parameter
+                if ($firstIteration) {
+                    $lastProcessTimestamp = 0;
+                } else {
+                    $lastProcessTimestamp = microtime(true);
+                }
+
+                $firstIteration = false;
+
                 try {
                     /** @var JobInterface $job */
-                    $job = yield from $this->queueManager->getNextJob();
-                    if (!$job) {
+                    if (!($job = yield from $this->queueManager->getNextJob())) {
                         break;
                     }
+                } catch (FatalQueueException $ex) {
+                    //Let this pass to stop the loop
+                    throw $ex;
                 } catch (\Exception $ex) {
-                    $this->logger->critical($ex->getMessage(), $logContext);
-
-                    //@todo: is it correct to do this for every exception?
-                    $lastProcessTimestamp = microtime(true);
+                    $this->logger->critical($ex->getMessage(), $globalLogContext);
                     continue;
                 }
 
@@ -142,7 +132,7 @@ final class WorkerInstance implements WorkerInstanceInterface
                     unset(self::$workCounts[$jobUuid]);
                 } catch (\Throwable $e) {
                     $job->addEvent(new ErroredJobEvent(new \DateTime(), $workerFqcn, $e->getMessage()));
-                    yield $this->elasticSearch->indexJob($job, $this->flowConfig->getTube());
+                    yield $this->queueManager->updateJob($job);
                     $this->logger->notice(
                         'An error occurred while working a Job.',
                         array_merge(
@@ -152,7 +142,7 @@ final class WorkerInstance implements WorkerInstanceInterface
                     );
 
                     if (self::$workCounts[$jobUuid] >= $this->flowConfig->getWorkerMaxRetry()) {
-                        yield $this->beanstalkClient->delete($jobUuid);
+                        yield $this->queueManager->dequeue($job);
                         $this->logger->error(
                             'A Job reached maximum work retry limit and has been removed from queue.',
                             array_merge(
@@ -164,18 +154,15 @@ final class WorkerInstance implements WorkerInstanceInterface
                             )
                         );
                         unset(self::$workCounts[$jobUuid]);
-                        $lastProcessTimestamp = microtime(true);
                         continue;
                     }
 
-                    yield $this->beanstalkClient->release($jobUuid, $this->flowConfig->getWorkerReleaseDelay());
+                    yield $this->queueManager->requeue($job, $this->flowConfig->getWorkerReleaseDelay());
                     $this->logger->info(
                         'Worker released a Job',
                         array_merge($logContext, ['release_delay' => $this->flowConfig->getWorkerReleaseDelay()])
                     );
                 }
-
-                $lastProcessTimestamp = microtime(true);
             }
         });
     }
@@ -220,14 +207,13 @@ final class WorkerInstance implements WorkerInstanceInterface
                     foreach ($this->flowConfig->getDependsOn() as $dependency) {
                         $sleepTime = $this->flowConfig->getInitialPollingInterval();
                         while (true) {
-                            $tubeStats = yield $this->beanstalkClient->getTubeStats($dependency);
-                            if ($tubeStats->currentJobsReady + $tubeStats->currentJobsReserved === 0) {
+                            if (yield $this->queueManager->isEmpty($dependency)) {
                                 break;
                             }
                             $this->logger->debug(
                                 sprintf(
                                     'Flow %s has to wait for dependency %s to complete before it can work its jobs.',
-                                    $this->flowConfig->getTube(),
+                                    $this->flowConfig->getName(),
                                     $dependency
                                 ),
                                 $logContext
@@ -250,7 +236,7 @@ final class WorkerInstance implements WorkerInstanceInterface
                     $this->logger->debug(
                         sprintf(
                             'All dependencies of flow %s are idle. Proceeding to work the queued jobs.',
-                            $this->flowConfig->getTube()
+                            $this->flowConfig->getName()
                         ),
                         $logContext
                     );

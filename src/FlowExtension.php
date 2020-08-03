@@ -81,6 +81,7 @@ final class FlowExtension implements ExtensionInterface, CompilerPassInterface
         $definition = $container->findDefinition(FlowManager::class);
         foreach ($this->flowsConfig as $flowTube => $flowConfigData) {
             $flowConfig = new FlowConfig($flowTube, $flowConfigData);
+
             $flowDefinition = new Definition(Flow::class);
             $flowDefinition->setAutowired(true);
             $flowDefinition->setArgument('$flowConfig', $flowConfig);
@@ -101,6 +102,7 @@ final class FlowExtension implements ExtensionInterface, CompilerPassInterface
                     ->setAutowired(true)
                     ->setClass(ProducerInstance::class)
                     ->setArgument('$producer', $producerDefinition)
+                    ->setArgument('$flowConfig', $flowConfig)
                     ->setArgument('$queueManager', $queueManagerDefinition)
                 ;
 
@@ -117,8 +119,18 @@ final class FlowExtension implements ExtensionInterface, CompilerPassInterface
             try {
                 $workerDefinition = $container->findDefinition($flowConfig->getWorkerServiceId());
                 $workerDefinition->setShared(false);
+
                 $workerInstancesDefinitions = [];
                 for ($instanceId = 1; $instanceId <= $flowConfig->getWorkerInstancesCount(); $instanceId++) {
+                    //A separate queueManager instance for each worker instance
+                    $queueManagerDefinition = new Definition();
+                    $queueManagerDefinition
+                        ->setShared(false)
+                        ->setAutowired(true)
+                        ->setClass(QueueManager::class)
+                        ->setArgument('$flowConfig', $flowConfig)
+                    ;
+
                     $workerInstanceDefinition = new Definition();
                     $workerInstanceDefinition
                         ->setAutowired(true)
@@ -126,6 +138,7 @@ final class FlowExtension implements ExtensionInterface, CompilerPassInterface
                         ->setArgument('$flowConfig', $flowConfig)
                         ->setArgument('$instanceId', $instanceId)
                         ->setArgument('$worker', new Reference($flowConfig->getWorkerServiceId()))
+                        ->setArgument('$queueManager', $queueManagerDefinition)
                     ;
                     $workerInstancesDefinitions[] = $workerInstanceDefinition;
                 }

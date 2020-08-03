@@ -16,14 +16,17 @@ class Flow
      * @var FlowConfig
      */
     private $flowConfig;
+
     /**
      * @var ProducerInstance
      */
     private $producerInstance;
+
     /**
      * @var WorkerInstanceInterface[]
      */
     private $workerInstances;
+
     /**
      * @var LoggerInterface
      */

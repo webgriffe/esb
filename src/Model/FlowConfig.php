@@ -23,9 +23,12 @@ class FlowConfig
         $this->config = $config;
     }
 
-    /**
-     * @return string
-     */
+    public function getName(): string
+    {
+        //We may introduce an explicit name for a flow at a later time. For now use the tube name as the flow name
+        return $this->getTube();
+    }
+
     public function getTube(): string
     {
         return $this->tube;

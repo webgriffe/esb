@@ -6,6 +6,7 @@ namespace Webgriffe\Esb;
 use Amp\Loop;
 use Amp\Promise;
 use Psr\Log\LoggerInterface;
+use Webgriffe\Esb\Model\FlowConfig;
 use Webgriffe\Esb\Model\Job;
 use Webgriffe\Esb\Model\ProducedJobEvent;
 use Webgriffe\Esb\Service\CronProducersServer;
@@ -16,33 +17,44 @@ use function Amp\call;
 final class ProducerInstance implements ProducerInstanceInterface
 {
     /**
+     * @var FlowConfig
+     */
+    private $flowConfig;
+
+    /**
      * @var ProducerInterface
      */
     private $producer;
+
     /**
      * @var LoggerInterface
      */
     private $logger;
+
     /**
      * @var HttpProducersServer
      */
     private $httpProducersServer;
+
     /**
      * @var CronProducersServer
      */
     private $cronProducersServer;
+
     /**
      * @var QueueManager
      */
     private $queueManager;
 
     public function __construct(
+        FlowConfig $flowConfig,
         ProducerInterface $producer,
         LoggerInterface $logger,
         HttpProducersServer $httpProducersServer,
         CronProducersServer $cronProducersServer,
         QueueManager $queueManager
     ) {
+        $this->flowConfig = $flowConfig;
         $this->producer = $producer;
         $this->logger = $logger;
         $this->httpProducersServer = $httpProducersServer;
@@ -55,9 +67,10 @@ final class ProducerInstance implements ProducerInstanceInterface
         return call(function () {
             yield $this->producer->init();
             yield $this->queueManager->boot();
+
             $this->logger->info(
                 'A Producer has been successfully initialized',
-                ['flow' => $this->queueManager->getFlowDescription(), 'producer' => \get_class($this->producer)]
+                ['flow' => $this->flowConfig->getDescription(), 'producer' => \get_class($this->producer)]
             );
             if ($this->producer instanceof RepeatProducerInterface) {
                 Loop::repeat(
@@ -83,7 +96,7 @@ final class ProducerInstance implements ProducerInstanceInterface
                     sprintf(
                         'Unknown producer type "%s" for flow "%s".',
                         \get_class($this->producer),
-                        $this->queueManager->getFlowDescription()
+                        $this->flowConfig->getDescription()
                     )
                 );
             }

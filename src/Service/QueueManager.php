@@ -4,9 +4,12 @@ declare(strict_types=1);
 namespace Webgriffe\Esb\Service;
 
 use Amp\Beanstalk\BeanstalkClient;
+use Amp\Beanstalk\BeanstalkException;
+use Amp\Beanstalk\ConnectionClosedException;
 use Amp\Promise;
 use Psr\Log\LoggerInterface;
 use Webgriffe\Esb\Exception\ElasticSearch\JobNotFoundException;
+use Webgriffe\Esb\Exception\FatalQueueException;
 use Webgriffe\Esb\Model\FlowConfig;
 use Webgriffe\Esb\Model\Job;
 use Webgriffe\Esb\Model\JobInterface;
@@ -39,6 +42,12 @@ class QueueManager
      */
     private $batch = [];
 
+    /**
+     * static because it must be shared among all queue manager instances
+     * @var string[]
+     */
+    private static $uuidToBeanstalkIdMap = [];
+
     public function __construct(
         FlowConfig $flowConfig,
         BeanstalkClient $beanstalkClient,
@@ -54,10 +63,19 @@ class QueueManager
     public function boot(): Promise
     {
         return call(function () {
+            //Producer
             yield $this->beanstalkClient->use($this->flowConfig->getTube());
+
+            //Worker
+            yield $this->beanstalkClient->watch($this->flowConfig->getTube());
+            yield $this->beanstalkClient->ignore('default');
         });
     }
 
+    /**
+     * @param JobInterface $job
+     * @return int
+     */
     public function enqueue(JobInterface $job)
     {
         $jobExists = yield $this->jobExists($job->getUuid());
@@ -70,22 +88,14 @@ class QueueManager
             );
         }
         $this->batch[] = $job;
-        $count = count($this->batch);
-        $jobsCount = 0;
-        if ($count >= 1000) { //TODO: should be a parameter
-            yield from $this->processBatch($this->batch);
-            $jobsCount = $count;
-            $this->batch = [];
-        }
-        return $jobsCount;
-    }
 
-    /**
-     * @return string
-     */
-    public function getFlowDescription()
-    {
-        return $this->flowConfig->getDescription();
+        $count = count($this->batch);
+        if ($count < 1000) {    //TODO: batch size should be a parameter
+            return 0;   //Number of jobs actually added to the queue
+        }
+
+        yield from $this->processBatch();
+        return $count;
     }
 
     /**
@@ -95,8 +105,7 @@ class QueueManager
     {
         $jobsCount = count($this->batch);
         if ($jobsCount > 0) {
-            yield from $this->processBatch($this->batch);
-            $this->batch = [];
+            yield from $this->processBatch();
         }
         return $jobsCount;
     }
@@ -106,7 +115,12 @@ class QueueManager
      */
     public function getNextJob()
     {
-        $rawJob = yield $this->beanstalkClient->reserve();
+        try {
+            $rawJob = yield $this->beanstalkClient->reserve();
+        } catch (\Exception $ex) {
+            throw new FatalQueueException($ex->getMessage(), $ex->getCode(), $ex);
+        }
+
         list($jobBeanstalkId, $jobUuid) = $rawJob;
 
         try {
@@ -122,6 +136,8 @@ class QueueManager
             );
         }
 
+        $this->saveJobBeanstalkId($job, $jobBeanstalkId);
+
         return $job;
     }
 
@@ -130,11 +146,28 @@ class QueueManager
         yield $this->elasticSearch->indexJob($job, $this->flowConfig->getTube());
     }
 
+    public function requeue(JobInterface $job, int $delay = 0)
+    {
+        //Leave the job in Elasticsearch. Only delete it from Beanstalk
+        $jobBeanstalkId = $this->getJobBeanstalkId($job);
+        yield $this->beanstalkClient->release($jobBeanstalkId, $delay);
+    }
+
     public function dequeue(JobInterface $job)
     {
-        $jobBeanstalkId = $job->getPayloadData()[''];
-
+        //Leave the job in Elasticsearch. Only delete it from Beanstalk
+        $jobBeanstalkId = $this->getJobBeanstalkId($job);
         yield $this->beanstalkClient->delete($jobBeanstalkId);
+    }
+
+    /**
+     * @param string $queueName
+     * @return bool
+     */
+    public function isEmpty(string $queueName)
+    {
+        $tubeStats = yield $this->beanstalkClient->getTubeStats($queueName);
+        return ($tubeStats->currentJobsReady + $tubeStats->currentJobsReserved + $tubeStats->currentJobsDelayed) === 0;
     }
 
     private function jobExists(string $jobUuid): Promise
@@ -142,24 +175,22 @@ class QueueManager
         return call(function () use ($jobUuid) {
             try {
                 yield $this->elasticSearch->fetchJob($jobUuid, $this->flowConfig->getTube());
+                return true;
             } catch (JobNotFoundException $exception) {
                 return false;
             }
-            return true;
         });
     }
 
-
     /**
-     * @param array $batch
      * @return \Generator
      */
-    private function processBatch(array $batch): \Generator
+    private function processBatch(): \Generator
     {
         $this->logger->debug('Processing batch');
-        yield $this->elasticSearch->bulkIndexJobs($batch, $this->flowConfig->getTube());
+        yield $this->elasticSearch->bulkIndexJobs($this->batch, $this->flowConfig->getTube());
 
-        foreach ($batch as $singleJob) {
+        foreach ($this->batch as $singleJob) {
             $jobId = yield $this->beanstalkClient->put(
                 $singleJob->getUuid(),
                 $singleJob->getTimeout(),
@@ -167,5 +198,30 @@ class QueueManager
                 $singleJob->getPriority()
             );
         }
+
+        $this->batch = [];
+    }
+
+    /**
+     * @param JobInterface $job
+     * @param string $jobBeanstalkId
+     */
+    private function saveJobBeanstalkId(JobInterface $job, string $jobBeanstalkId): void
+    {
+        self::$uuidToBeanstalkIdMap[$job->getUuid()] = $jobBeanstalkId;
+    }
+
+    /**
+     * @param JobInterface $job
+     * @return string
+     */
+    private function getJobBeanstalkId(JobInterface $job): string
+    {
+        $uuid = $job->getUuid();
+        if (array_key_exists($uuid, self::$uuidToBeanstalkIdMap)) {
+            return self::$uuidToBeanstalkIdMap[$uuid];
+        }
+
+        throw new \RuntimeException("Unknown Beanstalk id for job {$uuid}");
     }
 }
