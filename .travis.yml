@@ -32,7 +32,7 @@ before_script:
   - composer install
   - composer global require maglnet/composer-require-checker && $HOME/.composer/vendor/bin/composer-require-checker --config-file=composer-require-checker.json;
   - vendor/bin/phpcs
-  - vendor/bin/phpstan analyse --no-progress -l 6 -c phpstan.neon src tests
+  - vendor/bin/phpstan analyse --no-progress -l max -c phpstan.neon src/
 
 after_failure:
   - sudo bash ./upload-textfiles "/var/log/elasticsearch/*.log"
