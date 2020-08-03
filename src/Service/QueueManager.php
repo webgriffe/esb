@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Webgriffe\Esb\Service;
@@ -216,7 +217,7 @@ class QueueManager implements ProducerQueueManagerInterface, WorkerQueueManagerI
         yield $this->elasticSearch->bulkIndexJobs($this->batch, $this->flowConfig->getTube());
 
         foreach ($this->batch as $singleJob) {
-            $jobId = yield $this->beanstalkClient->put(
+            yield $this->beanstalkClient->put(
                 $singleJob->getUuid(),
                 $singleJob->getTimeout(),
                 $singleJob->getDelay(),
