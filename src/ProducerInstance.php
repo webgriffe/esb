@@ -11,7 +11,7 @@ use Webgriffe\Esb\Model\Job;
 use Webgriffe\Esb\Model\ProducedJobEvent;
 use Webgriffe\Esb\Service\CronProducersServer;
 use Webgriffe\Esb\Service\HttpProducersServer;
-use Webgriffe\Esb\Service\QueueManager;
+use Webgriffe\Esb\Service\ProducerQueueManagerInterface;
 use function Amp\call;
 
 final class ProducerInstance implements ProducerInstanceInterface
@@ -42,7 +42,7 @@ final class ProducerInstance implements ProducerInstanceInterface
     private $cronProducersServer;
 
     /**
-     * @var QueueManager
+     * @var ProducerQueueManagerInterface
      */
     private $queueManager;
 
@@ -52,7 +52,7 @@ final class ProducerInstance implements ProducerInstanceInterface
         LoggerInterface $logger,
         HttpProducersServer $httpProducersServer,
         CronProducersServer $cronProducersServer,
-        QueueManager $queueManager
+        ProducerQueueManagerInterface $queueManager
     ) {
         $this->flowConfig = $flowConfig;
         $this->producer = $producer;

@@ -13,7 +13,7 @@ use Webgriffe\Esb\Model\Job;
 use Webgriffe\Esb\Model\JobInterface;
 use function Amp\call;
 
-class QueueManager
+class QueueManager implements ProducerQueueManagerInterface, WorkerQueueManagerInterface
 {
     /**
      * @var BeanstalkClient
@@ -76,7 +76,7 @@ class QueueManager
      * @param JobInterface $job
      * @return Promise
      */
-    public function enqueue(JobInterface $job)
+    public function enqueue(JobInterface $job): Promise
     {
         return call(function () use ($job) {
             $jobExists = yield $this->jobExists($job->getUuid());
@@ -103,7 +103,7 @@ class QueueManager
     /**
      * @return Promise
      */
-    public function flush()
+    public function flush(): Promise
     {
         return call(function () {
             $jobsCount = count($this->batch);
@@ -117,7 +117,7 @@ class QueueManager
     /**
      * @return Promise
      */
-    public function getNextJob()
+    public function getNextJob(): Promise
     {
         return call(function () {
             try {
@@ -147,14 +147,14 @@ class QueueManager
         });
     }
 
-    public function updateJob(JobInterface $job)
+    public function updateJob(JobInterface $job): Promise
     {
         return call(function () use ($job) {
             yield $this->elasticSearch->indexJob($job, $this->flowConfig->getTube());
         });
     }
 
-    public function requeue(JobInterface $job, int $delay = 0)
+    public function requeue(JobInterface $job, int $delay = 0): Promise
     {
         return call(function () use ($job, $delay) {
             //Leave the job in Elasticsearch. Only delete it from Beanstalk
@@ -163,7 +163,7 @@ class QueueManager
         });
     }
 
-    public function dequeue(JobInterface $job)
+    public function dequeue(JobInterface $job): Promise
     {
         return call(function () use ($job) {
             //Leave the job in Elasticsearch. Only delete it from Beanstalk
@@ -176,7 +176,7 @@ class QueueManager
      * @param string $queueName
      * @return Promise
      */
-    public function isEmpty(string $queueName)
+    public function isEmpty(string $queueName): Promise
     {
         return call(function () use ($queueName) {
             $tubeStats = yield $this->beanstalkClient->getTubeStats($queueName);

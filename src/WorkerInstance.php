@@ -9,12 +9,11 @@ use Psr\Log\LoggerInterface;
 use Webgriffe\Esb\Exception\FatalQueueException;
 use Webgriffe\Esb\Model\ErroredJobEvent;
 use Webgriffe\Esb\Model\FlowConfig;
-use Webgriffe\Esb\Model\Job;
 use Webgriffe\Esb\Model\JobInterface;
 use Webgriffe\Esb\Model\ReservedJobEvent;
 use Webgriffe\Esb\Model\WorkedJobEvent;
 use function Amp\call;
-use Webgriffe\Esb\Service\QueueManager;
+use Webgriffe\Esb\Service\WorkerQueueManagerInterface;
 
 final class WorkerInstance implements WorkerInstanceInterface
 {
@@ -39,7 +38,7 @@ final class WorkerInstance implements WorkerInstanceInterface
     private $logger;
 
     /**
-     * @var QueueManager
+     * @var WorkerQueueManagerInterface
      */
     private $queueManager;
 
@@ -53,7 +52,7 @@ final class WorkerInstance implements WorkerInstanceInterface
         int $instanceId,
         WorkerInterface $worker,
         LoggerInterface $logger,
-        QueueManager $queueManager
+        WorkerQueueManagerInterface $queueManager
     ) {
         $this->flowConfig = $flowConfig;
         $this->instanceId = $instanceId;
