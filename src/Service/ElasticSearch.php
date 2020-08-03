@@ -126,7 +126,7 @@ class ElasticSearch
     /**
      * @param JobInterface[] $jobs
      * @param string $indexName
-     * @return Generator
+     * @return Generator<Amp\Promise>
      * @throws ExceptionInterface
      */
     private function doBulkIndexJobs(array $jobs, string $indexName): Generator

@@ -62,7 +62,7 @@ class QueueManager implements ProducerQueueManagerInterface, WorkerQueueManagerI
     }
 
     /**
-     * @return {@inheritdoc}
+     * @inheritdoc
      */
     public function boot(): Promise
     {
@@ -77,7 +77,7 @@ class QueueManager implements ProducerQueueManagerInterface, WorkerQueueManagerI
     }
 
     /**
-     * @return {@inheritdoc}
+     * @inheritdoc
      */
     public function enqueue(JobInterface $job): Promise
     {
@@ -104,7 +104,7 @@ class QueueManager implements ProducerQueueManagerInterface, WorkerQueueManagerI
     }
 
     /**
-     * @return {@inheritdoc}
+     * @inheritdoc
      */
     public function flush(): Promise
     {
@@ -118,7 +118,7 @@ class QueueManager implements ProducerQueueManagerInterface, WorkerQueueManagerI
     }
 
     /**
-     * @return {@inheritdoc}
+     * @inheritdoc
      */
     public function getNextJob(): Promise
     {
@@ -151,7 +151,7 @@ class QueueManager implements ProducerQueueManagerInterface, WorkerQueueManagerI
     }
 
     /**
-     * @return {@inheritdoc}
+     * @inheritdoc
      */
     public function updateJob(JobInterface $job): Promise
     {
@@ -161,7 +161,7 @@ class QueueManager implements ProducerQueueManagerInterface, WorkerQueueManagerI
     }
 
     /**
-     * @return {@inheritdoc}
+     * @inheritdoc
      */
     public function requeue(JobInterface $job, int $delay = 0): Promise
     {
@@ -173,7 +173,7 @@ class QueueManager implements ProducerQueueManagerInterface, WorkerQueueManagerI
     }
 
     /**
-     * @return {@inheritdoc}
+     * @inheritdoc
      */
     public function dequeue(JobInterface $job): Promise
     {
@@ -185,7 +185,7 @@ class QueueManager implements ProducerQueueManagerInterface, WorkerQueueManagerI
     }
 
     /**
-     * @return {@inheritdoc}
+     * @inheritdoc
      */
     public function isEmpty(string $queueName): Promise
     {
@@ -196,6 +196,10 @@ class QueueManager implements ProducerQueueManagerInterface, WorkerQueueManagerI
         });
     }
 
+    /**
+     * @param string $jobUuid
+     * @return Promise<bool>
+     */
     private function jobExists(string $jobUuid): Promise
     {
         return call(function () use ($jobUuid) {
@@ -209,7 +213,7 @@ class QueueManager implements ProducerQueueManagerInterface, WorkerQueueManagerI
     }
 
     /**
-     * @return \Generator
+     * @return \Generator<null>
      */
     private function processBatch(): \Generator
     {
