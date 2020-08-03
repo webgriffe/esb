@@ -110,7 +110,7 @@ final class WorkerInstance implements WorkerInstanceInterface
                 yield $this->waitForDependencies($lastProcessTimestamp, $logContext);
 
                 $job->addEvent(new ReservedJobEvent(new \DateTime(), $workerFqcn));
-                yield $this->queueManager->updateJob($job);
+                yield from $this->queueManager->updateJob($job);
                 $payloadData = $job->getPayloadData();
                 $logContext['payload_data'] = NonUtf8Cleaner::clean($payloadData);
 
@@ -125,14 +125,14 @@ final class WorkerInstance implements WorkerInstanceInterface
                     yield $this->worker->work($job);
 
                     $job->addEvent(new WorkedJobEvent(new \DateTime(), $workerFqcn));
-                    yield $this->queueManager->updateJob($job);
+                    yield from $this->queueManager->updateJob($job);
                     $this->logger->info('Successfully worked a Job', $logContext);
 
-                    yield $this->queueManager->dequeue($job);
+                    yield from $this->queueManager->dequeue($job);
                     unset(self::$workCounts[$jobUuid]);
                 } catch (\Throwable $e) {
                     $job->addEvent(new ErroredJobEvent(new \DateTime(), $workerFqcn, $e->getMessage()));
-                    yield $this->queueManager->updateJob($job);
+                    yield from $this->queueManager->updateJob($job);
                     $this->logger->notice(
                         'An error occurred while working a Job.',
                         array_merge(
@@ -142,7 +142,7 @@ final class WorkerInstance implements WorkerInstanceInterface
                     );
 
                     if (self::$workCounts[$jobUuid] >= $this->flowConfig->getWorkerMaxRetry()) {
-                        yield $this->queueManager->dequeue($job);
+                        yield from $this->queueManager->dequeue($job);
                         $this->logger->error(
                             'A Job reached maximum work retry limit and has been removed from queue.',
                             array_merge(
@@ -157,7 +157,7 @@ final class WorkerInstance implements WorkerInstanceInterface
                         continue;
                     }
 
-                    yield $this->queueManager->requeue($job, $this->flowConfig->getWorkerReleaseDelay());
+                    yield from $this->queueManager->requeue($job, $this->flowConfig->getWorkerReleaseDelay());
                     $this->logger->info(
                         'Worker released a Job',
                         array_merge($logContext, ['release_delay' => $this->flowConfig->getWorkerReleaseDelay()])
@@ -207,7 +207,7 @@ final class WorkerInstance implements WorkerInstanceInterface
                     foreach ($this->flowConfig->getDependsOn() as $dependency) {
                         $sleepTime = $this->flowConfig->getInitialPollingInterval();
                         while (true) {
-                            if (yield $this->queueManager->isEmpty($dependency)) {
+                            if (yield from $this->queueManager->isEmpty($dependency)) {
                                 break;
                             }
                             $this->logger->debug(

@@ -44,7 +44,7 @@ class QueueManager
 
     /**
      * static because it must be shared among all queue manager instances
-     * @var string[]
+     * @var int[]
      */
     private static $uuidToBeanstalkIdMap = [];
 
@@ -204,18 +204,18 @@ class QueueManager
 
     /**
      * @param JobInterface $job
-     * @param string $jobBeanstalkId
+     * @param int $jobBeanstalkId
      */
-    private function saveJobBeanstalkId(JobInterface $job, string $jobBeanstalkId): void
+    private function saveJobBeanstalkId(JobInterface $job, int $jobBeanstalkId): void
     {
         self::$uuidToBeanstalkIdMap[$job->getUuid()] = $jobBeanstalkId;
     }
 
     /**
      * @param JobInterface $job
-     * @return string
+     * @return int
      */
-    private function getJobBeanstalkId(JobInterface $job): string
+    private function getJobBeanstalkId(JobInterface $job): int
     {
         $uuid = $job->getUuid();
         if (array_key_exists($uuid, self::$uuidToBeanstalkIdMap)) {
