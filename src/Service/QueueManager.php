@@ -4,8 +4,6 @@ declare(strict_types=1);
 namespace Webgriffe\Esb\Service;
 
 use Amp\Beanstalk\BeanstalkClient;
-use Amp\Beanstalk\BeanstalkException;
-use Amp\Beanstalk\ConnectionClosedException;
 use Amp\Promise;
 use Psr\Log\LoggerInterface;
 use Webgriffe\Esb\Exception\ElasticSearch\JobNotFoundException;
@@ -43,7 +41,9 @@ class QueueManager
     private $batch = [];
 
     /**
-     * static because it must be shared among all queue manager instances
+     * @todo Does this need to be static? In theory if a worker retrieves a job (which populates this map), then it will
+     *       be that same worker that will delete or requeue the job. So perhaps this can be made non-static?
+     *
      * @var int[]
      */
     private static $uuidToBeanstalkIdMap = [];
