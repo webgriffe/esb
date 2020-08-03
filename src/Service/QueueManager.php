@@ -74,100 +74,115 @@ class QueueManager
 
     /**
      * @param JobInterface $job
-     * @return int
+     * @return Promise
      */
     public function enqueue(JobInterface $job)
     {
-        $jobExists = yield $this->jobExists($job->getUuid());
-        if ($jobExists) {
-            throw new \RuntimeException(
-                sprintf(
-                    'A job with UUID "%s" already exists but this should be a new job.',
-                    $job->getUuid()
-                )
-            );
-        }
-        $this->batch[] = $job;
+        return call(function () use ($job) {
+            $jobExists = yield $this->jobExists($job->getUuid());
+            if ($jobExists) {
+                throw new \RuntimeException(
+                    sprintf(
+                        'A job with UUID "%s" already exists but this should be a new job.',
+                        $job->getUuid()
+                    )
+                );
+            }
+            $this->batch[] = $job;
 
-        $count = count($this->batch);
-        if ($count < 1000) {    //TODO: batch size should be a parameter
-            return 0;   //Number of jobs actually added to the queue
-        }
+            $count = count($this->batch);
+            if ($count < 1000) {    //TODO: batch size should be a parameter
+                return 0;   //Number of jobs actually added to the queue
+            }
 
-        yield from $this->processBatch();
-        return $count;
+            yield from $this->processBatch();
+            return $count;
+        });
     }
 
     /**
-     * @return int
+     * @return Promise
      */
     public function flush()
     {
-        $jobsCount = count($this->batch);
-        if ($jobsCount > 0) {
-            yield from $this->processBatch();
-        }
-        return $jobsCount;
+        return call(function () {
+            $jobsCount = count($this->batch);
+            if ($jobsCount > 0) {
+                yield from $this->processBatch();
+            }
+            return $jobsCount;
+        });
     }
 
     /**
-     * @return JobInterface
+     * @return Promise
      */
     public function getNextJob()
     {
-        try {
-            $rawJob = yield $this->beanstalkClient->reserve();
-        } catch (\Exception $ex) {
-            throw new FatalQueueException($ex->getMessage(), $ex->getCode(), $ex);
-        }
+        return call(function () {
+            try {
+                $rawJob = yield $this->beanstalkClient->reserve();
+            } catch (\Exception $ex) {
+                throw new FatalQueueException($ex->getMessage(), $ex->getCode(), $ex);
+            }
 
-        list($jobBeanstalkId, $jobUuid) = $rawJob;
+            list($jobBeanstalkId, $jobUuid) = $rawJob;
 
-        try {
-            /** @var Job $job */
-            $job = yield $this->elasticSearch->fetchJob($jobUuid, $this->flowConfig->getTube());
-        } catch (\Throwable $exception) {
-            yield $this->beanstalkClient->bury($jobBeanstalkId);
+            try {
+                /** @var Job $job */
+                $job = yield $this->elasticSearch->fetchJob($jobUuid, $this->flowConfig->getTube());
+            } catch (\Throwable $exception) {
+                yield $this->beanstalkClient->bury($jobBeanstalkId);
 
-            throw new JobNotFoundException(
-                sprintf('Cannot fetch job %s from ElasticSearch. Job has been buried.', $jobUuid),
-                0,
-                $exception
-            );
-        }
+                throw new JobNotFoundException(
+                    sprintf('Cannot fetch job %s from ElasticSearch. Job has been buried.', $jobUuid),
+                    0,
+                    $exception
+                );
+            }
 
-        $this->saveJobBeanstalkId($job, $jobBeanstalkId);
+            $this->saveJobBeanstalkId($job, $jobBeanstalkId);
 
-        return $job;
+            return $job;
+        });
     }
 
     public function updateJob(JobInterface $job)
     {
-        yield $this->elasticSearch->indexJob($job, $this->flowConfig->getTube());
+        return call(function () use ($job) {
+            yield $this->elasticSearch->indexJob($job, $this->flowConfig->getTube());
+        });
     }
 
     public function requeue(JobInterface $job, int $delay = 0)
     {
-        //Leave the job in Elasticsearch. Only delete it from Beanstalk
-        $jobBeanstalkId = $this->getJobBeanstalkId($job);
-        yield $this->beanstalkClient->release($jobBeanstalkId, $delay);
+        return call(function () use ($job, $delay) {
+            //Leave the job in Elasticsearch. Only delete it from Beanstalk
+            $jobBeanstalkId = $this->getJobBeanstalkId($job);
+            yield $this->beanstalkClient->release($jobBeanstalkId, $delay);
+        });
     }
 
     public function dequeue(JobInterface $job)
     {
-        //Leave the job in Elasticsearch. Only delete it from Beanstalk
-        $jobBeanstalkId = $this->getJobBeanstalkId($job);
-        yield $this->beanstalkClient->delete($jobBeanstalkId);
+        return call(function () use ($job) {
+            //Leave the job in Elasticsearch. Only delete it from Beanstalk
+            $jobBeanstalkId = $this->getJobBeanstalkId($job);
+            yield $this->beanstalkClient->delete($jobBeanstalkId);
+        });
     }
 
     /**
      * @param string $queueName
-     * @return bool
+     * @return Promise
      */
     public function isEmpty(string $queueName)
     {
-        $tubeStats = yield $this->beanstalkClient->getTubeStats($queueName);
-        return ($tubeStats->currentJobsReady + $tubeStats->currentJobsReserved + $tubeStats->currentJobsDelayed) === 0;
+        return call(function () use ($queueName) {
+            $tubeStats = yield $this->beanstalkClient->getTubeStats($queueName);
+            return
+                ($tubeStats->currentJobsReady + $tubeStats->currentJobsReserved + $tubeStats->currentJobsDelayed) === 0;
+        });
     }
 
     private function jobExists(string $jobUuid): Promise
