@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Webgriffe\Esb\Console;
@@ -17,7 +18,6 @@ use FastRoute\RouteCollector;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerAwareInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Webmozart\Assert\Assert;
 
 /**
  * @internal

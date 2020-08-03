@@ -1,14 +1,15 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Webgriffe\Esb\Console\Controller;
 
 use Amp\Http\Server\Request;
-use function Amp\call;
 use Amp\Http\Server\Response;
 use Amp\Http\Status;
 use Amp\Promise;
 use Webgriffe\AmpElasticsearch\Error as AmpElasticsearchError;
+use function Amp\call;
 
 /**
  * @internal
@@ -104,11 +105,11 @@ class IndexController extends AbstractController
     private function isIndexNotFoundException(AmpElasticsearchError $e): bool
     {
         $exceptionData = $e->getData();
-        return (
+        return
             $exceptionData &&
             isset($exceptionData['error']) &&
             isset($exceptionData['error']['type']) &&
             $exceptionData['error']['type'] === 'index_not_found_exception'
-        );
+        ;
     }
 }

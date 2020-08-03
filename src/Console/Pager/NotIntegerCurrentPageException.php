@@ -1,4 +1,5 @@
 <?php
+
 // @codingStandardsIgnoreFile
 
 namespace Webgriffe\Esb\Console\Pager;
@@ -15,5 +16,4 @@ trigger_deprecation(
  */
 final class NotIntegerCurrentPageException extends NotValidCurrentPageException
 {
-
 }

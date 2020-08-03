@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Webgriffe\Esb;
@@ -7,7 +8,6 @@ use Amp\Beanstalk\BeanstalkClient;
 use Amp\Loop;
 use Amp\Promise;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Serializer\SerializerInterface;
 use Webgriffe\Esb\Exception\ElasticSearch\JobNotFoundException;
 use Webgriffe\Esb\Model\FlowConfig;
 use Webgriffe\Esb\Model\Job;
@@ -23,7 +23,7 @@ final class ProducerInstance implements ProducerInstanceInterface
      * @var FlowConfig
      */
     private $flowConfig;
-        /**
+    /**
      * @var ProducerInterface
      */
     private $producer;

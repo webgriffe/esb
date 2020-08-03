@@ -105,11 +105,11 @@ final class AmpElasticsearchUriSearchAdapter implements AsyncPagerAdapterInterfa
     private function isIndexNotFoundException(AmpElasticsearchError $e): bool
     {
         $exceptionData = $e->getData();
-        return (
+        return
             $exceptionData &&
             isset($exceptionData['error']) &&
             isset($exceptionData['error']['type']) &&
             $exceptionData['error']['type'] === 'index_not_found_exception'
-        );
+        ;
     }
 }

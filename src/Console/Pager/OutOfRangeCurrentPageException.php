@@ -1,4 +1,5 @@
 <?php
+
 // @codingStandardsIgnoreFile
 
 namespace Webgriffe\Esb\Console\Pager;

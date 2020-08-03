@@ -7,13 +7,13 @@ namespace Webgriffe\Esb\Service;
 use Amp;
 use Generator;
 use Symfony\Component\Serializer\Exception\ExceptionInterface;
-use Webgriffe\AmpElasticsearch\Client;
-use Webgriffe\AmpElasticsearch\Error;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
+use Webgriffe\AmpElasticsearch\Client;
+use Webgriffe\AmpElasticsearch\Error;
+use Webgriffe\Esb\Exception\ElasticSearch\JobNotFoundException;
 use Webgriffe\Esb\Model\Job;
 use Webgriffe\Esb\Model\JobInterface;
-use Webgriffe\Esb\Exception\ElasticSearch\JobNotFoundException;
 use Webmozart\Assert\Assert;
 
 class ElasticSearch

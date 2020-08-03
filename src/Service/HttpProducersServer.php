@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Webgriffe\Esb\Service;
@@ -77,7 +78,7 @@ class HttpProducersServer
             return false;
         }
         $state = $this->httpServer->getState();
-        return ($state === Server::STARTING || $state === Server::STARTED);
+        return $state === Server::STARTING || $state === Server::STARTED;
     }
 
     public function addProducerInstance(ProducerInstance $producerInstance): void

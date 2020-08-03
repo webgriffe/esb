@@ -1,10 +1,10 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Webgriffe\Esb;
 
 use Amp\Beanstalk\BeanstalkClient;
-use function Amp\delay;
 use Amp\Promise;
 use Psr\Log\LoggerInterface;
 use Webgriffe\Esb\Model\ErroredJobEvent;
@@ -14,6 +14,7 @@ use Webgriffe\Esb\Model\ReservedJobEvent;
 use Webgriffe\Esb\Model\WorkedJobEvent;
 use Webgriffe\Esb\Service\ElasticSearch;
 use function Amp\call;
+use function Amp\delay;
 
 final class WorkerInstance implements WorkerInstanceInterface
 {
@@ -183,7 +184,7 @@ final class WorkerInstance implements WorkerInstanceInterface
     {
         return call(function () use ($lastProcessTimestamp, $logContext) {
             if (count($this->flowConfig->getDependsOn()) > 0) {
-                if ((microtime(true) - $lastProcessTimestamp) > 1) {
+                if (microtime(true) - $lastProcessTimestamp > 1) {
                     //If more than one second has passed since the last job finished processing and if this flow depends
                     //on something, then do not start processing the new job right away but wait for a bit.
                     //Suppose that there are two flows, flow A and flow B, and that flow A depends on flow B. Also
@@ -228,7 +229,7 @@ final class WorkerInstance implements WorkerInstanceInterface
 
                             //Exponentially increase the wait time up to one minute after every failed check
                             $sleepTime = min(
-                                (int)($sleepTime*$this->flowConfig->getPollingIntervalMultiplier()),
+                                (int)($sleepTime * $this->flowConfig->getPollingIntervalMultiplier()),
                                 $this->flowConfig->getMaximumPollingInterval()
                             );
                         }

@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Webgriffe\Esb\Service;
@@ -17,7 +18,7 @@ use function Amp\call;
  */
 class CronProducersServer
 {
-    const CRON_TICK_SECONDS = 60;
+    public const CRON_TICK_SECONDS = 60;
 
     /**
      * @var ProducerInstance[]

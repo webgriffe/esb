@@ -283,9 +283,7 @@ class AsyncPager implements PagerfantaInterface
     {
         $currentPage = $this->toInteger($currentPage);
         $this->checkCurrentPage($currentPage);
-        $currentPage = $this->filterOutOfRangeCurrentPage($currentPage);
-
-        return $currentPage;
+        return $this->filterOutOfRangeCurrentPage($currentPage);
     }
 
     /**
@@ -594,6 +592,6 @@ class AsyncPager implements PagerfantaInterface
             ));
         }
 
-        return (int) ceil($position/$this->getMaxPerPage());
+        return (int) ceil($position / $this->getMaxPerPage());
     }
 }
