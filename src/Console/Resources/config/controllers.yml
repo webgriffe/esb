@@ -27,3 +27,10 @@ services:
     arguments:
       - '@Psr\Log\LoggerInterface'
       - '@Amp\Beanstalk\BeanstalkClient'
+
+  console.controller.mass_action:
+    parent: console.controller.abstract
+    class: '\Webgriffe\Esb\Console\Controller\MassActionController'
+    arguments:
+      - '@Psr\Log\LoggerInterface'
+      - '@Amp\Beanstalk\BeanstalkClient'
