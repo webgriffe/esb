@@ -27,6 +27,7 @@ class FlowController extends AbstractController
             parse_str($request->getUri()->getQuery(), $queryParams);
             $query = $queryParams['query'] ?? '';
             $page = (int)($queryParams['page'] ?? '1');
+            $massActionSuccess = $queryParams['massActionSuccess'] ?? false;
             $adapter = new AmpElasticsearchUriSearchAdapter(
                 $this->getElasticsearch()->getClient(),
                 $flowCode,
@@ -44,6 +45,7 @@ class FlowController extends AbstractController
                         'flowCode' => $flowCode,
                         'pager' => $pager,
                         'query' => $query,
+                        'massActionSuccess' => $massActionSuccess
                     ]
                 )
             );

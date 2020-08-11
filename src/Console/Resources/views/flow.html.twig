@@ -6,6 +6,11 @@
         <a class="btn btn-secondary btn-sm float-right" role="button" href="/">&laquo; Back</a>
     </h2>
 
+    {% if massActionSuccess == 'requeue' %}
+        <div class="alert alert-success" role="alert">
+            Selected jobs has been successfully re-queued!
+        </div>
+    {% endif %}
 
     <h4>Search</h4>
     <form action="/flow/{{ flowCode }}" method="get">
@@ -20,7 +25,7 @@
     </form>
 
     {% if pager.getCurrentPageResults|length > 0 %}
-        <form>
+        <form action="/flow/{{ flowCode }}/mass-action" method="POST">
         <div class="navbar navbar-expand-lg navbar-light bg-light sticky-top d-flex">
             <ul class="navbar-nav">
                 <li class="nav-item dropdown">
