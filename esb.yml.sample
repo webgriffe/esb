@@ -32,6 +32,7 @@ flows:
     description: Sample Flow        # The flow description
     producer:
       service: My\Esb\Producer      # A producer service ID defined above
+      batch_size: 1200              # Jobs are produced in batches of 1200 jobs. Optional: default is 1000
     worker:
       service: My\Esb\Worker        # A worker service ID defined above
       instances: 1                  # The number of worker instances to spawn for this flow
