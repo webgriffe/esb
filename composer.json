@@ -21,7 +21,7 @@
         "twig/twig": "^2.5",
         "nikic/fast-route": "^1.3",
         "amphp/http-server": "^0.8.2",
-        "amphp/amp": "^2.1",
+        "amphp/amp": "^2.5",
         "psr/log": "^1.1",
         "amphp/socket": "^0.10",
         "amphp/http": "^1.1",
