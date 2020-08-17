@@ -47,17 +47,23 @@ final class QueueManager implements ProducerQueueManagerInterface, WorkerQueueMa
      * @var int[]
      */
     private static $uuidToBeanstalkIdMap = [];
+    /**
+     * @var int
+     */
+    private $batchSize;
 
     public function __construct(
         FlowConfig $flowConfig,
         BeanstalkClient $beanstalkClient,
         ElasticSearch $elasticSearch,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        int $batchSize
     ) {
         $this->flowConfig = $flowConfig;
         $this->beanstalkClient = $beanstalkClient;
         $this->elasticSearch = $elasticSearch;
         $this->logger = $logger;
+        $this->batchSize = $batchSize;
     }
 
     /**
@@ -93,7 +99,7 @@ final class QueueManager implements ProducerQueueManagerInterface, WorkerQueueMa
             $this->batch[] = $job;
 
             $count = count($this->batch);
-            if ($count < 1000) {    //TODO: batch size should be a parameter
+            if ($count < $this->batchSize) {
                 return 0;   //Number of jobs actually added to the queue
             }
 

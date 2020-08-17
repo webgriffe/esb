@@ -96,4 +96,9 @@ class FlowConfig
     {
         return $this->config['dependencies']['polling_interval_multiplier'];
     }
+
+    public function getProducerBatchSize(): int
+    {
+        return $this->config['producer']['batch_size'];
+    }
 }

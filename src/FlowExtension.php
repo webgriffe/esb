@@ -89,6 +89,7 @@ final class FlowExtension implements ExtensionInterface, CompilerPassInterface
                     ->setAutowired(true)
                     ->setClass(QueueManager::class)
                     ->setArgument('$flowConfig', $flowConfig)
+                    ->setArgument('$batchSize', $flowConfig->getProducerBatchSize())
                 ;
                 $container->setDefinition($queueManagerId, $queueManagerDefinition);
 

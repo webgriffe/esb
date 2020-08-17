@@ -27,6 +27,7 @@ final class FlowConfiguration implements ConfigurationInterface
                     ->arrayNode('producer')
                         ->children()
                             ->scalarNode('service')->isRequired()->end()
+                            ->integerNode('batch_size')->min(1)->defaultValue(1000)->end()
                         ->end()
                     ->end()
                     ->arrayNode('worker')
