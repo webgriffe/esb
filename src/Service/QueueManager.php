@@ -14,7 +14,7 @@ use Webgriffe\Esb\Model\Job;
 use Webgriffe\Esb\Model\JobInterface;
 use function Amp\call;
 
-class QueueManager implements ProducerQueueManagerInterface, WorkerQueueManagerInterface
+final class QueueManager implements ProducerQueueManagerInterface, WorkerQueueManagerInterface
 {
     /**
      * @var BeanstalkClient
