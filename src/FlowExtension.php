@@ -64,20 +64,21 @@ final class FlowExtension implements ExtensionInterface, CompilerPassInterface
      */
     public function process(ContainerBuilder $container): void
     {
-        //These clasees are defined manually. Remove the default definitions otherwise the container generates errors
+        //These classes are defined manually. Remove the default definitions otherwise the container generates errors
         //trying to autowire them
         $container->removeDefinition(QueueManager::class);
         $container->removeDefinition(FlowConfig::class);
         $container->removeDefinition(ProducerInstance::class);
         $container->removeDefinition(WorkerInstance::class);
 
-        $definition = $container->findDefinition(FlowManager::class);
-        foreach ($this->flowsConfig as $flowTube => $flowConfigData) {
-            $flowConfig = new FlowConfig($flowTube, $flowConfigData);
+        $flowManagerDefinition = $container->findDefinition(FlowManager::class);
+        foreach ($this->flowsConfig as $flowName => $flowConfigData) {
+            $flowConfig = new FlowConfig($flowName, $flowConfigData);
 
             $flowDefinition = new Definition(Flow::class);
             $flowDefinition->setAutowired(true);
             $flowDefinition->setArgument('$flowConfig', $flowConfig);
+            $queueManagerId = 'flow.queue_manager.' . $flowName;
             try {
                 $producerDefinition = $container->findDefinition($flowConfig->getProducerServiceId());
                 $producerDefinition->setShared(false);
@@ -89,17 +90,20 @@ final class FlowExtension implements ExtensionInterface, CompilerPassInterface
                     ->setClass(QueueManager::class)
                     ->setArgument('$flowConfig', $flowConfig)
                 ;
+                $container->setDefinition($queueManagerId, $queueManagerDefinition);
 
                 $producerInstanceDefinition = new Definition();
                 $producerInstanceDefinition
                     ->setAutowired(true)
                     ->setClass(ProducerInstance::class)
-                    ->setArgument('$producer', $producerDefinition)
+                    ->setArgument('$producer', new Reference($flowConfig->getProducerServiceId()))
                     ->setArgument('$flowConfig', $flowConfig)
-                    ->setArgument('$queueManager', $queueManagerDefinition)
+                    ->setArgument('$queueManager', new Reference($queueManagerId))
                 ;
+                $producerInstanceId = 'flow.producer_instance' . $flowName;
+                $container->setDefinition($producerInstanceId, $producerInstanceDefinition);
 
-                $flowDefinition->setArgument('$producerInstance', $producerInstanceDefinition);
+                $flowDefinition->setArgument('$producerInstance', new Reference($producerInstanceId));
             } catch (ServiceNotFoundException $e) {
                 throw new InvalidConfigurationException(
                     sprintf(
@@ -115,15 +119,6 @@ final class FlowExtension implements ExtensionInterface, CompilerPassInterface
 
                 $workerInstancesDefinitions = [];
                 for ($instanceId = 1; $instanceId <= $flowConfig->getWorkerInstancesCount(); $instanceId++) {
-                    //A separate queueManager instance for each worker instance
-                    $queueManagerDefinition = new Definition();
-                    $queueManagerDefinition
-                        ->setShared(false)
-                        ->setAutowired(true)
-                        ->setClass(QueueManager::class)
-                        ->setArgument('$flowConfig', $flowConfig)
-                    ;
-
                     $workerInstanceDefinition = new Definition();
                     $workerInstanceDefinition
                         ->setAutowired(true)
@@ -131,9 +126,11 @@ final class FlowExtension implements ExtensionInterface, CompilerPassInterface
                         ->setArgument('$flowConfig', $flowConfig)
                         ->setArgument('$instanceId', $instanceId)
                         ->setArgument('$worker', new Reference($flowConfig->getWorkerServiceId()))
-                        ->setArgument('$queueManager', $queueManagerDefinition)
+                        ->setArgument('$queueManager', new Reference($queueManagerId))
                     ;
-                    $workerInstancesDefinitions[] = $workerInstanceDefinition;
+                    $workerInstanceId = sprintf('flow.worker_instance.%s.%s', $flowName, $instanceId);
+                    $container->setDefinition($workerInstanceId, $workerInstanceDefinition);
+                    $workerInstancesDefinitions[] = new Reference($workerInstanceId);
                 }
                 $flowDefinition->setArgument('$workerInstances', $workerInstancesDefinitions);
             } catch (ServiceNotFoundException $e) {
@@ -145,8 +142,9 @@ final class FlowExtension implements ExtensionInterface, CompilerPassInterface
                     )
                 );
             }
-            $container->setDefinition($flowTube, $flowDefinition);
-            $definition->addMethodCall('addFlow', [new Reference($flowTube)]);
+            $flowId = 'flow.' . $flowName;
+            $container->setDefinition($flowId, $flowDefinition);
+            $flowManagerDefinition->addMethodCall('addFlow', [new Reference($flowId)]);
         }
     }
 }

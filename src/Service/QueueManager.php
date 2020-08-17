@@ -42,9 +42,8 @@ final class QueueManager implements ProducerQueueManagerInterface, WorkerQueueMa
     private $batch = [];
 
     /**
-     * @todo Does this need to be static? In theory if a worker retrieves a job (which populates this map), then it will
-     *       be that same worker that will delete or requeue the job. So perhaps this can be made non-static?
-     *
+     * @TODO This map is static because it must be shared between each QueueManager instance: it could be refactored
+     *       extracting the mapping service to a dedicated class
      * @var int[]
      */
     private static $uuidToBeanstalkIdMap = [];
@@ -213,7 +212,7 @@ final class QueueManager implements ProducerQueueManagerInterface, WorkerQueueMa
     }
 
     /**
-     * @return \Generator<null>
+     * @return \Generator<Promise>
      */
     private function processBatch(): \Generator
     {
