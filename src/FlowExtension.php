@@ -141,7 +141,7 @@ final class FlowExtension implements ExtensionInterface, CompilerPassInterface
             } catch (ServiceNotFoundException $e) {
                 throw new InvalidConfigurationException(
                     sprintf(
-                        'Invalid workder for flow "%s", there is no service defined with ID "%s".',
+                        'Invalid worker for flow "%s", there is no service defined with ID "%s".',
                         $flowConfig->getDescription(),
                         $flowConfig->getWorkerServiceId()
                     )
