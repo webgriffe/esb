@@ -100,6 +100,8 @@ final class FlowExtension implements ExtensionInterface, CompilerPassInterface
                     ->setArgument('$producer', new Reference($flowConfig->getProducerServiceId()))
                     ->setArgument('$flowConfig', $flowConfig)
                     ->setArgument('$queueManager', new Reference($queueManagerId))
+                    ->setArgument('$beanstalkClient', null)
+                    ->setArgument('$elasticSearch', null)
                 ;
                 $producerInstanceId = 'flow.producer_instance' . $flowName;
                 $container->setDefinition($producerInstanceId, $producerInstanceDefinition);
@@ -128,6 +130,8 @@ final class FlowExtension implements ExtensionInterface, CompilerPassInterface
                         ->setArgument('$instanceId', $instanceId)
                         ->setArgument('$worker', new Reference($flowConfig->getWorkerServiceId()))
                         ->setArgument('$queueManager', new Reference($queueManagerId))
+                        ->setArgument('$beanstalkClient', null)
+                        ->setArgument('$elasticSearch', null)
                     ;
                     $workerInstanceId = sprintf('flow.worker_instance.%s.%s', $flowName, $instanceId);
                     $container->setDefinition($workerInstanceId, $workerInstanceDefinition);
