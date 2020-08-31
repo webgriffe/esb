@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Webgriffe\Esb;
 
+use Amp\Beanstalk\BeanstalkClient;
 use Amp\Promise;
 use Psr\Log\LoggerInterface;
 use Webgriffe\Esb\Exception\FatalQueueException;
@@ -12,6 +13,8 @@ use Webgriffe\Esb\Model\FlowConfig;
 use Webgriffe\Esb\Model\JobInterface;
 use Webgriffe\Esb\Model\ReservedJobEvent;
 use Webgriffe\Esb\Model\WorkedJobEvent;
+use Webgriffe\Esb\Service\ElasticSearch;
+use Webgriffe\Esb\Service\QueueManager;
 use Webgriffe\Esb\Service\WorkerQueueManagerInterface;
 use function Amp\call;
 use function Amp\delay;
@@ -52,14 +55,50 @@ final class WorkerInstance implements WorkerInstanceInterface
         FlowConfig $flowConfig,
         int $instanceId,
         WorkerInterface $worker,
+        ?BeanstalkClient $beanstalkClient,
         LoggerInterface $logger,
-        WorkerQueueManagerInterface $queueManager
+        ?ElasticSearch $elasticSearch,
+        WorkerQueueManagerInterface $queueManager = null
     ) {
+        if ($beanstalkClient !== null) {
+            trigger_deprecation(
+                'webgriffe/esb',
+                '2.2',
+                'Passing a "%s" to "%s" is deprecated and will be removed in 3.0.',
+                BeanstalkClient::class,
+                __CLASS__
+            );
+        }
+        if ($elasticSearch !== null) {
+            trigger_deprecation(
+                'webgriffe/esb',
+                '2.2',
+                'Passing a "%s" to "%s" is deprecated and will be removed in 3.0.',
+                ElasticSearch::class,
+                __CLASS__
+            );
+        }
         $this->flowConfig = $flowConfig;
         $this->instanceId = $instanceId;
         $this->worker = $worker;
         $this->logger = $logger;
         $this->queueManager = $queueManager;
+        if ($this->queueManager === null) {
+            trigger_deprecation(
+                'webgriffe/esb',
+                '2.2',
+                'Not passing a "%s" to "%s" is deprecated and will be required in 3.0.',
+                WorkerQueueManagerInterface::class,
+                __CLASS__
+            );
+            $this->queueManager = new QueueManager(
+                $this->flowConfig,
+                $beanstalkClient,
+                $elasticSearch,
+                $this->logger,
+                1000
+            );
+        }
     }
 
     public function boot(): Promise
