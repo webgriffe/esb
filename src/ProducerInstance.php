@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Webgriffe\Esb;
 
+use Amp\Beanstalk\BeanstalkClient;
 use Amp\Loop;
 use Amp\Promise;
 use Psr\Log\LoggerInterface;
@@ -11,8 +12,10 @@ use Webgriffe\Esb\Model\FlowConfig;
 use Webgriffe\Esb\Model\Job;
 use Webgriffe\Esb\Model\ProducedJobEvent;
 use Webgriffe\Esb\Service\CronProducersServer;
+use Webgriffe\Esb\Service\ElasticSearch;
 use Webgriffe\Esb\Service\HttpProducersServer;
 use Webgriffe\Esb\Service\ProducerQueueManagerInterface;
+use Webgriffe\Esb\Service\QueueManager;
 use function Amp\call;
 
 final class ProducerInstance implements ProducerInstanceInterface
@@ -50,17 +53,53 @@ final class ProducerInstance implements ProducerInstanceInterface
     public function __construct(
         FlowConfig $flowConfig,
         ProducerInterface $producer,
+        ?BeanstalkClient $beanstalkClient,
         LoggerInterface $logger,
         HttpProducersServer $httpProducersServer,
         CronProducersServer $cronProducersServer,
-        ProducerQueueManagerInterface $queueManager
+        ?ElasticSearch $elasticSearch,
+        ProducerQueueManagerInterface $queueManager = null
     ) {
+        if ($beanstalkClient !== null) {
+            trigger_deprecation(
+                'webgriffe/esb',
+                '2.2',
+                'Passing a "%s" to "%s" is deprecated and will be removed in 3.0.',
+                BeanstalkClient::class,
+                __CLASS__
+            );
+        }
+        if ($elasticSearch !== null) {
+            trigger_deprecation(
+                'webgriffe/esb',
+                '2.2',
+                'Passing a "%s" to "%s" is deprecated and will be removed in 3.0.',
+                ElasticSearch::class,
+                __CLASS__
+            );
+        }
         $this->flowConfig = $flowConfig;
         $this->producer = $producer;
         $this->logger = $logger;
         $this->httpProducersServer = $httpProducersServer;
         $this->cronProducersServer = $cronProducersServer;
         $this->queueManager = $queueManager;
+        if ($this->queueManager === null) {
+            trigger_deprecation(
+                'webgriffe/esb',
+                '2.2',
+                'Not passing a "%s" to "%s" is deprecated and will be required in 3.0.',
+                ProducerQueueManagerInterface::class,
+                __CLASS__
+            );
+            $this->queueManager = new QueueManager(
+                $this->flowConfig,
+                $beanstalkClient,
+                $elasticSearch,
+                $this->logger,
+                1000
+            );
+        }
     }
 
     public function boot(): Promise
