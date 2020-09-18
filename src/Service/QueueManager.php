@@ -218,7 +218,7 @@ final class QueueManager implements ProducerQueueManagerInterface, WorkerQueueMa
     }
 
     /**
-     * @return \Generator<Promise>
+     * @return \Generator<void>
      */
     private function processBatch(): \Generator
     {

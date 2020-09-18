@@ -71,7 +71,7 @@ class CronProducersServer
     }
 
     /**
-     * @return \Generator<Promise>
+     * @return \Generator<void>
      */
     private function cronTick(): \Generator
     {

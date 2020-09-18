@@ -89,7 +89,7 @@ class HttpProducersServer
     /** @noinspection PhpUnusedPrivateMethodInspection */
     /**
      * @param Request $request
-     * @return \Generator<Promise>
+     * @return \Generator<Response>
      */
     private function requestHandler(Request $request)
     {
