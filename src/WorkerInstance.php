@@ -64,7 +64,7 @@ final class WorkerInstance implements WorkerInstanceInterface
             trigger_deprecation(
                 'webgriffe/esb',
                 '2.2',
-                'Passing a "%s" to "%s" is deprecated and will be removed in 3.0. '.
+                'Passing a "%s" to "%s" is deprecated and will be removed in 3.0. ' .
                 'Please pass a WorkerQueueManagerInterface instead.',
                 BeanstalkClient::class,
                 __CLASS__
@@ -74,7 +74,7 @@ final class WorkerInstance implements WorkerInstanceInterface
             trigger_deprecation(
                 'webgriffe/esb',
                 '2.2',
-                'Passing a "%s" to "%s" is deprecated and will be removed in 3.0. '.
+                'Passing a "%s" to "%s" is deprecated and will be removed in 3.0. ' .
                 'Please pass a WorkerQueueManagerInterface instead.',
                 ElasticSearch::class,
                 __CLASS__
