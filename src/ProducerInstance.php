@@ -64,7 +64,8 @@ final class ProducerInstance implements ProducerInstanceInterface
             trigger_deprecation(
                 'webgriffe/esb',
                 '2.2',
-                'Passing a "%s" to "%s" is deprecated and will be removed in 3.0.',
+                'Passing a "%s" to "%s" is deprecated and will be removed in 3.0. '.
+                'Please pass a ProducerQueueManagerInterface instead.',
                 BeanstalkClient::class,
                 __CLASS__
             );
@@ -73,7 +74,8 @@ final class ProducerInstance implements ProducerInstanceInterface
             trigger_deprecation(
                 'webgriffe/esb',
                 '2.2',
-                'Passing a "%s" to "%s" is deprecated and will be removed in 3.0.',
+                'Passing a "%s" to "%s" is deprecated and will be removed in 3.0. '.
+                'Please pass a ProducerQueueManagerInterface instead.',
                 ElasticSearch::class,
                 __CLASS__
             );
@@ -83,8 +85,8 @@ final class ProducerInstance implements ProducerInstanceInterface
         $this->logger = $logger;
         $this->httpProducersServer = $httpProducersServer;
         $this->cronProducersServer = $cronProducersServer;
-        $this->queueManager = $queueManager;
-        if ($this->queueManager === null) {
+
+        if ($queueManager === null) {
             trigger_deprecation(
                 'webgriffe/esb',
                 '2.2',
@@ -92,7 +94,16 @@ final class ProducerInstance implements ProducerInstanceInterface
                 ProducerQueueManagerInterface::class,
                 __CLASS__
             );
-            $this->queueManager = new QueueManager(
+
+            if (!$beanstalkClient) {
+                throw new \RuntimeException('Cannot create a QueueManager without the Beanstalk client!');
+            }
+
+            if (!$elasticSearch) {
+                throw new \RuntimeException('Cannot create a QueueManager without the ElasticSearch client');
+            }
+
+            $queueManager = new QueueManager(
                 $this->flowConfig,
                 $beanstalkClient,
                 $elasticSearch,
@@ -100,6 +111,7 @@ final class ProducerInstance implements ProducerInstanceInterface
                 1000
             );
         }
+        $this->queueManager = $queueManager;
     }
 
     public function boot(): Promise

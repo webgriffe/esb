@@ -64,7 +64,8 @@ final class WorkerInstance implements WorkerInstanceInterface
             trigger_deprecation(
                 'webgriffe/esb',
                 '2.2',
-                'Passing a "%s" to "%s" is deprecated and will be removed in 3.0.',
+                'Passing a "%s" to "%s" is deprecated and will be removed in 3.0. '.
+                'Please pass a WorkerQueueManagerInterface instead.',
                 BeanstalkClient::class,
                 __CLASS__
             );
@@ -73,7 +74,8 @@ final class WorkerInstance implements WorkerInstanceInterface
             trigger_deprecation(
                 'webgriffe/esb',
                 '2.2',
-                'Passing a "%s" to "%s" is deprecated and will be removed in 3.0.',
+                'Passing a "%s" to "%s" is deprecated and will be removed in 3.0. '.
+                'Please pass a WorkerQueueManagerInterface instead.',
                 ElasticSearch::class,
                 __CLASS__
             );
@@ -82,8 +84,8 @@ final class WorkerInstance implements WorkerInstanceInterface
         $this->instanceId = $instanceId;
         $this->worker = $worker;
         $this->logger = $logger;
-        $this->queueManager = $queueManager;
-        if ($this->queueManager === null) {
+
+        if ($queueManager === null) {
             trigger_deprecation(
                 'webgriffe/esb',
                 '2.2',
@@ -91,7 +93,16 @@ final class WorkerInstance implements WorkerInstanceInterface
                 WorkerQueueManagerInterface::class,
                 __CLASS__
             );
-            $this->queueManager = new QueueManager(
+
+            if (!$beanstalkClient) {
+                throw new \RuntimeException('Cannot create a QueueManager without the Beanstalk client!');
+            }
+
+            if (!$elasticSearch) {
+                throw new \RuntimeException('Cannot create a QueueManager without the ElasticSearch client');
+            }
+
+            $queueManager = new QueueManager(
                 $this->flowConfig,
                 $beanstalkClient,
                 $elasticSearch,
@@ -99,6 +110,7 @@ final class WorkerInstance implements WorkerInstanceInterface
                 1000
             );
         }
+        $this->queueManager = $queueManager;
     }
 
     public function boot(): Promise
