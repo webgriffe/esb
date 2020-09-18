@@ -11,7 +11,6 @@ use Amp\Http\Server\RequestHandler\CallableRequestHandler;
 use Amp\Http\Server\Response;
 use Amp\Http\Status;
 use Amp\Loop;
-use Amp\Promise;
 use Amp\Socket;
 use FastRoute\Dispatcher;
 use FastRoute\RouteCollector;
