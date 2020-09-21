@@ -11,6 +11,7 @@ use Amp\Http\Server\RequestHandler\CallableRequestHandler;
 use Amp\Http\Server\Response;
 use Amp\Http\Status;
 use Amp\Loop;
+use Amp\Promise;
 use Amp\Socket;
 use FastRoute\Dispatcher;
 use FastRoute\RouteCollector;
@@ -84,7 +85,7 @@ class Server implements ContainerAwareInterface
     /** @noinspection PhpUnusedPrivateMethodInspection */
     /**
      * @param Request $request
-     * @return \Generator<Response>
+     * @return \Generator<Promise>
      */
     private function requestHandler(Request $request): \Generator
     {

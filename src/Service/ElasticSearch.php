@@ -95,7 +95,7 @@ class ElasticSearch
      * @param JobInterface $job
      * @param string $indexName
      * @param int $retry
-     * @return Generator<void>
+     * @return Generator<Amp\Promise>
      * @throws ExceptionInterface
      */
     private function doIndexJob(JobInterface $job, string $indexName, int $retry): Generator
@@ -126,7 +126,7 @@ class ElasticSearch
     /**
      * @param JobInterface[] $jobs
      * @param string $indexName
-     * @return Generator<void>
+     * @return Generator<Amp\Promise>
      * @throws ExceptionInterface
      */
     private function doBulkIndexJobs(array $jobs, string $indexName): Generator
@@ -143,7 +143,7 @@ class ElasticSearch
      * @param string $uuid
      * @param string $indexName
      * @param int $retry
-     * @return Generator<array>
+     * @return Generator<Amp\Promise>
      */
     private function doFetchJob(string $uuid, string $indexName, int $retry): Generator
     {
