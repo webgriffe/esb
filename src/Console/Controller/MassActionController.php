@@ -62,8 +62,9 @@ class MassActionController extends AbstractController
             if ($action === self::ACTION_REQUEUE) {
                 yield from $this->requeue($jobs, $flow);
             }
+            $jobsCount = count($jobs);
 
-            return new Response(302, ['Location' => ["/flow/$flow?massActionSuccess=$action"]]);
+            return new Response(302, ['Location' => ["/flow/$flow?massActionSuccess=$action&massActionCount=$jobsCount"]]);
         });
     }
 
