@@ -8,7 +8,11 @@
 
     {% if massActionSuccess == 'requeue' %}
         <div class="alert alert-success" role="alert">
-            Selected jobs has been successfully re-queued!
+            {% if massActionCount is not defined %}
+                Selected jobs has been successfully re-queued!
+            {% else %}
+                {{ massActionCount }} selected job(s) has been successfully re-queued!
+            {% endif %}
         </div>
     {% endif %}
 
