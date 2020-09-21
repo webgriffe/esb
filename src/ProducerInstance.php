@@ -65,9 +65,10 @@ final class ProducerInstance implements ProducerInstanceInterface
                 'webgriffe/esb',
                 '2.2',
                 'Passing a "%s" to "%s" is deprecated and will be removed in 3.0. ' .
-                'Please pass a ProducerQueueManagerInterface instead.',
+                'Please pass a "%s" instead.',
                 BeanstalkClient::class,
-                __CLASS__
+                __CLASS__,
+                ProducerQueueManagerInterface::class
             );
         }
         if ($elasticSearch !== null) {
@@ -75,9 +76,10 @@ final class ProducerInstance implements ProducerInstanceInterface
                 'webgriffe/esb',
                 '2.2',
                 'Passing a "%s" to "%s" is deprecated and will be removed in 3.0. ' .
-                'Please pass a ProducerQueueManagerInterface instead.',
+                'Please pass a "%s" instead.',
                 ElasticSearch::class,
-                __CLASS__
+                __CLASS__,
+                ProducerQueueManagerInterface::class
             );
         }
         $this->flowConfig = $flowConfig;
