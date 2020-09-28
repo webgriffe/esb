@@ -20,15 +20,15 @@ It's built on top of popular open-sourced PHP libraries like:
 Architecture & Core concepts
 ----------------------------
 
-Integrating different systems together is a matter of data flows. With Webgriffe ESB every data flow goes, one way, from a system to another through a Beanstalkd **tube**. Every tube must have a **producer** which produces **jobs** and a **worker** which works that jobs. So data goes from the producer to the worker through the tube.
+Integrating different systems together is a matter of data flows. With Webgriffe ESB every data flow goes one way, from a system to another through a Beanstalkd **tube**. Every tube must have a **producer** which produces **jobs** and a **worker** which works that jobs. So data goes from the producer to the worker through the tube.
 
-With Webgriffe ESB you integrate different systems by only implementing workers and producers. The framework will take care about the rest.
+With Webgriffe ESB you integrate different systems by only implementing workers and producers. The framework will take care of the rest.
 
 Webgriffe ESB is designed to use a single binary which is used as a main entry point of the whole application; all the producers and workers are started and executed by a single PHP binary. This is possible by using [Amp](http://amphp.org/) concurrency framework.
 
 Requirements
 ------------
-* PHP 7.1, 7.2, 7.3
+* PHP 7.2, 7.3
 * Beanstalk
 * Elasticsearch 7.*
 
@@ -71,9 +71,10 @@ flows:
     worker:
       service: My\Esb\Worker            # A worker service ID defined above
       instances: 1                      # The number of worker instances to spawn for this flow
-      release_delay: 0                  # The jobs release delay in seconds for this flow (see the Beanstalkd protocol here https://github.com/beanstalkd/beanstalkd/blob/master/doc/protocol.txt)
+      error_retry_delay: 0              # The number of seconds to wait before an errored job can be retried. The default is 0 (errored jobs can be retried immediately). Useful when "retrying later" might solve the problem.
+      release_delay: 0                  # (deprecated) older name of the error_retry_delay value
       max_retry: 5                      # The number of maximum work retries for a job in this tube/flow before being buried
-    dependencies:                       # This whole section can be omitted if no dependencies are to be configured
+    dependencies:                       # This whole section can be omitted if the current flow has no dependencies
       flows: ['other_flow_1', 'other_flow_2']  # Optional: dependencies of this flow toward other flow(s)
       delay_after_idle_time: 1000       # Optional: delay that a worker with dependencies waits before working the first job received after the tube was empty
       initial_polling_interval: 1000    # Optional: initial polling delay that a worker waits when it has to wait for a dependency that is not idle
@@ -145,14 +146,14 @@ If desired, the timing of this polling action can be controlled with a few confi
 * `initial_polling_interval` (default 1000ms) is the number of milliseconds that flow A will *first* wait before rechecking flow B's status
 * `polling_interval_multiplier` (default: 2) after the first delay, each subsequent delay is obtained by multiplying the previous one by this parameter. The default value of 2 means that each time the delay doubles, so the first time the wait fill be 1000ms, the second 2000ms, then 4000ms etc. Setting this value to 1 forces the system to keep on using the initial delay value without change.
 * `maximum_polling_interval` (default: 60000ms) the exponential increase imposed by `polling_interval_multiplier` is capped by this value, which is the maximum possible polling interval.
-* `delay_after_idle_time` (default: 1000ms) sometimes it may happen that flow A's and flow B's producers *begin* producing new jobs at the same time. If flow A was idle, it may begin working the new job before flow B's producer has had time to produce its job, and so the dependency would be violated. To solve this, whenever a flow with some dependencies (flow A in our example) has been waiting for some time for new jobs to arrive, it will wait a time specified by `delay_after_idle_time` before resuming operation. This gives flow B's producer enough time to publish its job in flow B's queue, which will ensure that flow A will wait for its dependency when the timeout expires.
+* `delay_after_idle_time` (default: 1000ms) sometimes it may happen that flow A's and flow B's producers *begin* producing new jobs at the same time. If flow A was idle, it may begin to work the new job before flow B's producer has had time to produce its job, and so the dependency would be violated. To solve this, whenever a flow with some dependencies (flow A in our example) has been waiting for some time for new jobs to arrive, it will wait a time specified by `delay_after_idle_time` before resuming operation. This gives flow B's producer enough time to publish its job in flow B's queue, which will ensure that flow A will wait for its dependency when the timeout expires.
 
 Notice that the exponential polling time increase is reset for each dependency: if a flow depends on multiple other flows, each time a dependency goes idle the timing parameters are reset before checking the next dependency.
 
 Producers
 ---------
 
-A producer can be any service whose class implements the `ProducerInterface`. Anyway implementing only the `ProducerInterface` is not enough. Every producer must implement also one of the supported *producer type* interfaces. This is because the framework must know when to invoke every producer. At the moment we support the following producer types:
+A producer can be any service whose class implements the `ProducerInterface`. However, implementing only the `ProducerInterface` is not enough. Every producer must implement also one of the supported *producer type* interfaces. This is because the framework must know when to invoke every producer. At the moment we support the following producer types:
 
 * `RepeatProducerInterface`: these producers are invoked repeatedly every fixed interval.
 * `CrontabProducerInterface`: these producers are invoked when their [crontab expression](https://en.wikipedia.org/wiki/Cron#CRON_expression) matches.
@@ -172,7 +173,7 @@ A worker can be any service whose class implements the `WorkerInterface`. Every 
 
 The `work` method of a worker must return an Amp's [Promise](https://amphp.org/amp/promises/) that must resolve when the job is worked succesfully. Otherwise the `work` method must throw an exception.
 
-When a worker successfully works a job the ESB framwork deletes it from the tube. Instead, when a worker fails to work a job the ESB framework keeps it in the tube for a maximum of a `max_retry` times, then the job is **buried** and a critical event is logged.
+When a worker successfully works a job, the ESB framwork deletes it from the tube. Instead, when a worker fails to work a job the ESB framework keeps it in the tube for a maximum of a `max_retry` times. If an *error_retry_delay* other than 0 is specified, then the job cannot be retried for the specified number of seconds. If the maximum number of retries is exceeded, the job is **buried** and a critical event is logged.
 
 Like for producers, **you should never use I/O blocking function calls inside your workers**. Look for [Amp](https://amphp.org/) or [ReactPHP](https://reactphp.org) libraries when you need to do I/O operations.
 
@@ -181,7 +182,7 @@ See the dummy workers in the [tests/](https://github.com/webgriffe/esb/tree/mast
 Initialization
 --------------
 
-`WorkerInterface` and `ProducerInterface` support boths an `init` method which is called by the ESB framework at the boot phase.
+`WorkerInterface` and `ProducerInterface` both support an `init` method which is called by the ESB framework at the boot phase.
 
 The `init` method must return an Amp's [Promise](https://amphp.org/amp/promises/). This allows you to perform initialization operations asyncronously (for example instantiating a SOAP client with a remote WSDL URL).
 
@@ -276,9 +277,15 @@ For example, given the configuration above, you can access to the web console at
 
 The web console HTTP server must be set on a different port then the one used by the `HttpRequestProducerInterface` producers (and identified by the `http_server_port` parameter).
 
+In the web console dashboard you can check the status of the configured flows:
+
 ![Web Console 1](web-console-1.png)
 
+By clicking on a flow, you can see a searchable list of jobs for that flow. The list is paginated and it allows one to manually requeue jobs, if needed:
+
 ![Web Console 2](web-console-2.png)
+
+Clicking on a single job or on the "view" button, one can see further details of a specific job, as well as forcing it back in the queue:
 
 ![Web Console 3](web-console-3.png)
 

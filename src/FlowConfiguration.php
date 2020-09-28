@@ -34,6 +34,7 @@ final class FlowConfiguration implements ConfigurationInterface
                         ->children()
                             ->scalarNode('service')->isRequired()->end()
                             ->integerNode('instances')->min(1)->defaultValue(1)->end()
+                            ->integerNode('error_retry_delay')->min(0)->defaultValue(0)->end()
                             ->integerNode('release_delay')->min(0)->defaultValue(0)->end()
                             ->integerNode('max_retry')->min(1)->defaultValue(5)->end()
                         ->end()
