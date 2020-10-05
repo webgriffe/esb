@@ -25,19 +25,31 @@ services:
     arguments: ['6 15 * * *']                               # The argument is the crontab expression
 
   Webgriffe\Esb\Worker\CleanOldJobs:
-    arguments: ['@Webgriffe\AmpElasticsearch\Client', 30]     # 30 is the number of day after which a job is considered old and is deleted
+    arguments: ['@Webgriffe\AmpElasticsearch\Client', 30]   # 30 is the number of day after which a job is considered old and is deleted
 
 flows:
-  sample_flow:                      # The flow "code" and will be the Beanstalkd tube name
-    description: Sample Flow        # The flow description
+  sample_flow:                          # The flow "code" and will be the Beanstalkd tube name
+    description: Sample Flow            # The flow description
     producer:
-      service: My\Esb\Producer      # A producer service ID defined above
-      batch_size: 1200              # Jobs are produced in batches of 1200 jobs. Optional: default is 1000
+      service: My\Esb\Producer          # A producer service ID defined above
+      batch_size: 1200                  # Jobs are produced in batches of 1200 jobs. Optional: default is 1000
     worker:
-      service: My\Esb\Worker        # A worker service ID defined above
-      instances: 1                  # The number of worker instances to spawn for this flow
-      release_delay: 0              # The jobs release delay in seconds for this flow (see the Beanstalkd protocol here https://github.com/beanstalkd/beanstalkd/blob/master/doc/protocol.txt)
-      max_retry: 5                  # The number of maximum work retries for a job in this tube/flow before being buried
+      service: My\Esb\Worker            # A worker service ID defined above
+      instances: 1                      # The number of worker instances to spawn for this flow
+      error_retry_delay: 0              # The number of seconds to wait before an errored job can be retried. The default is 0 (errored jobs can be retried immediately). Useful when "retrying later" might solve the problem.
+      max_retry: 5                      # The number of maximum work retries for a job in this tube/flow before being buried
+    dependencies:                       # This whole section can be omitted if the current flow has no dependencies
+      flows: ['other_flow_1', 'other_flow_2']  # Optional: dependencies of this flow toward other flow(s)
+      delay_after_idle_time: 1000       # Optional: delay that a worker with dependencies waits before working the first job received after the tube was empty
+      initial_polling_interval: 1000    # Optional: initial polling delay that a worker waits when it has to wait for a dependency that is not idle
+      maximum_polling_interval: 60000   # Optional: maximum polling delay that a worker waits when it has to wait for a dependency that is not idle
+      polling_interval_multiplier: 2    # Optional: polling delay increase factor whenever a worker is waiting for a dependency that is not idle
+
+  other_flow_1:
+    # ...
+
+  other_flow_2:
+    # ...
 
   # Keep the following flow definition to enable automatic old jobs cleaning
   clean_old_jobs_flow:

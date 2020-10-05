@@ -20,11 +20,11 @@ It's built on top of popular open-sourced PHP libraries like:
 Architecture & Core concepts
 ----------------------------
 
-Integrating different systems together is a matter of data flows. With Webgriffe ESB every data flow goes one way, from a system to another through a Beanstalkd **tube**. Every tube must have a **producer** which produces **jobs** and a **worker** which works that jobs. So data goes from the producer to the worker through the tube.
+Integrating different systems together is a matter of data flows. With Webgriffe ESB every data flow goes one way, from a system to another through a Beanstalkd **tube**. Every tube must have a **producer** which creates **jobs** and a **worker** that processes them. So data goes from the producer to the worker through the tube.
 
-With Webgriffe ESB you integrate different systems by only implementing workers and producers. The framework will take care of the rest.
+With Webgriffe ESB you integrate different systems by only implementing producers and workers. The framework will take care of the rest.
 
-Webgriffe ESB is designed to use a single binary which is used as a main entry point of the whole application; all the producers and workers are started and executed by a single PHP binary. This is possible by using [Amp](http://amphp.org/) concurrency framework.
+Webgriffe ESB is designed to use a single binary which is used as a main entry point of the whole application; all the producers and workers are started and executed by that single PHP binary. This is possible by using the [Amp](http://amphp.org/) concurrency framework.
 
 Requirements
 ------------
@@ -88,13 +88,13 @@ flows:
     # ...
 ```
 The `services` section is where you have to define your worker and producer services using the syntax of the [Symfony Dependency Injection](http://symfony.com/doc/current/components/dependency_injection.html) component.
-In the `services` section you also find two services Webgriffe\Esb\Producer\CleanOldJobs and Webgriffe\Esb\Worker\CleanOldJobs that you should keep if you want to enable the flow that periodically deletes old jobs
+In the `services` section you also find two services Webgriffe\Esb\Producer\CleanOldJobs and Webgriffe\Esb\Worker\CleanOldJobs that you should keep if you want to enable the flow that periodically deletes old jobs.
 
 The `flows` section is where you have to define your ESB flows. Every flow must refer to a producer and a worker service defined in the `services` section.
-In the `flows` section you also find the definition of the clean_old_jobs_flow: you should keep it if you want old jobs to be periodically deleted.
+In the `flows` section you also find the definition of the `clean_old_jobs_flow`: you should keep it if you want old jobs to be periodically deleted.
 This is also the section where dependencies between flows are defined. See the **Dependencies** section for details.
 
-You also have to define some parameters under the `parameters` section, refer to the `esb.yml.sample` file for more informations about required parameters. Usually it's better to isolate parameters in a `parameters.yml` file which can be included in the `esb.yml` as follows:
+You also have to define some parameters under the `parameters` section. Please refer to the `esb.yml.sample` file for more informations about required parameters. Usually it's better to isolate parameters in a `parameters.yml` file which can be included in the `esb.yml` as follows:
 
 ```yaml
 # esb.yml
@@ -115,17 +115,17 @@ parameters:
   # Other parameters here ...
 ```
 
-Refer to the [sample configuration file](https://github.com/webgriffe/esb/blob/master/esb.yml.sample) for the complete list of parameters and for more information about the configuration of your ESB.
+Please refer to the [sample configuration file](https://github.com/webgriffe/esb/blob/master/esb.yml.sample) for the complete list of parameters and for more information about the configuration of your ESB.
 
 Dependencies
 ------------
 
-It is possible to specify **dependencies** across flows. This is done by using the `dependencies` configuration section: if you want flow A to depend on flow B, you specify the `dependencies` section in flow A's configuration to list flow B:
+It is possible to specify **dependencies** across flows, which ensure that a flow cannot process any job as long as one or more other flows are working their jobs. This is done by using the `dependencies` configuration section: if you want flow A to depend on flow B, you specify the `dependencies` section in flow A's configuration to list flow B:
 
 ```yaml
 # esb.yml
 # ...
- 
+
 flows:
   flow_B:
     #...
@@ -136,24 +136,24 @@ flows:
       flows: ['flow_B']
 ```
 
-When one such dependency is specified so that flow A depends on flow B, whenever flow B is working some job and/or it has queued jobs, then flow A will still produce and queue new jobs, but it will not work them. When flow B finishes processing its last job and its Beanstalk tube is empty, then flow A begins to work through its jobs.
-If a new job is created for flow B while flow A is working, flow A will complete the job (or jobs, if there are multiple workers) that was already being worked and then it will stop until all its dependencies are idle (empty tube and no jobs being worked).
+When one such dependency is specified so that flow A depends on flow B, whenever flow B is working some job and/or it has queued jobs, then flow A will still produce and queue new jobs, but **it will not work them**. When flow B finishes processing its last job and its Beanstalk tube is empty, then flow A begins to work through its jobs.
+If a new job is created for flow B while flow A is working, flow A will complete the job (or jobs, if there are multiple workers) that was already being worked and **then it will stop until all its dependencies are idle** (empty tube and no jobs being worked).
 Dependencies can also be multiple, meaning that flow A can depend on both flow B and flow C (and more, if needed). In this case flow A will wait until **all** its dependencies are idle. To declare multiple dependencies, simply list all dependencies in the `dependencies.flows` field.
-Indirect dependencies are **not** honored. This means that if flow A depends on flow B, which in turn depends on flow C, a job for flow C will **not** stop flow A. Flow A will only check flow B. If you want flow A to also check flow C, simply make the dependency between flow A and flow C explicit by saying that flow A depends on both flows B and C.
+Indirect dependencies are **not** honored. This means that if flow A depends on flow B, which in turn depends on flow C, a job for flow C will block flow B, but it will **not** stop flow A. Flow A will only check flow B. If you want flow A to also check flow C, simply make the dependency between flow A and flow C explicit by saying that flow A depends on both flows B and C.
 
-When a flow depends on another, such as flow A depending on flow B, whenever flow A's worker extracts a job from its queue it will check all dependencies to ensure that they are all idle. If one is found that is not idle, flow A will begin polling that dependency to see when it finishes.
+When a flow depends on another, such as flow A depending on flow B, whenever flow A's worker extracts a job from its queue it will check its dependencies to ensure that they are all idle. If one is found that is not idle, flow A will begin polling that dependency to see when it finishes.
 If desired, the timing of this polling action can be controlled with a few configuration parameters (these are all optional):
-* `initial_polling_interval` (default 1000ms) is the number of milliseconds that flow A will *first* wait before rechecking flow B's status
-* `polling_interval_multiplier` (default: 2) after the first delay, each subsequent delay is obtained by multiplying the previous one by this parameter. The default value of 2 means that each time the delay doubles, so the first time the wait fill be 1000ms, the second 2000ms, then 4000ms etc. Setting this value to 1 forces the system to keep on using the initial delay value without change.
-* `maximum_polling_interval` (default: 60000ms) the exponential increase imposed by `polling_interval_multiplier` is capped by this value, which is the maximum possible polling interval.
-* `delay_after_idle_time` (default: 1000ms) sometimes it may happen that flow A's and flow B's producers *begin* producing new jobs at the same time. If flow A was idle, it may begin to work the new job before flow B's producer has had time to produce its job, and so the dependency would be violated. To solve this, whenever a flow with some dependencies (flow A in our example) has been waiting for some time for new jobs to arrive, it will wait a time specified by `delay_after_idle_time` before resuming operation. This gives flow B's producer enough time to publish its job in flow B's queue, which will ensure that flow A will wait for its dependency when the timeout expires.
+* `initial_polling_interval` (default 1000ms) is the number of milliseconds that flow A will wait the *first* time, before rechecking flow B's status.
+* `polling_interval_multiplier` (default: 2) after the first delay defined by `initial_polling_interval`, each subsequent delay is obtained by multiplying the previous one by this parameter. The default value of 2 means that each time the delay doubles, so if the first delay is 1000ms, the second will be 2000ms, then 4000ms etc. Setting this value to 1 forces the system to keep on using the initial delay value without change.
+* `maximum_polling_interval` (default: 60000ms) the exponential increase imposed by `polling_interval_multiplier` is limited by this value, which is the maximum possible polling interval.
+* `delay_after_idle_time` (default: 1000ms) sometimes it may happen that flow A's and flow B's producers *begin* producing new jobs at the same time. If flow A was idle, it may begin to work the new job before flow B's producer has had time to produce its job, and so the dependency would be violated. To solve this, whenever a flow with some dependencies has been waiting for some time for new jobs to arrive (flow A in our example), it will wait a time specified by `delay_after_idle_time` before resuming operation. This gives flow B's producer enough time to publish its job in flow B's queue, which will ensure that flow A will wait for its dependency when the timeout expires.
 
 Notice that the exponential polling time increase is reset for each dependency: if a flow depends on multiple other flows, each time a dependency goes idle the timing parameters are reset before checking the next dependency.
 
 Producers
 ---------
 
-A producer can be any service whose class implements the `ProducerInterface`. However, implementing only the `ProducerInterface` is not enough. Every producer must implement also one of the supported *producer type* interfaces. This is because the framework must know when to invoke every producer. At the moment we support the following producer types:
+A producer can be any service whose class implements the `ProducerInterface`. However, implementing only the `ProducerInterface` is not enough: every producer must implement also one of the supported *producer type* interfaces. This is because the framework must know when to invoke every producer. At the moment these are the supported producer types:
 
 * `RepeatProducerInterface`: these producers are invoked repeatedly every fixed interval.
 * `CrontabProducerInterface`: these producers are invoked when their [crontab expression](https://en.wikipedia.org/wiki/Cron#CRON_expression) matches.
@@ -162,20 +162,20 @@ A producer can be any service whose class implements the `ProducerInterface`. Ho
 Refer to these interfaces in the source code for more information.
 The `produce` method of the `ProducerInterface` must return an Amp's [Iterator](https://amphp.org/amp/iterators/), this allows you to produce a collection of jobs with a single `produce` invocation. Moreover iterators allows to have long running produce operations which are executed asyncronously.
 
-Also, keep in mind that **you should never use I/O blocking function calls inside your producers**. Look for [Amp](https://amphp.org/) or [ReactPHP](https://reactphp.org) libraries when you need to do I/O operations.
+Also, keep in mind that **you should never use I/O blocking function calls inside your producers**. Use [Amp](https://amphp.org/) or [ReactPHP](https://reactphp.org) libraries when you need to do I/O operations.
 
 See the dummy producers in the [tests/](https://github.com/webgriffe/esb/tree/master/tests) directory for some examples.
 
 Workers
 -------
 
-A worker can be any service whose class implements the `WorkerInterface`. Every worker is invoked immediatly when a job is available on its flow's tube.
+A worker can be any service whose class implements the `WorkerInterface`. Every worker is invoked immediately when a job is available on its flow's tube.
 
 The `work` method of a worker must return an Amp's [Promise](https://amphp.org/amp/promises/) that must resolve when the job is worked succesfully. Otherwise the `work` method must throw an exception.
 
-When a worker successfully works a job, the ESB framwork deletes it from the tube. Instead, when a worker fails to work a job the ESB framework keeps it in the tube for a maximum of a `max_retry` times. If an *error_retry_delay* other than 0 is specified, then the job cannot be retried for the specified number of seconds. If the maximum number of retries is exceeded, the job is **buried** and a critical event is logged.
+When a worker successfully works a job, the ESB framwork deletes it from the tube. Conversely, when a worker fails to work a job the ESB framework keeps it in the tube for a maximum of a `max_retry` times. If an `error_retry_delay` other than 0 is specified, then the job will not be retried for at least the specified number of seconds. If the maximum number of retries is exceeded, the job is **buried** and a critical event is logged.
 
-Like for producers, **you should never use I/O blocking function calls inside your workers**. Look for [Amp](https://amphp.org/) or [ReactPHP](https://reactphp.org) libraries when you need to do I/O operations.
+Like for producers, **you should never use I/O blocking function calls inside your workers**. Use [Amp](https://amphp.org/) or [ReactPHP](https://reactphp.org) libraries if you need to do I/O operations.
 
 See the dummy workers in the [tests/](https://github.com/webgriffe/esb/tree/master/tests) directory for some examples.
 
@@ -194,7 +194,7 @@ You can (and should) also unit test your workers and producers. Because workers 
 Unit test example
 -----------------
 
-Here follows an example of a producer test which verify that the producer produces stock inventory update jobs based on an XML file in a given directory.
+Here follows an example of a producer test which verifies that the producer produces stock inventory update jobs based on an XML file in a given directory.
 
 ```php
 public function testShouldProduceMultipleJobsWithMultipleEntriesFile()
@@ -259,7 +259,7 @@ public function testWorksSimpleJob()
 Web Console
 -----------
 
-A web console UI is available and allows to inspect tubes and jobs; is it also possible to search jobs and kick or delete them. The web console is currentyl only available under HTTP (not HTTPS) and must be configured using the following parameters:
+A web console UI is available and allows to inspect tubes and jobs; is it also possible to search jobs and requeue them. The web console is currentyl only available under HTTP (not HTTPS) and must be configured using the following parameters:
 
 ```yaml
 # esb.yml
@@ -285,15 +285,15 @@ By clicking on a flow, you can see a searchable list of jobs for that flow. The 
 
 ![Web Console 2](web-console-2.png)
 
-Clicking on a single job or on the "view" button, one can see further details of a specific job, as well as forcing it back in the queue:
+Clicking on a single job or on the *view* button, one can see further details of a specific job, as well as forcing it back in the queue:
 
 ![Web Console 3](web-console-3.png)
 
 Deployment
 ----------
-As said all workers and producers are managed by a single PHP binary. This binary is located at `vendor/bin/esb`. So to deploy and run your ESB application all you have to do is to deploy your application as any other PHP application (for example using [Deployer](https://deployer.org/)) and make sure that `vendor/bin/esb` is always running (we suggest to use [Supervisord](http://supervisord.org/) for this purpose).
+As said all workers and producers are managed by a single PHP binary. This binary is located at `vendor/bin/esb`. To deploy and run your ESB application all you have to do is deploy your application as any other PHP application (for example using [Deployer](https://deployer.org/)) and make sure that `vendor/bin/esb` is always running (we suggest to use [Supervisord](http://supervisord.org/) for this purpose).
 
-Keep in mind that the `vendor/bin/esb` binary logs its operations to `stdout` and errors using `error_log()` function. With a standard PHP CLI configuration all the `error_log()` entries are then redirected to `stderr`. This is done through [Monolog](https://github.com/Seldaek/monolog)'s [StreamHandler](https://github.com/Seldaek/monolog/blob/master/src/Monolog/Handler/StreamHandler.php) and [ErrorHandler](https://github.com/Seldaek/monolog/blob/master/src/Monolog/Handler/ErrorLogHandler.php) handlers. Moreover all warning (or higher level) events are handled by the [NativeMailHander](https://github.com/Seldaek/monolog/blob/master/src/Monolog/Handler/NativeMailerHandler.php) (configured with `logger_mail_to` and `logger_mail_from` parameters).
+Keep in mind that the `vendor/bin/esb` binary logs its operations to `stdout` and it reports errors using `error_log()` function. With a standard PHP CLI configuration all the `error_log()` entries are then redirected to `stderr`. This is done through [Monolog](https://github.com/Seldaek/monolog)'s [StreamHandler](https://github.com/Seldaek/monolog/blob/master/src/Monolog/Handler/StreamHandler.php) and [ErrorHandler](https://github.com/Seldaek/monolog/blob/master/src/Monolog/Handler/ErrorLogHandler.php) handlers. Moreover all warning (or higher level) events are handled by the [NativeMailHander](https://github.com/Seldaek/monolog/blob/master/src/Monolog/Handler/NativeMailerHandler.php) (configured with `logger_mail_to` and `logger_mail_from` parameters).
 
 You can also add your own handlers using the `esb.yml` configuration file.
 
