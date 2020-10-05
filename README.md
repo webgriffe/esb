@@ -120,7 +120,7 @@ Please refer to the [sample configuration file](https://github.com/webgriffe/esb
 Dependencies
 ------------
 
-It is possible to specify **dependencies** across flows, which ensure that a flow cannot process any job as long as one or more other flows are working their jobs. This is done by using the `dependencies` configuration section: if you want flow A to depend on flow B, you specify the `dependencies` section in flow A's configuration to list flow B:
+It is possible to specify **dependencies** across flows, which ensure that a flow cannot process any job as long as one or more configured flows are working their jobs. This is done by using the `dependencies` configuration section: if you want flow A to depend on flow B, you specify the `dependencies` section in flow A's configuration to list flow B:
 
 ```yaml
 # esb.yml
