@@ -22,9 +22,9 @@ Architecture & Core concepts
 
 Integrating different systems together is a matter of data flows. With Webgriffe ESB every data flow goes one way, from a system to another through a Beanstalkd **tube**. Every tube must have a **producer** which creates **jobs** and a **worker** that processes them. So data goes from the producer to the worker through the tube.
 
-With Webgriffe ESB you integrate different systems by only implementing producers and workers. The framework will take care of the rest.
+With Webgriffe ESB you integrate different systems by only implementing producers and workers. The framework takes care of the rest.
 
-Webgriffe ESB is designed to use a single binary which is used as a main entry point of the whole application; all the producers and workers are started and executed by that single PHP binary. This is possible by using the [Amp](http://amphp.org/) concurrency framework.
+Webgriffe ESB is designed to use a single binary which is used as the main entry point of the whole application; all the producers and workers are started and executed by that single PHP binary. This is possible thanks to the [Amp](http://amphp.org/) concurrency framework.
 
 Requirements
 ------------
@@ -146,7 +146,7 @@ If desired, the timing of this polling action can be controlled with a few confi
 * `initial_polling_interval` (default 1000ms) is the number of milliseconds that flow A will wait the *first* time, before rechecking flow B's status.
 * `polling_interval_multiplier` (default: 2) after the first delay defined by `initial_polling_interval`, each subsequent delay is obtained by multiplying the previous one by this parameter. The default value of 2 means that each time the delay doubles, so if the first delay is 1000ms, the second will be 2000ms, then 4000ms etc. Setting this value to 1 forces the system to keep on using the initial delay value without change.
 * `maximum_polling_interval` (default: 60000ms) the exponential increase imposed by `polling_interval_multiplier` is limited by this value, which is the maximum possible polling interval.
-* `delay_after_idle_time` (default: 1000ms) sometimes it may happen that flow A's and flow B's producers *begin* producing new jobs at the same time. If flow A was idle, it may begin to work the new job before flow B's producer has had time to produce its job, and so the dependency would be violated. To solve this, whenever a flow with some dependencies has been waiting for some time for new jobs to arrive (flow A in our example), it will wait a time specified by `delay_after_idle_time` before resuming operation. This gives flow B's producer enough time to publish its job in flow B's queue, which will ensure that flow A will wait for its dependency when the timeout expires.
+* `delay_after_idle_time` (default: 1000ms) sometimes it may happen that flow A's and flow B's producers *begin* producing new jobs at the same time. If flow A was idle and its producer manages to produce the first job before flow B's, flow A's worker may begin to work the new job before flow B's producer has had time to produce its job, and so the dependency would be violated. To solve this, whenever a flow with some dependencies has been waiting for some time for new jobs to arrive (flow A in our example), upon receiving a new job it will wait a time specified by `delay_after_idle_time` before resuming operation. This gives flow B's producer enough time to publish its job in its tube, which will ensure that flow A will wait for its dependency when the timeout expires. This parameter should not need changing unless one is dealing with a very slow producer, in which case it may be appropriate to increase it.
 
 Notice that the exponential polling time increase is reset for each dependency: if a flow depends on multiple other flows, each time a dependency goes idle the timing parameters are reset before checking the next dependency.
 
