@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Webgriffe\Esb;
 
 use Amp\Loop;
+use Amp\MultiReasonException;
 use Doctrine\Common\Annotations\AnnotationRegistry;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Config\Exception\FileLocatorFileNotFoundException;
@@ -86,13 +87,7 @@ class Kernel
         $logger = $this->getContainer()->get(LoggerInterface::class);
         $logger->critical(
             'An uncaught exception occurred, ESB will be stopped now!',
-            [
-                'code' => $exception->getCode(),
-                'message' => $exception->getMessage(),
-                'file' => $exception->getFile(),
-                'line' => $exception->getLine(),
-                'trace' => $exception->getTrace()
-            ]
+            $this->getExceptionLogContext($exception)
         );
         throw $exception;
     }
@@ -163,5 +158,30 @@ class Kernel
         } catch (FileLocatorFileNotFoundException $exception) {
             $loader->load($this->localConfigFilePath);
         }
+    }
+
+    /**
+     * Builds the log context of an exception. If this is an \Amp\MultiReasonException all reasons are included
+     * @param \Throwable $exception
+     * @return mixed[]
+     */
+    private function getExceptionLogContext(\Throwable $exception): array
+    {
+        $context = [
+            'code' => $exception->getCode(),
+            'message' => $exception->getMessage(),
+            'file' => $exception->getFile(),
+            'line' => $exception->getLine(),
+            'trace' => $exception->getTrace()
+        ];
+
+        if ($exception instanceof MultiReasonException) {
+            $context['reasons'] = [];
+            foreach ($exception->getReasons() as $reason) {
+                $context['reasons'][] = $this->getExceptionLogContext($reason);
+            }
+        }
+
+        return $context;
     }
 }
