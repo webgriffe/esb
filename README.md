@@ -28,7 +28,7 @@ Webgriffe ESB is designed to use a single binary which is used as the main entry
 
 Requirements
 ------------
-* PHP 7.2, 7.3
+* PHP 7.2, 7.3 or 7.4
 * Beanstalk
 * Elasticsearch 7.*
 
