@@ -12,6 +12,7 @@
     "require": {
         "php": "~7.2.0|~7.3.0|~7.4.0",
         "ext-pcntl": "*",
+        "ext-json": "*",
         "symfony/dependency-injection": "^3.3",
         "symfony/config": "^3.3",
         "symfony/yaml": "^3.3",

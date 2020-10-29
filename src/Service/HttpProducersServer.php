@@ -14,8 +14,11 @@ use Amp\Promise;
 use Amp\Socket;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Webgriffe\Esb\Exception\HttpResponseException;
 use Webgriffe\Esb\HttpRequestProducerInterface;
 use Webgriffe\Esb\ProducerInstance;
+use Webgriffe\Esb\ProducerResult;
+
 use function Amp\call;
 
 /**
@@ -59,7 +62,7 @@ class HttpProducersServer
                 Socket\listen("[::]:{$this->port}"),
             ];
 
-            $this->httpServer = new \Amp\Http\Server\Server(
+            $this->httpServer = new Server(
                 $sockets,
                 new CallableRequestHandler($this->callableFromInstanceMethod('requestHandler')),
                 new NullLogger()
@@ -105,9 +108,37 @@ class HttpProducersServer
                 'request' => sprintf('%s %s', strtoupper($request->getMethod()), $request->getUri())
             ]
         );
-        $jobsCount = yield $producerInstance->produceAndQueueJobs($request);
-        $responseMessage = sprintf('Successfully scheduled %s job(s) to be queued.', $jobsCount);
-        return new Response(Status::OK, [], sprintf('"%s"', $responseMessage));
+        $producerResult = yield $producerInstance->produceAndQueueJobs($request);
+        return $this->buildResponse($producerResult);
+    }
+
+    /**
+     * @param ProducerResult $producerResult
+     * @return Response
+     */
+    private function buildResponse(ProducerResult $producerResult): Response
+    {
+        $producerException = $producerResult->getException();
+        if ($producerException === null) {
+            $responseCode = Status::OK;
+            $responseMessage = sprintf('Successfully scheduled %d job(s) to be queued.', $producerResult->getJobsCount());
+        } else {
+            $responseCode = Status::INTERNAL_SERVER_ERROR;
+            $errorMessage = 'Internal server error';
+
+            if ($producerException instanceof HttpResponseException) {
+                $responseCode = $producerException->getHttpResponseCode();
+                $errorMessage = $producerException->getClientMessage();
+            }
+
+            if ($producerResult->getJobsCount() === 0) {
+                $responseMessage = sprintf('%s, could not schedule any jobs.', $errorMessage);
+            } else {
+                $responseMessage = sprintf('%s, only scheduled the first %d job(s) to be queued.', $errorMessage, $producerResult->getJobsCount());
+            }
+        }
+
+        return new Response($responseCode, [], sprintf('"%s"', $responseMessage));
     }
 
     /**
