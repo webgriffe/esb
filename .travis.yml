@@ -1,13 +1,20 @@
 sudo: required
 
 language: php
-php:
-  - 7.2
-  - 7.3
-  - 7.4
+
+jobs:
+  include:
+    # Combination PHP <7.4 and maglnet/composer-require-checker doesn't work with Composer 2
+    - php: 7.2
+      env: COMPOSER_VERSION=1.10.16
+    - php: 7.3
+      env: COMPOSER_VERSION=1.10.16
+    - php: 7.4
+      env: COMPOSER_VERSION=--stable
 
 env:
-  - ESB_CONSOLE_PORT=8080 ESB_HTTP_SERVER_PORT=34981 ESB_BEANSTALKD_URL=tcp://127.0.0.1:11300 ES_BASE_URI=http://127.0.0.1:9200
+  global:
+    - ESB_CONSOLE_PORT=8080 ESB_HTTP_SERVER_PORT=34981 ESB_BEANSTALKD_URL=tcp://127.0.0.1:11300 ES_BASE_URI=http://127.0.0.1:9200
 
 cache:
   directories:
@@ -24,6 +31,8 @@ before_install:
   - echo -e '-Ddiscovery.type=single-node\n-XX:+DisableExplicitGC\n-Djdk.io.permissionsUseCanonicalPath=true\n-Dlog4j.skipJansi=true\n-server\n' | sudo tee -a /etc/elasticsearch/jvm.options
   - sudo chown -R elasticsearch:elasticsearch /etc/default/elasticsearch
   - sudo systemctl start elasticsearch
+  - composer --verbose self-update $COMPOSER_VERSION
+  - composer --version
 
 install:
   - sudo apt-get update

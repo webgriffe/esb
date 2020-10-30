@@ -164,7 +164,9 @@ final class ProducerInstance implements ProducerInstanceInterface
     public function produceAndQueueJobs($data = null): Promise
     {
         return call(function () use ($data) {
-            $jobsCount = 0;
+            $flushedJobsCount = 0;
+            $queuedJobsCount = 0;
+            $caughtException = null;
             $job = null;
             $test = false;
             try {
@@ -173,7 +175,8 @@ final class ProducerInstance implements ProducerInstanceInterface
                     /** @var Job $job */
                     $job = $jobs->getCurrent();
                     $job->addEvent(new ProducedJobEvent(new \DateTime(), \get_class($this->producer)));
-                    $jobsCount += yield $this->queueManager->enqueue($job);
+                    $flushedJobsCount += yield $this->queueManager->enqueue($job);
+                    $queuedJobsCount++;
                     $this->logger->info(
                         'Successfully produced a new Job',
                         [
@@ -184,8 +187,9 @@ final class ProducerInstance implements ProducerInstanceInterface
                     );
                 }
 
-                $jobsCount += yield $this->queueManager->flush();
+                $flushedJobsCount += yield $this->queueManager->flush();
             } catch (\Throwable $error) {
+                $caughtException = $error;
                 $this->logger->error(
                     'An error occurred producing/queueing jobs.',
                     [
@@ -195,8 +199,18 @@ final class ProducerInstance implements ProducerInstanceInterface
                         'test' => $test
                     ]
                 );
+
+                // At least try to flush any previously successfully queued jobs. Don't let an error in parsing job 3
+                // details also fail jobs 1 and 2.
+                if ($queuedJobsCount > $flushedJobsCount) {
+                    try {
+                        $flushedJobsCount += yield $this->queueManager->flush();
+                    } catch (\Throwable $nestedError) {
+                        // Ignore any further (duplicated) errors
+                    }
+                }
             }
-            return $jobsCount;
+            return new ProducerResult($flushedJobsCount, $caughtException);
         });
     }
 
