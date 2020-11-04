@@ -133,7 +133,7 @@ class ElasticSearch
     {
         $body = [];
         foreach ($jobs as $job) {
-            $body[] = ['index' => ['_id' => $job->getUuid()]];
+            $body[] = ['index' => ['_id' => $job->getUuid(), '_type' => '_doc']];
             $body[] = (array)$this->normalizer->normalize($job, 'json');
         }
         yield $this->client->bulk($body, $indexName);
