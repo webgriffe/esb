@@ -56,8 +56,8 @@
         "pda/pheanstalk": "^3.1",
         "mikey179/vfsstream": "^1.6",
         "amphp/artax": "^3.0",
-        "phpstan/phpstan": "^0.12",
-        "symplify/easy-coding-standard-prefixed": "^8.1"
+        "phpstan/phpstan": "^0.12 <=0.12.66",
+        "symplify/easy-coding-standard-prefixed": "^8.1 <8.3"
     },
     "scripts": {
         "phpcs": "phpcs",
