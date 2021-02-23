@@ -15,6 +15,7 @@ services:
   Webgriffe\Esb\Service\HttpProducersServer:
     arguments:
       $port: '%http_server_port%'
+      $options: '%http_server_options%'
 
   Monolog\Handler\StreamHandler:
     class: \Monolog\Handler\StreamHandler

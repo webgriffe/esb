@@ -5,15 +5,18 @@ namespace Webgriffe\Esb\Integration;
 use Amp\Artax\DefaultClient;
 use Amp\Artax\Request;
 use Amp\Artax\Response;
+use Amp\Http\Server\Options;
 use Amp\Loop;
 use Amp\Promise;
 use Amp\Socket\ClientSocket;
 use Amp\Socket\ConnectException;
 use Monolog\Logger;
 use org\bovigo\vfs\vfsStream;
+use ReflectionObject;
 use Webgriffe\Esb\DummyFilesystemWorker;
 use Webgriffe\Esb\DummyHttpRequestProducer;
 use Webgriffe\Esb\KernelTestCase;
+use Webgriffe\Esb\Service\HttpProducersServer;
 use Webgriffe\Esb\TestUtils;
 use function Amp\call;
 use function Amp\File\exists;
@@ -28,9 +31,8 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
 
     private const FLOW_CODE = 'http_producer_flow';
 
-    public function setUp()
+    private function setUpKernel(array $additionalParameters = [])
     {
-        parent::setUp();
         $this->workerFile = vfsStream::url('root/worker.data');
         self::createKernel(
             [
@@ -44,7 +46,8 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
                         'producer' => ['service' => DummyHttpRequestProducer::class],
                         'worker' => ['service' => DummyFilesystemWorker::class],
                     ]
-                ]
+                ],
+                'parameters' => $additionalParameters,
             ]
         );
         $this->httpPort = self::$kernel->getContainer()->getParameter('http_server_port');
@@ -52,6 +55,8 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
 
     public function testHttpRequestProducerAndWorker()
     {
+        $this->setUpKernel();
+
         Loop::delay(100, function () {
             yield $this->waitForConnectionAvailable("tcp://127.0.0.1:{$this->httpPort}");
             $payload = json_encode(['jobs' => ['job1', 'job2', 'job3']]);
@@ -89,6 +94,8 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
 
     public function testHttpRequestProducerWithWrongUriShouldReturn404()
     {
+        $this->setUpKernel();
+
         Loop::delay(100, function () {
             yield $this->waitForConnectionAvailable("tcp://127.0.0.1:{$this->httpPort}");
             $payload = json_encode(['jobs' => ['job1', 'job2', 'job3']]);
@@ -108,6 +115,25 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
         $this->assertReadyJobsCountInTube(0, self::FLOW_CODE);
     }
 
+    public function testHttpKernelSettings()
+    {
+        $this->setUpKernel(['http_server_options' => ['bodySizeLimit' => 42]]);
+
+        Loop::delay(100, function () {
+            yield $this->waitForConnectionAvailable("tcp://127.0.0.1:{$this->httpPort}");
+
+            $httpProducersServer = self::$kernel->getContainer()->get(HttpProducersServer::class);
+            $httpServer = $this->getObjectProperty($httpProducersServer, 'httpServer');
+            /** @var Options $serverOptions */
+            $serverOptions = $this->getObjectProperty($httpServer, 'options');
+            $this->assertSame(42, $serverOptions->getBodySizeLimit());
+
+            Loop::stop();
+        });
+
+        self::$kernel->boot();
+    }
+
     private function waitForConnectionAvailable(string $uri): Promise
     {
         return call(function () use ($uri) {
@@ -121,5 +147,22 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
             } while ($connection === null);
             $connection->close();
         });
+    }
+
+    /**
+     * @param object $object
+     * @param string $propertyName
+     * @return mixed
+     * @throws \ReflectionException
+     */
+    private function getObjectProperty(object $object, string $propertyName)
+    {
+        $reflectionProperty = (new ReflectionObject($object))->getProperty($propertyName);
+        $reflectionProperty->setAccessible(true);
+        try {
+            return $reflectionProperty->getValue($object);
+        } finally {
+            $reflectionProperty->setAccessible(false);
+        }
     }
 }
