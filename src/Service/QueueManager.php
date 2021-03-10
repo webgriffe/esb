@@ -223,9 +223,16 @@ final class QueueManager implements ProducerQueueManagerInterface, WorkerQueueMa
     private function processBatch(): \Generator
     {
         $this->logger->debug('Processing batch');
-        yield $this->elasticSearch->bulkIndexJobs($this->batch, $this->flowConfig->getTube());
 
-        foreach ($this->batch as $singleJob) {
+        // Store batch in a local variable and clear the shared property. Any other Producer instance may update and
+        // process $this->batch during a yield call within this method (emulating concurrency). This shouldn't cause
+        // duplicate inserts of the same job.
+        $batch = $this->batch;
+        $this->batch = [];
+
+        yield $this->elasticSearch->bulkIndexJobs($batch, $this->flowConfig->getTube());
+
+        foreach ($batch as $singleJob) {
             yield $this->beanstalkClient->put(
                 $singleJob->getUuid(),
                 $singleJob->getTimeout(),
@@ -233,8 +240,6 @@ final class QueueManager implements ProducerQueueManagerInterface, WorkerQueueMa
                 $singleJob->getPriority()
             );
         }
-
-        $this->batch = [];
     }
 
     /**
