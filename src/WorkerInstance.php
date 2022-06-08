@@ -8,6 +8,7 @@ use Amp\Beanstalk\BeanstalkClient;
 use function Amp\call;
 use function Amp\delay;
 use Amp\Promise;
+use Monolog\ResettableInterface;
 use Psr\Log\LoggerInterface;
 use Webgriffe\Esb\Exception\FatalQueueException;
 use Webgriffe\Esb\Model\ErroredJobEvent;
@@ -37,7 +38,7 @@ final class WorkerInstance implements WorkerInstanceInterface
     private $worker;
 
     /**
-     * @var LoggerInterface
+     * @var LoggerInterface&ResettableInterface
      */
     private $logger;
 
@@ -51,12 +52,15 @@ final class WorkerInstance implements WorkerInstanceInterface
      */
     private static $workCounts = [];
 
+    /**
+     * @param LoggerInterface&ResettableInterface $logger
+     */
     public function __construct(
         FlowConfig $flowConfig,
         int $instanceId,
         WorkerInterface $worker,
         ?BeanstalkClient $beanstalkClient,
-        LoggerInterface $logger,
+        $logger,
         ?ElasticSearch $elasticSearch,
         WorkerQueueManagerInterface $queueManager = null
     ) {
@@ -146,13 +150,16 @@ final class WorkerInstance implements WorkerInstanceInterface
                 try {
                     /** @var JobInterface $job */
                     if (!($job = yield $this->queueManager->getNextJob())) {
+                        $this->logger->reset(); // todo: necessary?
                         break;
                     }
                 } catch (FatalQueueException $ex) {
                     //Let this pass to stop the loop
+                    $this->logger->reset(); // todo: necessary?
                     throw $ex;
                 } catch (\Exception $ex) {
                     $this->logger->critical($ex->getMessage(), $globalLogContext);
+                    $this->logger->reset();
                     continue;
                 }
 
@@ -207,6 +214,7 @@ final class WorkerInstance implements WorkerInstanceInterface
                             )
                         );
                         unset(self::$workCounts[$jobUuid]);
+                        $this->logger->reset();
                         continue;
                     }
 
@@ -215,6 +223,8 @@ final class WorkerInstance implements WorkerInstanceInterface
                         'Worker released a Job',
                         array_merge($logContext, ['release_delay' => $this->flowConfig->getWorkerReleaseDelay()])
                     );
+                } finally {
+                    $this->logger->reset();
                 }
             }
         });
