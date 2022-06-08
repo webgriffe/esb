@@ -8,9 +8,8 @@ use Amp\Beanstalk\BeanstalkClient;
 use function Amp\call;
 use function Amp\delay;
 use Amp\Promise;
-use Monolog\ResettableInterface;
-use Psr\Log\LoggerInterface;
 use Webgriffe\Esb\Exception\FatalQueueException;
+use Webgriffe\Esb\Logger\LoggerResettableInterface;
 use Webgriffe\Esb\Model\ErroredJobEvent;
 use Webgriffe\Esb\Model\FlowConfig;
 use Webgriffe\Esb\Model\JobInterface;
@@ -38,7 +37,7 @@ final class WorkerInstance implements WorkerInstanceInterface
     private $worker;
 
     /**
-     * @var LoggerInterface&ResettableInterface
+     * @var LoggerResettableInterface
      */
     private $logger;
 
@@ -52,15 +51,12 @@ final class WorkerInstance implements WorkerInstanceInterface
      */
     private static $workCounts = [];
 
-    /**
-     * @param LoggerInterface&ResettableInterface $logger
-     */
     public function __construct(
         FlowConfig $flowConfig,
         int $instanceId,
         WorkerInterface $worker,
         ?BeanstalkClient $beanstalkClient,
-        $logger,
+        LoggerResettableInterface $logger,
         ?ElasticSearch $elasticSearch,
         WorkerQueueManagerInterface $queueManager = null
     ) {
