@@ -15,7 +15,7 @@ class JobTest extends TestCase
      */
     private $originalTimezone;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -78,7 +78,7 @@ class JobTest extends TestCase
         $job->addEvent(new DummyJobEvent(new \DateTime('2019-10-29 19:39:00')));
     }
 
-    protected function tearDown()
+    protected function tearDown(): void
     {
         date_default_timezone_set($this->originalTimezone);
 

@@ -4,3 +4,5 @@
 /.env
 esb.yml
 .idea
+
+.phpunit.result.cache

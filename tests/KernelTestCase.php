@@ -31,7 +31,7 @@ class KernelTestCase extends BeanstalkTestCase
     /**
      * @throws \Throwable
      */
-    public function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
         filesystem(new BlockingDriver());
@@ -39,7 +39,7 @@ class KernelTestCase extends BeanstalkTestCase
         $this->elasticSearchReset();
     }
 
-    protected function tearDown()
+    protected function tearDown(): void
     {
         parent::tearDown();
         self::$kernel = null;

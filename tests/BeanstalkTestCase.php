@@ -2,17 +2,17 @@
 
 namespace Webgriffe\Esb;
 
-use PHPUnit\Framework\TestCase;
+use Amp\PHPUnit\AsyncTestCase;
 use Pheanstalk\Pheanstalk;
 
-class BeanstalkTestCase extends TestCase
+class BeanstalkTestCase extends AsyncTestCase
 {
     /**
      * @var Pheanstalk
      */
     protected $pheanstalk;
 
-    public function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
         $this->pheanstalk = $this->getPheanstalk();

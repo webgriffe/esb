@@ -28,7 +28,7 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
 
     private const FLOW_CODE = 'http_producer_flow';
 
-    public function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
         $this->workerFile = vfsStream::url('root/worker.data');
@@ -59,7 +59,7 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
             $request = (new Request("http://127.0.0.1:{$this->httpPort}/dummy", 'POST'))->withBody($payload);
             /** @var Response $response */
             $response = yield $client->request($request);
-            $this->assertContains('"Successfully scheduled 3 job(s) to be queued."', yield $response->getBody());
+            $this->assertStringContainsString('"Successfully scheduled 3 job(s) to be queued."', yield $response->getBody());
         });
         $this->stopWhen(function () {
             return (yield exists($this->workerFile)) && count($this->getFileLines($this->workerFile)) === 3;
@@ -69,9 +69,9 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
 
         $workerFileLines = $this->getFileLines($this->workerFile);
         $this->assertCount(3, $workerFileLines);
-        $this->assertContains('job1', $workerFileLines[0]);
-        $this->assertContains('job2', $workerFileLines[1]);
-        $this->assertContains('job3', $workerFileLines[2]);
+        $this->assertStringContainsString('job1', $workerFileLines[0]);
+        $this->assertStringContainsString('job2', $workerFileLines[1]);
+        $this->assertStringContainsString('job3', $workerFileLines[2]);
         $this->logHandler()->hasRecordThatMatches(
             '/Successfully produced a new Job .*? "payload_data":["job1"]/',
             Logger::INFO
@@ -104,7 +104,7 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
 
         self::$kernel->boot();
 
-        $this->assertFileNotExists($this->workerFile);
+        $this->assertFileDoesNotExist($this->workerFile);
         $this->assertReadyJobsCountInTube(0, self::FLOW_CODE);
     }
 

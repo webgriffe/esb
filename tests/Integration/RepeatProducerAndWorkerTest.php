@@ -93,8 +93,8 @@ class RepeatProducerAndWorkerTest extends KernelTestCase
         self::$kernel->boot();
 
         $workerFileLines = $this->getFileLines($workerFile);
-        $this->assertContains('job1', $workerFileLines[0]);
-        $this->assertContains('job2', $workerFileLines[1]);
+        $this->assertStringContainsString('job1', $workerFileLines[0]);
+        $this->assertStringContainsString('job2', $workerFileLines[1]);
         $this->assertReadyJobsCountInTube(0, self::FLOW_CODE);
     }
 
