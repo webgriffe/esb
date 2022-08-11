@@ -60,9 +60,9 @@
         "symplify/easy-coding-standard": "^11.1"
     },
     "scripts": {
-        "phpcs": "phpcs",
-        "phpstan": "phpstan analyse --no-progress -l 6 -c phpstan.neon src tests",
-        "phpunit": "phpunit",
-        "tests": ["@phpcs", "@phpstan", "@phpunit"]
+        "ecs": "vendor/bin/ecs",
+        "phpstan": "vendor/bin/phpstan analyse --no-progress -l max -c phpstan.neon src/",
+        "phpunit": "vendor/bin/phpunit",
+        "tests": ["@ecs", "@phpstan", "@phpunit"]
     }
 }
