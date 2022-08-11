@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Webgriffe\Esb\Console\Pager;
 
+use function Amp\call;
 use Amp\Promise;
 use Pagerfanta\Exception\LessThan1CurrentPageException;
 use Pagerfanta\Exception\LessThan1MaxPerPageException;
@@ -12,7 +13,6 @@ use Pagerfanta\Exception\NotValidMaxPerPageException;
 use Pagerfanta\Exception\OutOfRangeCurrentPageException;
 use Pagerfanta\PagerfantaInterface;
 use Webmozart\Assert\Assert;
-use function Amp\call;
 
 /**
  * @internal

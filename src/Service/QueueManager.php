@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Webgriffe\Esb\Service;
 
 use Amp\Beanstalk\BeanstalkClient;
+use function Amp\call;
 use Amp\Promise;
 use Psr\Log\LoggerInterface;
 use Webgriffe\Esb\Exception\ElasticSearch\JobNotFoundException;
@@ -12,7 +13,6 @@ use Webgriffe\Esb\Exception\FatalQueueException;
 use Webgriffe\Esb\Model\FlowConfig;
 use Webgriffe\Esb\Model\Job;
 use Webgriffe\Esb\Model\JobInterface;
-use function Amp\call;
 
 final class QueueManager implements ProducerQueueManagerInterface, WorkerQueueManagerInterface
 {

@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Webgriffe\Esb\Console\Controller;
 
+use function Amp\call;
 use Amp\Http\Server\Request;
 use Amp\Http\Server\Response;
 use Amp\Http\Status;
 use Amp\Promise;
 use Webgriffe\AmpElasticsearch\Error as AmpElasticsearchError;
-use function Amp\call;
 
 /**
  * @internal
