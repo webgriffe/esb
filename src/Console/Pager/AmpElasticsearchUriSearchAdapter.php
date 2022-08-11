@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Webgriffe\Esb\Console\Pager;
 
+use function Amp\call;
 use Amp\Promise;
 use Amp\Success;
 use Webgriffe\AmpElasticsearch\Client;
 use Webgriffe\AmpElasticsearch\Error as AmpElasticsearchError;
-use function Amp\call;
 
 final class AmpElasticsearchUriSearchAdapter implements AsyncPagerAdapterInterface
 {

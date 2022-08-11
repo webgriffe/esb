@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Webgriffe\Esb\Worker;
 
+use function Amp\call;
 use Amp\Promise;
 use Amp\Success;
 use Webgriffe\AmpElasticsearch\Client;
 use Webgriffe\Esb\Model\JobInterface;
 use Webgriffe\Esb\WorkerInterface;
-use function Amp\call;
 
 class CleanOldJobs implements WorkerInterface
 {

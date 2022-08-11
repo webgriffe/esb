@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Webgriffe\Esb\Service;
 
+use function Amp\call;
 use Amp\Loop;
 use Amp\Promise;
 use Cron\CronExpression;
@@ -11,7 +12,6 @@ use Psr\Log\LoggerInterface;
 use Webgriffe\Esb\CrontabProducerInterface;
 use Webgriffe\Esb\DateTimeBuilderInterface;
 use Webgriffe\Esb\ProducerInstance;
-use function Amp\call;
 
 /**
  * @internal

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Webgriffe\Esb;
 
 use Amp\Beanstalk\BeanstalkClient;
+use function Amp\call;
 use Amp\Loop;
 use Amp\Promise;
 use Psr\Log\LoggerInterface;
@@ -16,7 +17,6 @@ use Webgriffe\Esb\Service\ElasticSearch;
 use Webgriffe\Esb\Service\HttpProducersServer;
 use Webgriffe\Esb\Service\ProducerQueueManagerInterface;
 use Webgriffe\Esb\Service\QueueManager;
-use function Amp\call;
 
 final class ProducerInstance implements ProducerInstanceInterface
 {

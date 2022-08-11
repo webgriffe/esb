@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Webgriffe\Esb\Console\Controller;
 
 use Amp\Beanstalk\BeanstalkClient;
+use function Amp\call;
 use Amp\Http\Server\Request;
 use Amp\Http\Server\Response;
 use Amp\Promise;
@@ -14,7 +15,6 @@ use Webgriffe\Esb\FlowManager;
 use Webgriffe\Esb\Model\RequeuedJobEvent;
 use Webgriffe\Esb\NonUtf8Cleaner;
 use Webgriffe\Esb\Service\ElasticSearch;
-use function Amp\call;
 
 /**
  * @internal
