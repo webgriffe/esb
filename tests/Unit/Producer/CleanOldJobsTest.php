@@ -19,7 +19,7 @@ class CleanOldJobsTest extends TestCase
      */
     private $producer;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->producer = new CleanOldJobs(self::CRONTAB_EXPRESSION);
     }

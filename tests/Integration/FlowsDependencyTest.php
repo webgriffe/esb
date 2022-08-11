@@ -100,18 +100,18 @@ class FlowsDependencyTest extends KernelTestCase
         $workerFileLines = $this->getFileLines($workerFile1);
         $this->assertCount(1, $workerFileLines);
         $worker1Line = $workerFileLines[0];
-        $this->assertContains('job1', $worker1Line);
+        $this->assertStringContainsString('job1', $worker1Line);
         $timestamp1 = $this->getLogLineTimestamp($worker1Line);
 
         $this->assertReadyJobsCountInTube(0, self::FLOW2_CODE);
         $workerFileLines = $this->getFileLines($workerFile2);
         $this->assertCount(1, $workerFileLines);
         $worker2Line = $workerFileLines[0];
-        $this->assertContains('job2', $worker2Line);
+        $this->assertStringContainsString('job2', $worker2Line);
         $timestamp2 = $this->getLogLineTimestamp($worker2Line);
 
         $this->assertReadyJobsCountInTube(0, self::FLOW3_CODE);
-        $this->assertFileNotExists($workerFile3);
+        $this->assertFileDoesNotExist($workerFile3);
 
         //This is hard to read, but it checks that $timestamp1 >= $timestamp2
         $this->assertGreaterThanOrEqual(
@@ -208,21 +208,21 @@ class FlowsDependencyTest extends KernelTestCase
         $workerFileLines = $this->getFileLines($workerFile1);
         $this->assertCount(1, $workerFileLines);
         $worker1Line = $workerFileLines[0];
-        $this->assertContains('job1', $worker1Line);
+        $this->assertStringContainsString('job1', $worker1Line);
         $timestamp1 = $this->getLogLineTimestamp($worker1Line);
 
         $this->assertReadyJobsCountInTube(0, self::FLOW2_CODE);
         $workerFileLines = $this->getFileLines($workerFile2);
         $this->assertCount(1, $workerFileLines);
         $worker2Line = $workerFileLines[0];
-        $this->assertContains('job2', $worker2Line);
+        $this->assertStringContainsString('job2', $worker2Line);
         $timestamp2 = $this->getLogLineTimestamp($worker2Line);
 
         $this->assertReadyJobsCountInTube(0, self::FLOW3_CODE);
         $workerFileLines = $this->getFileLines($workerFile3);
         $this->assertCount(1, $workerFileLines);
         $worker3Line = $workerFileLines[0];
-        $this->assertContains('job3', $worker3Line);
+        $this->assertStringContainsString('job3', $worker3Line);
         $timestamp3 = $this->getLogLineTimestamp($worker3Line);
 
         //Checks that $timestamp1 >= $timestamp2
