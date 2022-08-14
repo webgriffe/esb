@@ -1,0 +1,91 @@
+name: Continuous Integration
+
+on:
+  push: ~
+  pull_request: ~
+  schedule:
+    -
+      cron: "0 1 * * 6" # Run at 1am every Saturday
+  workflow_dispatch: ~
+
+jobs:
+  tests:
+    name: "PHP ${{ matrix.php }}"
+
+    runs-on: ubuntu-22.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        php: [7.2, 7.3, 7.4]
+
+    env:
+      ESB_CONSOLE_PORT: 8080
+      ESB_HTTP_SERVER_PORT: 34981
+      ESB_BEANSTALKD_URL: tcp://127.0.0.1:11300
+      ES_BASE_URI: http://127.0.0.1:9200
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Configure sysctl limits
+        run: |
+          sudo swapoff -a
+          sudo sysctl -w vm.swappiness=1
+          sudo sysctl -w fs.file-max=262144
+          sudo sysctl -w vm.max_map_count=262144
+
+      - name: Run Elasticsearch
+        uses: elastic/elastic-github-actions/elasticsearch@master
+        with:
+          stack-version: 7.4.1
+
+      - name: Run Beanstalk
+        run: sudo apt-get update && sudo apt-get install beanstalkd
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "${{ matrix.php }}"
+          tools: "composer, composer-require-checker"
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "::set-output name=dir::$(composer config cache-files-dir)"
+
+      - name: Cache Composer
+        uses: actions/cache@v2
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-php-${{ matrix.php }}-composer-${{ hashFiles('**/composer.json **/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-php-${{ matrix.php }}-composer-
+
+      - name: Install dependencies
+        run: composer install --no-interaction
+
+      - name: Composer Require Checker
+        run: composer-require-checker
+
+      - name: Run Easy Coding Standard
+        run: vendor/bin/ecs check
+
+      - name: Run PHPStan
+        run: vendor/bin/phpstan analyse --no-progress -l 6 -c phpstan.neon src tests
+
+      - name: PHPUnit tests
+        run: vendor/bin/phpunit tests
+
+      - name: Upload Elasticsearch logs
+        if: ${{ failure() }}
+        run: sudo bash ./upload-textfiles "/var/log/elasticsearch/*.log"
+
+  roave_bc_check:
+    name: Roave BC Check
+
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Roave BC Check
+        uses: docker://nyholm/roave-bc-check-ga
