@@ -6,10 +6,10 @@ namespace Webgriffe\Esb\Service;
 
 use function Amp\call;
 use Amp\CallableMaker;
+use Amp\Http\Server\HttpServer;
 use Amp\Http\Server\Request;
 use Amp\Http\Server\RequestHandler\CallableRequestHandler;
 use Amp\Http\Server\Response;
-use Amp\Http\Server\Server;
 use Amp\Http\Status;
 use Amp\Promise;
 use Amp\Socket;
@@ -38,7 +38,7 @@ class HttpProducersServer
      */
     private $producerInstances = [];
     /**
-     * @var Server|null
+     * @var HttpServer|null
      */
     private $httpServer;
 
@@ -59,7 +59,7 @@ class HttpProducersServer
                 Socket\listen("[::]:{$this->port}"),
             ];
 
-            $this->httpServer = new \Amp\Http\Server\Server(
+            $this->httpServer = new HttpServer(
                 $sockets,
                 new CallableRequestHandler($this->callableFromInstanceMethod('requestHandler')),
                 new NullLogger()
@@ -78,7 +78,7 @@ class HttpProducersServer
             return false;
         }
         $state = $this->httpServer->getState();
-        return $state === Server::STARTING || $state === Server::STARTED;
+        return $state === HttpServer::STARTING || $state === HttpServer::STARTED;
     }
 
     public function addProducerInstance(ProducerInstance $producerInstance): void

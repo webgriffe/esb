@@ -6,6 +6,7 @@ namespace Webgriffe\Esb\Console;
 
 use Amp\CallableMaker;
 use Amp\File;
+use Amp\Http\Server\HttpServer;
 use Amp\Http\Server\Request;
 use Amp\Http\Server\RequestHandler\CallableRequestHandler;
 use Amp\Http\Server\Response;
@@ -64,7 +65,7 @@ class Server implements ContainerAwareInterface
                 Socket\listen("[::]:$port"),
             ];
 
-            $server = new \Amp\Http\Server\Server(
+            $server = new HttpServer(
                 $sockets,
                 new CallableRequestHandler($this->callableFromInstanceMethod('requestHandler')),
                 $this->logger
