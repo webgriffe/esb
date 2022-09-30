@@ -196,8 +196,7 @@ final class QueueManager implements ProducerQueueManagerInterface, WorkerQueueMa
     {
         return call(function () use ($queueName) {
             $tubeStats = yield $this->beanstalkClient->getTubeStats($queueName);
-            return
-                ($tubeStats->currentJobsReady + $tubeStats->currentJobsReserved + $tubeStats->currentJobsDelayed) === 0;
+            return ($tubeStats->currentJobsReady + $tubeStats->currentJobsReserved + $tubeStats->currentJobsDelayed) === 0;
         });
     }
 

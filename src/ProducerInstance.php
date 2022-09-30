@@ -135,12 +135,12 @@ final class ProducerInstance implements ProducerInstanceInterface
                         Loop::enable($watcherId);
                     }
                 );
-            } elseif ($this->producer instanceof  HttpRequestProducerInterface) {
+            } elseif ($this->producer instanceof HttpRequestProducerInterface) {
                 if (!$this->httpProducersServer->isStarted()) {
                     yield $this->httpProducersServer->start();
                 }
                 $this->httpProducersServer->addProducerInstance($this);
-            } elseif ($this->producer instanceof  CrontabProducerInterface) {
+            } elseif ($this->producer instanceof CrontabProducerInterface) {
                 $this->cronProducersServer->addProducerInstance($this);
                 if (!$this->cronProducersServer->isStarted()) {
                     yield $this->cronProducersServer->start();
