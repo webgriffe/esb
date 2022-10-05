@@ -3,8 +3,6 @@ declare(strict_types=1);
 
 namespace Webgriffe\Esb;
 
-use Amp\Artax\Response;
-use Amp\Artax\SocketException;
 use Webgriffe\AmpElasticsearch\Client;
 use Amp\File\BlockingDriver;
 use Amp\Loop;
