@@ -3,8 +3,8 @@ declare(strict_types=1);
 
 namespace Webgriffe\Esb;
 
+use Amp\File\Driver\BlockingDriver;
 use Webgriffe\AmpElasticsearch\Client;
-use Amp\File\BlockingDriver;
 use Amp\Loop;
 use Amp\Promise;
 use Monolog\Handler\TestHandler;

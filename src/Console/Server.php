@@ -97,8 +97,8 @@ class Server implements ContainerAwareInterface
         $httpMethod = $request->getMethod();
         $uri = $request->getUri()->getPath();
         $filePath = $this->publicDir . DIRECTORY_SEPARATOR . ltrim($uri, '/');
-        if ((yield File\exists($filePath)) && (yield File\isfile($filePath))) {
-            return new Response(Status::OK, [], yield File\get($filePath));
+        if ((yield File\exists($filePath)) && (yield File\isFile($filePath))) {
+            return new Response(Status::OK, [], yield File\read($filePath));
         }
 
         $dispatcher = $this->getDispatcher($request);
