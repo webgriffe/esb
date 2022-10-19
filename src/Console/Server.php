@@ -115,7 +115,7 @@ class Server implements ContainerAwareInterface
                 break;
             case Dispatcher::FOUND:
                 $handler = $routeInfo[1];
-                $vars = $routeInfo[2];
+                $vars = array_values($routeInfo[2]);
                 array_unshift($vars, $request);
                 /** @var Response $response */
                 $response = yield \call_user_func_array($handler, $vars);
