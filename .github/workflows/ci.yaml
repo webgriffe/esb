@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php: [7.3, 7.4, 8.0]
+        php: [7.1, 7.2, 7.3, 7.4]
 
     env:
       ESB_CONSOLE_PORT: 8080
@@ -61,21 +61,8 @@ jobs:
       - name: Composer Require Checker
         run: composer-require-checker
 
-      - name: Run Easy Coding Standard
-        run: vendor/bin/ecs check
-
       - name: Run PHPStan
         run: vendor/bin/phpstan analyse --no-progress -l max -c phpstan.neon src/
 
       - name: PHPUnit tests
         run: vendor/bin/phpunit tests
-
-  roave_bc_check:
-    name: Roave BC Check
-
-    runs-on: ubuntu-22.04
-
-    steps:
-      - uses: actions/checkout@v2
-      - name: Roave BC Check
-        uses: docker://nyholm/roave-bc-check-ga
