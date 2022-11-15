@@ -58,8 +58,5 @@ jobs:
       - name: Install dependencies
         run: composer install --no-interaction
 
-      - name: Composer Require Checker
-        run: composer-require-checker
-
       - name: PHPUnit tests
         run: vendor/bin/phpunit tests
