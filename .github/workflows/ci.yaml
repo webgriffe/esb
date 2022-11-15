@@ -61,8 +61,5 @@ jobs:
       - name: Composer Require Checker
         run: composer-require-checker
 
-      - name: Run PHPStan
-        run: vendor/bin/phpstan analyse --no-progress -l max -c phpstan.neon src/
-
       - name: PHPUnit tests
         run: vendor/bin/phpunit tests
