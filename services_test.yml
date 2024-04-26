@@ -1,6 +1,7 @@
 parameters:
   beanstalkd: '%env(string:ESB_BEANSTALKD_URL)%'
   http_server_port: '%env(int:ESB_HTTP_SERVER_PORT)%'
+  http_server_max_body_size: '%env(ESB_HTTP_SERVER_MAX_BODY_SIZE)%'
   logger_mail_to: "toemail@address.com"
   logger_mail_from: "From Name <fromemail@address.com>"
   console_port: '%env(int:ESB_CONSOLE_PORT)%'

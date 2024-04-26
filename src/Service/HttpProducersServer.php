@@ -7,6 +7,7 @@ namespace Webgriffe\Esb\Service;
 use function Amp\call;
 use Amp\CallableMaker;
 use Amp\Http\Server\HttpServer;
+use Amp\Http\Server\Options;
 use Amp\Http\Server\Request;
 use Amp\Http\Server\RequestHandler\CallableRequestHandler;
 use Amp\Http\Server\Response;
@@ -42,10 +43,16 @@ class HttpProducersServer
      */
     private $httpServer;
 
-    public function __construct(int $port, LoggerInterface $logger)
+    /**
+     * @var int
+     */
+    private $maxBodySize;
+
+    public function __construct(int $port, LoggerInterface $logger, int $maxBodySize)
     {
         $this->port = $port;
         $this->logger = $logger;
+        $this->maxBodySize = $maxBodySize;
     }
 
     /**
@@ -59,10 +66,14 @@ class HttpProducersServer
                 Socket\listen("[::]:{$this->port}"),
             ];
 
+            $options = new Options();
+            $options->withBodySizeLimit($this->maxBodySize);
+
             $this->httpServer = new HttpServer(
                 $sockets,
                 new CallableRequestHandler($this->callableFromInstanceMethod('requestHandler')),
-                new NullLogger()
+                new NullLogger(),
+                $options
             );
 
             yield $this->httpServer->start();
