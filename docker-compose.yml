@@ -29,7 +29,7 @@ services:
       - "${MAILHOG_WEB_PORT_HOST}:8025"
 
   elasticsearch:
-    image: "docker.elastic.co/elasticsearch/elasticsearch-oss:7.4.0"
+    image: "docker.elastic.co/elasticsearch/elasticsearch-oss:7.8.0"
     env_file:
       - .env
     environment:

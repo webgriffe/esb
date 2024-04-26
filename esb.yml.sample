@@ -1,13 +1,14 @@
 parameters:
-  beanstalkd: tcp://127.0.0.1:11300                         # Beanstalkd connection URI
-  http_server_port: 34981                                   # HTTP Server Port
-  logger_mail_to: toemail@address.com                       # Email address where to send significant events mail notifications
-  logger_mail_from: "From Name <fromemail@address.com>"     # From name/address for significant events mail notifications
-  console_port: 8080                                        # Web console port
-  console_username: admin                                   # Web console username
-  console_password: password                                # Web console password
-  console_log_file: /tmp/esb_console.log                    # Web console server log file
-  elasticsearch_base_uri: '%env(string:ES_BASE_URI)%'       # ElasticSearch base URI (i.e. http://elasticsearch:9200)
+  beanstalkd: tcp://127.0.0.1:11300                                                # Beanstalkd connection URI
+  http_server_port: 34981                                                          # HTTP Server Port
+  http_server_max_body_size: '%env(default::int:ESB_HTTP_SERVER_MAX_BODY_SIZE)%'   # HTTP Server max body size
+  logger_mail_to: toemail@address.com                                              # Email address where to send significant events mail notifications
+  logger_mail_from: "From Name <fromemail@address.com>"                            # From name/address for significant events mail notifications
+  console_port: 8080                                                               # Web console port
+  console_username: admin                                                          # Web console username
+  console_password: password                                                       # Web console password
+  console_log_file: /tmp/esb_console.log                                           # Web console server log file
+  elasticsearch_base_uri: '%env(string:ES_BASE_URI)%'                              # ElasticSearch base URI (i.e. http://elasticsearch:9200)
 
 services:
   _defaults:

@@ -20,17 +20,17 @@ services:
 
   Monolog\Handler\StreamHandler:
     class: \Monolog\Handler\StreamHandler
-    arguments: [ 'php://stdout', !php/const:Monolog\Logger::DEBUG ]
+    arguments: [ 'php://stdout', !php/const Monolog\Logger::DEBUG ]
 
   Monolog\Handler\ErrorLogHandler:
     class: \Monolog\Handler\ErrorLogHandler
-    arguments: [ !php/const:Monolog\Handler\ErrorLogHandler::OPERATING_SYSTEM, !php/const:Monolog\Logger::ERROR ]
+    arguments: [ !php/const Monolog\Handler\ErrorLogHandler::OPERATING_SYSTEM, !php/const Monolog\Logger::ERROR ]
 
   Monolog\Formatter\HtmlFormatter: {}
 
   Monolog\Handler\NativeMailerHandler:
     class: \Monolog\Handler\NativeMailerHandler
-    arguments: [ '%logger_mail_to%', 'Significant event from ESB', '%logger_mail_from%', !php/const:Monolog\Logger::WARNING ]
+    arguments: [ '%logger_mail_to%', 'Significant event from ESB', '%logger_mail_from%', !php/const Monolog\Logger::WARNING ]
     calls:
       - method: setFormatter
         arguments:
@@ -76,6 +76,7 @@ services:
       $classMetadataFactory: '@serializer.class_metadata_factory'
       $propertyTypeExtractor: '@serializer.object_normalizer.reflection_extractor'
   serializer:
+    public: true
     class: \Symfony\Component\Serializer\Serializer
     arguments:
       - ['@serializer.array_denormalizer', '@serializer.date_time_normalizer', '@serializer.object_normalizer']
@@ -85,5 +86,6 @@ services:
   Symfony\Component\Serializer\Normalizer\DenormalizerInterface: '@serializer'
 
   Webgriffe\Esb\Service\ElasticSearch:
+    public: true
     arguments:
       $normalizer: '@serializer'

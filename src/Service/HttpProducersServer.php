@@ -44,11 +44,11 @@ class HttpProducersServer
     private $httpServer;
 
     /**
-     * @var int
+     * @var int|null
      */
     private $maxBodySize;
 
-    public function __construct(int $port, LoggerInterface $logger, int $maxBodySize)
+    public function __construct(int $port, LoggerInterface $logger, ?int $maxBodySize)
     {
         $this->port = $port;
         $this->logger = $logger;
@@ -66,8 +66,11 @@ class HttpProducersServer
                 Socket\listen("[::]:{$this->port}"),
             ];
 
-            $options = new Options();
-            $options->withBodySizeLimit($this->maxBodySize);
+            $options = null;
+            if ($this->maxBodySize !== null) {
+                $options = new Options();
+                $options->withBodySizeLimit($this->maxBodySize);
+            }
 
             $this->httpServer = new HttpServer(
                 $sockets,
