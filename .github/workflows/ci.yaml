@@ -83,7 +83,7 @@ jobs:
         run: sudo bash ./upload-textfiles "/var/log/elasticsearch/*.log"
 
       - name: Install roave/backward-compatibility-check.
-        run: composer require -W --dev roave/backward-compatibility-check
+        run: composer require -W --dev roave/backward-compatibility-check --no-plugins
 
       - name: Run roave/backward-compatibility-check.
         run: vendor/bin/roave-backward-compatibility-check --format=github-actions
