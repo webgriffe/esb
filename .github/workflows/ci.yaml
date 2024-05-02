@@ -28,6 +28,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0 # This is needed for Roave BC check
 
       - name: Configure sysctl limits
         run: |
@@ -81,12 +83,8 @@ jobs:
         if: ${{ failure() }}
         run: sudo bash ./upload-textfiles "/var/log/elasticsearch/*.log"
 
-  roave_bc_check:
-    name: Roave BC Check
+      - name: Install roave/backward-compatibility-check.
+        run: composer require --dev roave/backward-compatibility-check
 
-    runs-on: ubuntu-22.04
-
-    steps:
-      - uses: actions/checkout@v2
-      - name: Roave BC Check
-        uses: docker://nyholm/roave-bc-check-ga
+      - name: Run roave/backward-compatibility-check.
+        run: vendor/bin/roave-backward-compatibility-check --format=github-actions
