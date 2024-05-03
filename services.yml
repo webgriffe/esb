@@ -16,7 +16,7 @@ services:
     arguments:
       $port: '%http_server_port%'
       $logger: '@Psr\Log\LoggerInterface'
-      $maxBodySize: '%http_server_max_body_size%'
+      $maxBodySize: '%env(default::int:ESB_HTTP_SERVER_MAX_BODY_SIZE)%'
 
   Monolog\Handler\StreamHandler:
     class: \Monolog\Handler\StreamHandler
