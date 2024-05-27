@@ -84,7 +84,10 @@ jobs:
         run: sudo bash ./upload-textfiles "/var/log/elasticsearch/*.log"
 
       - name: Install roave/backward-compatibility-check.
-        run: composer require -W --dev roave/backward-compatibility-check --no-plugins
+        run: |
+          # Install BC check tool in separate directory to avoid dependency conflicts 
+          mkdir -p test-tools/bc-check
+          composer require --working-dir="test-tools/bc-check" roave/backward-compatibility-check --no-plugins
 
       - name: Run roave/backward-compatibility-check.
-        run: vendor/bin/roave-backward-compatibility-check --format=github-actions
+        run: test-tools/bc-check/vendor/bin/roave-backward-compatibility-check --format=github-actions
