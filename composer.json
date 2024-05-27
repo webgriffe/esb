@@ -33,7 +33,7 @@
         "symfony/property-info": "^4.3",
         "doctrine/annotations": "^1.8",
         "ramsey/uuid": "^3.8",
-        "webgriffe/amp-elasticsearch": "^2.1",
+        "webgriffe/amp-elasticsearch": "dev-php-8.3-support#6b26a581fc99c6aba5b06fc2eabfe2dec98578c9 as 2.1",
         "pagerfanta/pagerfanta": "^2.4",
         "symfony/deprecation-contracts": "^2.1",
         "amphp/http-server-form-parser": "^1.1"
@@ -68,5 +68,11 @@
         "phpstan": "vendor/bin/phpstan analyse --no-progress -l max -c phpstan.neon src/",
         "phpunit": "vendor/bin/phpunit",
         "tests": ["@ecs", "@phpstan", "@phpunit"]
+    },
+    "repositories": {
+        "amp-elasticsearch-from-src": {
+            "type": "vcs",
+            "url": "git@github.com:youwe-petervanderwal/amp-elasticsearch.git"
+        }
     }
 }
