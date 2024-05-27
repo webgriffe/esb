@@ -38,6 +38,9 @@
         "symfony/deprecation-contracts": "^2.1",
         "amphp/http-server-form-parser": "^1.1"
     },
+    "suggest": {
+        "ext-mbstring": "*"
+    },
     "autoload": {
         "psr-4": {
             "Webgriffe\\Esb\\": ["src/"]
