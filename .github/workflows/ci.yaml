@@ -68,7 +68,7 @@ jobs:
         run: composer install --no-interaction
 
       - name: Composer Require Checker
-        run: composer-require-checker
+        run: composer-require-checker --config-file=composer-require-checker.json
 
       - name: Run Easy Coding Standard
         run: vendor/bin/ecs check
