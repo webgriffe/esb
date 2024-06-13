@@ -39,8 +39,12 @@ services:
         arguments:
           - 'text/html'
 
-  Psr\Log\LoggerInterface:
-    class: \Monolog\Logger
+  Psr\Log\LoggerInterface: '@webgriffe_esb_logger'
+
+  Webgriffe\Esb\LoggerResettableInterface: '@webgriffe_esb_logger'
+
+  webgriffe_esb_logger:
+    class: \Webgriffe\Esb\Logger\LoggerResettable
     arguments: [ 'esb', ['@Monolog\Handler\StreamHandler', '@Monolog\Handler\ErrorLogHandler', '@Monolog\Handler\NativeMailerHandler'] ]
     public: true
 
