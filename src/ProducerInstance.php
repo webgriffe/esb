@@ -166,7 +166,6 @@ final class ProducerInstance implements ProducerInstanceInterface
         return call(function () use ($data) {
             $jobsCount = 0;
             $job = null;
-            $test = false;
             try {
                 $jobs = $this->producer->produce($data);
                 while (yield $jobs->advance()) {
@@ -192,7 +191,6 @@ final class ProducerInstance implements ProducerInstanceInterface
                         'producer' => \get_class($this->producer),
                         'last_job_payload_data' => $job ? NonUtf8Cleaner::clean($job->getPayloadData()) : null,
                         'error' => $error->getMessage(),
-                        'test' => $test
                     ]
                 );
             }

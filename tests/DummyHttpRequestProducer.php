@@ -44,7 +44,7 @@ final class DummyHttpRequestProducer implements HttpRequestProducerInterface
                     sprintf('Expected "%s" as data for "%s"', Request::class, __CLASS__)
                 );
             }
-            $body = json_decode(yield $data->getBody()->read(), true);
+            $body = json_decode(yield $data->getBody()->buffer(), true);
             $jobsData = $body['jobs'];
             foreach ($jobsData as $jobData) {
                 yield $emit(new Job([$jobData]));
