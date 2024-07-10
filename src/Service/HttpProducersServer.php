@@ -107,40 +107,46 @@ class HttpProducersServer
      */
     private function requestHandler(Request $request)
     {
-        $producerInstance = $this->matchProducerInstance($request);
-        if (!$producerInstance) {
-            return new Response(Status::NOT_FOUND, [], 'Producer Not Found');
+        $producerInstances = $this->matchProducerInstance($request);
+
+        if (count($producerInstances) === 0) {
+            return new Response(Status::NOT_FOUND, [], 'No Producers Found');
         }
 
-        $this->logger->info(
-            'Matched an HTTP Producer for an incoming HTTP request.',
-            [
-                'producer' => \get_class($producerInstance->getProducer()),
-                'request' => sprintf('%s %s', strtoupper($request->getMethod()), $request->getUri())
-            ]
-        );
-        $jobsCount = yield $producerInstance->produceAndQueueJobs($request);
+        $jobsCount = 0;
+        foreach ($producerInstances as $producerInstance) {
+            $this->logger->info(
+                'Matched an HTTP Producer for an incoming HTTP request.',
+                [
+                    'producer' => \get_class($producerInstance->getProducer()),
+                    'request' => sprintf('%s %s', strtoupper($request->getMethod()), $request->getUri())
+                ]
+            );
+            $jobsCount += yield $producerInstance->produceAndQueueJobs($request);
+        }
+
         $responseMessage = sprintf('Successfully scheduled %s job(s) to be queued.', $jobsCount);
         return new Response(Status::OK, [], sprintf('"%s"', $responseMessage));
     }
 
     /**
      * @param Request $request
-     * @return false|ProducerInstance
+     * @return ProducerInstance[]
      */
     private function matchProducerInstance(Request $request)
     {
+        $matchingInstances = [];
         foreach ($this->producerInstances as $producerInstance) {
             $producer = $producerInstance->getProducer();
             if (!$producer instanceof HttpRequestProducerInterface) {
-                // This should never happen but maybe we should add a warning here?
+                // This should never happen, but maybe we should add a warning here?
                 continue;
             }
             if ($request->getUri()->getPath() === $producer->getAttachedRequestUri() &&
                 $producer->getAttachedRequestMethod() === $request->getMethod()) {
-                return $producerInstance;
+                $matchingInstances[] = $producerInstance;
             }
         }
-        return false;
+        return $matchingInstances;
     }
 }
