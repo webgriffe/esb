@@ -69,7 +69,7 @@ class HttpProducersServer
             $options = null;
             if ($this->maxBodySize !== null) {
                 $options = new Options();
-                $options->withBodySizeLimit($this->maxBodySize);
+                $options = $options->withBodySizeLimit($this->maxBodySize);
             }
 
             $this->httpServer = new HttpServer(
