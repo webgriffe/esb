@@ -142,11 +142,7 @@ final class QueueManager implements ProducerQueueManagerInterface, WorkerQueueMa
             } catch (\Throwable $exception) {
                 yield $this->beanstalkClient->bury($jobBeanstalkId);
 
-                throw new JobNotFoundException(
-                    sprintf('Cannot fetch job %s from ElasticSearch. Job has been buried.', $jobUuid),
-                    0,
-                    $exception
-                );
+                throw new JobNotFoundException($jobUuid, 0, $exception);
             }
 
             $this->saveJobBeanstalkId($job, $jobBeanstalkId);
