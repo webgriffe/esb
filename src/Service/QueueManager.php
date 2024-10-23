@@ -16,6 +16,9 @@ use Webgriffe\Esb\Model\JobInterface;
 
 final class QueueManager implements ProducerQueueManagerInterface, WorkerQueueManagerInterface
 {
+    private const JOB_NOT_FOUND_MAX_RETRIES = 3;
+    private const JOB_NOT_FOUND_RETRY_DELAY_SECONDS = 3;
+
     /**
      * @var BeanstalkClient
      */
@@ -51,6 +54,11 @@ final class QueueManager implements ProducerQueueManagerInterface, WorkerQueueMa
      * @var int
      */
     private $batchSize;
+
+    /**
+     * @var array<int, int>
+     */
+    private static $beanstalkIdToNotFoundCountMap = [];
 
     public function __construct(
         FlowConfig $flowConfig,
@@ -128,21 +136,38 @@ final class QueueManager implements ProducerQueueManagerInterface, WorkerQueueMa
     public function getNextJob(): Promise
     {
         return call(function () {
-            try {
-                $rawJob = yield $this->beanstalkClient->reserve();
-            } catch (\Exception $ex) {
-                throw new FatalQueueException($ex->getMessage(), $ex->getCode(), $ex);
-            }
+            while (true) {
+                try {
+                    $rawJob = yield $this->beanstalkClient->reserve();
+                } catch (\Exception $ex) {
+                    throw new FatalQueueException($ex->getMessage(), $ex->getCode(), $ex);
+                }
 
-            list($jobBeanstalkId, $jobUuid) = $rawJob;
+                list($jobBeanstalkId, $jobUuid) = $rawJob;
 
-            try {
-                /** @var Job $job */
-                $job = yield $this->elasticSearch->fetchJob($jobUuid, $this->flowConfig->getTube());
-            } catch (\Throwable $exception) {
-                yield $this->beanstalkClient->bury($jobBeanstalkId);
+                try {
+                    /** @var Job $job */
+                    $job = yield $this->elasticSearch->fetchJob($jobUuid, $this->flowConfig->getTube());
+                } catch (\Throwable $exception) {
+                    $notFoundCount = self::$beanstalkIdToNotFoundCountMap[$jobBeanstalkId] ?? 1;
+                    if ($notFoundCount <= self::JOB_NOT_FOUND_MAX_RETRIES) {
+                        self::$beanstalkIdToNotFoundCountMap[$jobBeanstalkId] = $notFoundCount + 1;
+                        $this->logger->warning(
+                            "Job with UUID {$jobUuid} not found in Elasticsearch. Retrying...",
+                            ['beanstalk_id' => $jobBeanstalkId, 'not_found_count' => $notFoundCount]
+                        );
+                        yield $this->beanstalkClient->release(
+                            $jobBeanstalkId,
+                            self::JOB_NOT_FOUND_RETRY_DELAY_SECONDS ** $notFoundCount
+                        );
+                        continue;
+                    }
+                    yield $this->beanstalkClient->bury($jobBeanstalkId);
 
-                throw new JobNotFoundException($jobUuid, 0, $exception);
+                    throw new JobNotFoundException($jobUuid, 0, $exception);
+                }
+
+                break;
             }
 
             $this->saveJobBeanstalkId($job, $jobBeanstalkId);
