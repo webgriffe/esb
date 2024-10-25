@@ -61,7 +61,7 @@ class ElasticSearch
     public function bulkIndexJobs(array $jobs, string $indexName): Amp\Promise
     {
         return Amp\call(function () use ($jobs, $indexName) {
-            yield from $this->doBulkIndexJobs($jobs, $indexName);
+            return yield from $this->doBulkIndexJobs($jobs, $indexName);
         });
     }
 
@@ -144,7 +144,7 @@ class ElasticSearch
             $body[] = ['index' => ['_id' => $job->getUuid()]];
             $body[] = (array)$this->normalizer->normalize($job, 'json');
         }
-        yield $this->client->bulk($body, $indexName);
+        return yield $this->client->bulk($body, $indexName);
     }
 
     /**
