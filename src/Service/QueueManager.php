@@ -218,9 +218,30 @@ final class QueueManager implements ProducerQueueManagerInterface, WorkerQueueMa
     private function processBatch(): \Generator
     {
         $this->logger->debug('Processing batch');
-        yield $this->elasticSearch->bulkIndexJobs($this->batch, $this->flowConfig->getTube());
+        $result = yield $this->elasticSearch->bulkIndexJobs($this->batch, $this->flowConfig->getTube());
+        $successfullyIndexedJobs = $this->batch;
+        $notIndexedJobs = [];
 
-        foreach ($this->batch as $singleJob) {
+        if ($result['errors'] === true) {
+            $successfullyIndexedJobs = array_filter($this->batch, function ($job) use ($result) {
+                return $result['items'][$job->getUuid()]['index']['status'] === 201;
+            });
+
+            $notIndexedJobs = array_filter($this->batch, function ($job) use ($result) {
+                return $result['items'][$job->getUuid()]['index']['status'] !== 201;
+            });
+        }
+
+        foreach ($notIndexedJobs as $singleJob) {
+            $this->logger->error(
+                sprintf(
+                    'Job with UUID "%s" could not be indexed in ElasticSearch',
+                    $singleJob->getUuid()
+                )
+            );
+        }
+
+        foreach ($successfullyIndexedJobs as $singleJob) {
             yield $this->beanstalkClient->put(
                 $singleJob->getUuid(),
                 $singleJob->getTimeout(),
