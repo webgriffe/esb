@@ -30,6 +30,11 @@ services:
 flows:
   sample_flow:                          # The flow "code" and will be the Beanstalkd tube name
     description: Sample Flow            # The flow description
+    es_index:                           # Optional: the create/update ElasticSearch index API body (see https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-create-index.html). This is useful if you want to control index mapping, settings and aliases.
+        settings:                       # For example you can set the total_fields limit to an higher (or lower) value:
+            index:
+                total_fields:
+                    limit: 2000
     producer:
       service: My\Esb\Producer          # A producer service ID defined above
       batch_size: 1200                  # Jobs are produced in batches of 1200 jobs. Optional: default is 1000

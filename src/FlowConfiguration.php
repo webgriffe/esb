@@ -24,6 +24,7 @@ final class FlowConfiguration implements ConfigurationInterface
             ->arrayPrototype()
                 ->children()
                     ->scalarNode('description')->isRequired()->cannotBeEmpty()->end()
+                    ->variableNode('es_index')->defaultNull()->end()
                     ->arrayNode('producer')
                         ->children()
                             ->scalarNode('service')->isRequired()->end()

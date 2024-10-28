@@ -72,6 +72,19 @@ final class QueueManager implements ProducerQueueManagerInterface, WorkerQueueMa
     public function boot(): Promise
     {
         return call(function () {
+            if ($this->flowConfig->getElasticSearchIndexCreateOrUpdateBody() !== null) {
+                yield $this->elasticSearch->setElasticSearchIndex(
+                    $this->flowConfig->getTube(),
+                    $this->flowConfig->getElasticSearchIndexCreateOrUpdateBody()
+                );
+                $this->logger->debug(
+                    'Successfully set ElasticSearch index',
+                    [
+                        'index' => $this->flowConfig->getTube(),
+                        'body' => $this->flowConfig->getElasticSearchIndexCreateOrUpdateBody()
+                    ]
+                );
+            }
             //Producer
             yield $this->beanstalkClient->use($this->flowConfig->getTube());
 
