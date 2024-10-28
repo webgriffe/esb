@@ -219,29 +219,29 @@ final class QueueManager implements ProducerQueueManagerInterface, WorkerQueueMa
     {
         $this->logger->debug('Processing batch');
         $result = yield $this->elasticSearch->bulkIndexJobs($this->batch, $this->flowConfig->getTube());
-        $successfullyIndexedJobs = $this->batch;
-        $notIndexedJobs = [];
 
         if ($result['errors'] === true) {
-            $successfullyIndexedJobs = array_filter($this->batch, function ($job) use ($result) {
-                return $result['items'][$job->getUuid()]['index']['status'] === 201;
-            });
-
-            $notIndexedJobs = array_filter($this->batch, function ($job) use ($result) {
-                return $result['items'][$job->getUuid()]['index']['status'] !== 201;
-            });
+            foreach ($result['items'] as $item) {
+                if (!array_key_exists('index', $item)) {
+                    $this->logger->error(
+                        'Unexpected response item in bulk index response',
+                        ['bulk_index_response_item' => $item]
+                    );
+                    continue;
+                }
+                $itemStatusCode = $item['index']['status'] ?? null;
+                if (!$this->isSuccessfulStatusCode($itemStatusCode)) {
+                    $uuid = $item['index']['_id'];
+                    unset($this->batch[$uuid]);
+                    $this->logger->error(
+                        'Job could not be indexed in ElasticSearch',
+                        ['bulk_index_response_item' => $item]
+                    );
+                }
+            }
         }
 
-        foreach ($notIndexedJobs as $singleJob) {
-            $this->logger->error(
-                sprintf(
-                    'Job with UUID "%s" could not be indexed in ElasticSearch',
-                    $singleJob->getUuid()
-                )
-            );
-        }
-
-        foreach ($successfullyIndexedJobs as $singleJob) {
+        foreach ($this->batch as $singleJob) {
             yield $this->beanstalkClient->put(
                 $singleJob->getUuid(),
                 $singleJob->getTimeout(),
@@ -274,5 +274,10 @@ final class QueueManager implements ProducerQueueManagerInterface, WorkerQueueMa
         }
 
         throw new \RuntimeException("Unknown Beanstalk id for job {$uuid}");
+    }
+
+    public function isSuccessfulStatusCode(?int $statusCode): bool
+    {
+        return $statusCode !== null && $statusCode >= 200 && $statusCode < 300;
     }
 }

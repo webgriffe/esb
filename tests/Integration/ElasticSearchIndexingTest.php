@@ -14,13 +14,10 @@ use Webgriffe\Esb\DummyFilesystemWorker;
 use Webgriffe\Esb\KernelTestCase;
 use Webgriffe\Esb\Model\ErroredJobEvent;
 use Webgriffe\Esb\Model\Job;
-use Webgriffe\Esb\Model\JobEventInterface;
 use Webgriffe\Esb\Model\ProducedJobEvent;
 use Webgriffe\Esb\Model\ReservedJobEvent;
 use Webgriffe\Esb\Model\WorkedJobEvent;
 use Webgriffe\Esb\TestUtils;
-use Webgriffe\Esb\Unit\Model\DummyJobEvent;
-use function Amp\Http\formatDateHeader;
 
 class ElasticSearchIndexingTest extends KernelTestCase
 {
@@ -199,16 +196,9 @@ class ElasticSearchIndexingTest extends KernelTestCase
         Loop::delay(
             200,
             function () use ($producerDir) {
-                touch($producerDir . DIRECTORY_SEPARATOR . 'job1');
-                // TODO: It needs to become a document with more than 1000 fields
-                $veryLargeDocument = 'TODO';
+                $veryLargeDocument = json_encode(array_fill_keys(range(1, 1001), 'value'));
                 file_put_contents($producerDir . DIRECTORY_SEPARATOR . 'job1', $veryLargeDocument);
-                Loop::delay(
-                    200,
-                    function () use ($producerDir) {
-                        touch($producerDir . DIRECTORY_SEPARATOR . 'job2');
-                    }
-                );
+                touch($producerDir . DIRECTORY_SEPARATOR . 'job2');
             }
         );
         $this->stopWhen(function () {
@@ -224,8 +214,8 @@ class ElasticSearchIndexingTest extends KernelTestCase
 
         Promise\wait($this->esClient->refresh());
         $search = Promise\wait($this->esClient->uriSearchOneIndex(self::FLOW_CODE, ''));
-        $this->assertCount(1, $search['hits']['hits']); // TODO: Make it green
-        // TODO: Add assertions on logs
+        $this->assertCount(1, $search['hits']['hits']);
+        $this->assertTrue($this->logHandler()->hasErrorThatContains('Job could not be indexed in ElasticSearch'));
     }
 
     private function assertForEachJob(callable $callable, array $jobsData)
