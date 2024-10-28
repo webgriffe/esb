@@ -1,9 +1,3 @@
 {
-  "scan-files" : ["bin/esb"],
-  "symbol-whitelist": [
-    "null", "true", "false", "static", "self", "parent",
-    "array", "string", "int", "float", "bool", "iterable", "callable", "void", "object", "mixed", "never",
-
-    "mb_convert_encoding"
-  ]
+  "scan-files" : ["bin/esb"]
 }
