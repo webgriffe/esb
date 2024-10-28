@@ -65,7 +65,12 @@ final class DummyFilesystemRepeatProducer implements RepeatProducerInterface
                     continue;
                 }
                 yield $this->longRunningOperation();
-                yield $emit(new Job(['file' => $file, 'data' => (yield File\read($file))]));
+                $fileContent = yield File\read($file);
+                $fileContentAsArray = json_decode($fileContent, true);
+                $payloadData = is_array($fileContentAsArray) ?
+                    $fileContentAsArray :
+                    ['file' => $file, 'data' => $fileContent];
+                yield $emit(new Job($payloadData));
                 yield \Amp\File\deleteFile($file);
             }
         });
