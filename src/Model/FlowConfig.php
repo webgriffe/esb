@@ -102,4 +102,12 @@ class FlowConfig
     {
         return $this->config['producer']['batch_size'];
     }
+
+    /**
+     * @return array<array-key, mixed>|null
+     */
+    public function getElasticSearchIndexCreateOrUpdateBody(): ?array
+    {
+        return $this->config['es_index'] ?? null;
+    }
 }

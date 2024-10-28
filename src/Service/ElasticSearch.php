@@ -92,6 +92,14 @@ class ElasticSearch
     }
 
     /**
+     * @param array<array-key, mixed>|null $createOrUpdateBody
+     */
+    public function setElasticSearchIndex(string $indexName, array $createOrUpdateBody = null): Amp\Promise
+    {
+        return $this->client->createOrUpdateIndex($indexName, $createOrUpdateBody);
+    }
+
+    /**
      * @param JobInterface $job
      * @param string $indexName
      * @param int $retry
