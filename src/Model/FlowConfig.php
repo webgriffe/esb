@@ -106,8 +106,31 @@ class FlowConfig
     /**
      * @return array<array-key, mixed>|null
      */
-    public function getElasticSearchIndexCreateOrUpdateBody(): ?array
+    public function getElasticSearchIndexUpdateSettingsBody(): ?array
     {
-        return $this->config['es_index'] ?? null;
+        return $this->config['es_index_settings'] ?? null;
+    }
+
+    /**
+     * @return array<array-key, mixed>|null
+     */
+    public function getElasticSearchIndexUpdateMappingBody(): ?array
+    {
+        return $this->config['es_index_mapping'] ?? null;
+    }
+
+    /**
+     * @return array<array-key, mixed>|null
+     */
+    public function getElasticSearchIndexUpdateAliasesBody(): ?array
+    {
+        return $this->config['es_index_aliases'] ?? null;
+    }
+
+    public function hasAdditionalIndexConfiguration(): bool
+    {
+        return $this->getElasticSearchIndexUpdateSettingsBody() !== null ||
+            $this->getElasticSearchIndexUpdateMappingBody() !== null ||
+            $this->getElasticSearchIndexUpdateAliasesBody() !== null;
     }
 }

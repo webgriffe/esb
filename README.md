@@ -80,11 +80,18 @@ flows:
       initial_polling_interval: 1000    # Optional: initial polling delay that a worker waits when it has to wait for a dependency that is not idle
       maximum_polling_interval: 60000   # Optional: maximum polling delay that a worker waits when it has to wait for a dependency that is not idle
       polling_interval_multiplier: 2    # Optional: polling delay increase factor whenever a worker is waiting for a dependency that is not idle
-    es_index:                           # Optional: the create/update ElasticSearch index API body (see https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-create-index.html). This is useful if you want to control index mapping, settings and aliases.
-      settings:                         # For example you can set the total_fields limit to an higher (or lower) value:
-        index:
+    es_index_settings:                  # Optional: the update ElasticSearch index API settings (see https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-update-settings.html#update-index-settings-api-request-body). This is useful if you want to control index settings.
+      index:                            # For example you can set the total_fields limit to an higher (or lower) value
+        mapping:
           total_fields:
             limit: 2000
+    es_index_mapping:                   # Optional: the update ElasticSearch index API mapping (see https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-put-mapping.html#put-mapping-api-request-body). This is useful if you want to control index mapping.
+      properties:
+        title:
+          type: text
+    es_index_aliases:                   # Optional: the update ElasticSearch index API aliases (see https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-add-alias.html#add-alias-api-request-body). This is useful if you want to control index aliases.
+      my_alias:
+        is_hidden: true
 
   other_flow_1:
     # ...

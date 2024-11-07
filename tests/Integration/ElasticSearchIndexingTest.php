@@ -226,6 +226,61 @@ class ElasticSearchIndexingTest extends KernelTestCase
         $this->assertCount(1, $successfullyIndexedLog);
     }
 
+    /**
+     * @test
+     */
+    public function itUpdatesIndexSettingsAccordingToFlowConfigTest()
+    {
+        $producerDir = vfsStream::url('root/producer_dir');
+        $workerFile = vfsStream::url('root/worker.data');
+        self::createKernel([
+            'services' => [
+                DummyFilesystemRepeatProducer::class => ['arguments' => [$producerDir]],
+                DummyFilesystemWorker::class => ['arguments' => [$workerFile]],
+            ],
+            'flows' => [
+                self::FLOW_CODE => [
+                    'description' => 'ElasticSearch Indexing Test Repeat Flow',
+                    'es_index_settings' => ['index' => ['mapping' => ['total_fields' => ['limit' => 2000]]]],
+                    'producer' => ['service' => DummyFilesystemRepeatProducer::class],
+                    'worker' => ['service' => DummyFilesystemWorker::class],
+                ]
+            ]
+        ]);
+        mkdir($producerDir);
+        Loop::delay(
+            200,
+            function () use ($producerDir) {
+                $veryLargeDocument = json_encode(array_fill_keys(range(1, 1001), 'value'));
+                file_put_contents($producerDir . DIRECTORY_SEPARATOR . 'job1', $veryLargeDocument);
+                touch($producerDir . DIRECTORY_SEPARATOR . 'job2');
+            }
+        );
+        $this->stopWhen(function () {
+            $successLog = array_filter(
+                $this->logHandler()->getRecords(),
+                function ($log) {
+                    return strpos($log['message'], 'Successfully worked a Job') !== false;
+                }
+            );
+            return count($successLog) >= 2;
+        });
+        self::$kernel->boot();
+
+        Promise\wait($this->esClient->refresh());
+        $search = Promise\wait($this->esClient->uriSearchOneIndex(self::FLOW_CODE, ''));
+        $this->assertCount(1, $search['hits']['hits']);
+        $this->assertFalse($this->logHandler()->hasErrorThatContains('Job could not be indexed in ElasticSearch'));
+        $logRecords = $this->logHandler()->getRecords();
+        $successfullyIndexedLog = array_filter(
+            $logRecords,
+            function ($log) {
+                return strpos($log['message'], 'Successfully enqueued a new Job') !== false;
+            }
+        );
+        $this->assertCount(2, $successfullyIndexedLog);
+    }
+
     private function assertForEachJob(callable $callable, array $jobsData)
     {
         /** @var Serializer $serializer */

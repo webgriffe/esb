@@ -92,11 +92,49 @@ class ElasticSearch
     }
 
     /**
-     * @param array<array-key, mixed>|null $createOrUpdateBody
+     * @return Amp\Promise<bool>
      */
-    public function setElasticSearchIndex(string $indexName, array $createOrUpdateBody = null): Amp\Promise
+    public function indexExists(string $indexName): Amp\Promise
     {
-        return $this->client->createOrUpdateIndex($indexName, $createOrUpdateBody);
+        return Amp\call(function () use ($indexName) {
+            try {
+                $response = yield $this->client->existsIndex($indexName);
+                if ($response->getStatusCode() === 200) {
+                    return true;
+                }
+                return false;
+            } catch (Error $error) {
+                if ($error->getCode() === 404) {
+                    return false;
+                }
+                throw $error;
+            }
+        });
+    }
+
+    /**
+     * @param array<array-key, mixed>|null $indexName
+     */
+    public function setElasticSearchIndex(string $indexName): Amp\Promise
+    {
+        return $this->client->createIndex($indexName);
+    }
+
+
+    public function setElasticSearchIndexSettings(string $indexName, array $updateSettingsBody = null): Amp\Promise
+    {
+        return $this->client->updateIndexSettings($indexName, $updateSettingsBody);
+    }
+
+
+    public function setElasticSearchIndexMapping(string $indexName, array $updateMappingBody = null): Amp\Promise
+    {
+        return $this->client->updateMappings($indexName, $updateMappingBody);
+    }
+
+    public function setElasticSearchIndexAlias(string $indexName, string $aliasName, array $aliasBody = null): Amp\Promise
+    {
+        return $this->client->createOrUpdateAlias($indexName, $aliasName, $aliasBody);
     }
 
     /**
