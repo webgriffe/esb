@@ -173,14 +173,6 @@ final class ProducerInstance implements ProducerInstanceInterface
                     $job = $jobs->getCurrent();
                     $job->addEvent(new ProducedJobEvent(new \DateTime(), \get_class($this->producer)));
                     $jobsCount += yield $this->queueManager->enqueue($job);
-                    $this->logger->info(
-                        'Successfully produced a new Job',
-                        [
-                            'producer' => \get_class($this->producer),
-                            'job_uuid' => $job->getUuid(),
-                            'payload_data' => NonUtf8Cleaner::clean($job->getPayloadData())
-                        ]
-                    );
                 }
 
                 $jobsCount += yield $this->queueManager->flush();

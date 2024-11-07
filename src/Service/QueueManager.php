@@ -13,6 +13,7 @@ use Webgriffe\Esb\Exception\FatalQueueException;
 use Webgriffe\Esb\Model\FlowConfig;
 use Webgriffe\Esb\Model\Job;
 use Webgriffe\Esb\Model\JobInterface;
+use Webgriffe\Esb\NonUtf8Cleaner;
 
 final class QueueManager implements ProducerQueueManagerInterface, WorkerQueueManagerInterface
 {
@@ -109,7 +110,7 @@ final class QueueManager implements ProducerQueueManagerInterface, WorkerQueueMa
                     )
                 );
             }
-            $this->batch[] = $job;
+            $this->batch[$job->getUuid()] = $job;
 
             $count = count($this->batch);
             if ($count < $this->batchSize) {
@@ -260,6 +261,14 @@ final class QueueManager implements ProducerQueueManagerInterface, WorkerQueueMa
                 $singleJob->getTimeout(),
                 $singleJob->getDelay(),
                 $singleJob->getPriority()
+            );
+            $this->logger->info(
+                'Successfully enqueued a new Job',
+                [
+                    'flow_name' => $this->flowConfig->getName(),
+                    'job_uuid' => $singleJob->getUuid(),
+                    'payload_data' => NonUtf8Cleaner::clean($singleJob->getPayloadData())
+                ]
             );
         }
 
