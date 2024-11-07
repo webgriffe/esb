@@ -175,7 +175,7 @@ class ElasticSearchIndexingTest extends KernelTestCase
     /**
      * @test
      */
-    public function itLogsAndSkipsJobsThatCouldNotBeIndexedOntoElasticSearchWithAllEvents()
+    public function itLogsAndSkipsJobsThatCouldNotBeIndexedOntoElasticSearch()
     {
         $producerDir = vfsStream::url('root/producer_dir');
         $workerFile = vfsStream::url('root/worker.data');
@@ -216,6 +216,14 @@ class ElasticSearchIndexingTest extends KernelTestCase
         $search = Promise\wait($this->esClient->uriSearchOneIndex(self::FLOW_CODE, ''));
         $this->assertCount(1, $search['hits']['hits']);
         $this->assertTrue($this->logHandler()->hasErrorThatContains('Job could not be indexed in ElasticSearch'));
+        $logRecords = $this->logHandler()->getRecords();
+        $successfullyIndexedLog = array_filter(
+            $logRecords,
+            function ($log) {
+                return strpos($log['message'], 'Successfully enqueued a new Job') !== false;
+            }
+        );
+        $this->assertCount(1, $successfullyIndexedLog);
     }
 
     private function assertForEachJob(callable $callable, array $jobsData)
