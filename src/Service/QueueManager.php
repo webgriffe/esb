@@ -73,18 +73,62 @@ final class QueueManager implements ProducerQueueManagerInterface, WorkerQueueMa
     public function boot(): Promise
     {
         return call(function () {
-            if ($this->flowConfig->getElasticSearchIndexCreateOrUpdateBody() !== null) {
-                yield $this->elasticSearch->setElasticSearchIndex(
-                    $this->flowConfig->getTube(),
-                    $this->flowConfig->getElasticSearchIndexCreateOrUpdateBody()
-                );
-                $this->logger->debug(
-                    'Successfully set ElasticSearch index',
-                    [
-                        'index' => $this->flowConfig->getTube(),
-                        'body' => $this->flowConfig->getElasticSearchIndexCreateOrUpdateBody()
-                    ]
-                );
+            if ($this->flowConfig->hasAdditionalIndexConfiguration()) {
+                $indexExists = yield $this->elasticSearch->indexExists($this->flowConfig->getTube());
+                if (!$indexExists) {
+                    yield $this->elasticSearch->setElasticSearchIndex($this->flowConfig->getTube());
+                    $this->logger->debug(
+                        'Successfully created ElasticSearch index',
+                        ['index' => $this->flowConfig->getTube()]
+                    );
+                }
+
+                if ($this->flowConfig->getElasticSearchIndexUpdateSettingsBody()) {
+                    yield $this->elasticSearch->setElasticSearchIndexSettings(
+                        $this->flowConfig->getTube(),
+                        $this->flowConfig->getElasticSearchIndexUpdateSettingsBody()
+                    );
+                    $this->logger->debug(
+                        'Successfully set ElasticSearch index settings',
+                        [
+                            'index' => $this->flowConfig->getTube(),
+                            'body' => $this->flowConfig->getElasticSearchIndexUpdateSettingsBody()
+                        ]
+                    );
+                }
+
+                if ($this->flowConfig->getElasticSearchIndexUpdateMappingBody()) {
+                    yield $this->elasticSearch->setElasticSearchIndexMapping(
+                        $this->flowConfig->getTube(),
+                        $this->flowConfig->getElasticSearchIndexUpdateMappingBody()
+                    );
+                    $this->logger->debug(
+                        'Successfully set ElasticSearch index mapping',
+                        [
+                            'index' => $this->flowConfig->getTube(),
+                            'body' => $this->flowConfig->getElasticSearchIndexUpdateMappingBody()
+                        ]
+                    );
+                }
+
+                if ($this->flowConfig->getElasticSearchIndexUpdateAliasesBody()) {
+                    $elasticSearchIndexUpdateAliases = $this->flowConfig->getElasticSearchIndexUpdateAliasesBody();
+                    foreach ($elasticSearchIndexUpdateAliases as $aliasName => $aliasBody) {
+                        yield $this->elasticSearch->setElasticSearchIndexAlias(
+                            $this->flowConfig->getTube(),
+                            $aliasName,
+                            $aliasBody
+                        );
+                        $this->logger->debug(
+                            'Successfully set ElasticSearch index alias',
+                            [
+                                'index' => $this->flowConfig->getTube(),
+                                'alias' => $aliasName,
+                                'body' => $aliasBody
+                            ]
+                        );
+                    }
+                }
             }
             //Producer
             yield $this->beanstalkClient->use($this->flowConfig->getTube());
