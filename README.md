@@ -80,6 +80,11 @@ flows:
       initial_polling_interval: 1000    # Optional: initial polling delay that a worker waits when it has to wait for a dependency that is not idle
       maximum_polling_interval: 60000   # Optional: maximum polling delay that a worker waits when it has to wait for a dependency that is not idle
       polling_interval_multiplier: 2    # Optional: polling delay increase factor whenever a worker is waiting for a dependency that is not idle
+    es_index:                           # Optional: the create/update ElasticSearch index API body (see https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-create-index.html). This is useful if you want to control index mapping, settings and aliases.
+      settings:                         # For example you can set the total_fields limit to an higher (or lower) value:
+        index:
+          total_fields:
+            limit: 2000
 
   other_flow_1:
     # ...
