@@ -98,11 +98,8 @@ class ElasticSearch
     {
         return Amp\call(function () use ($indexName) {
             try {
-                $response = yield $this->client->existsIndex($indexName);
-                if ($response->getStatusCode() === 200) {
-                    return true;
-                }
-                return false;
+                yield $this->client->existsIndex($indexName);
+                return true;
             } catch (Error $error) {
                 if ($error->getCode() === 404) {
                     return false;
@@ -112,26 +109,33 @@ class ElasticSearch
         });
     }
 
-    /**
-     * @param array<array-key, mixed>|null $indexName
-     */
     public function setElasticSearchIndex(string $indexName): Amp\Promise
     {
         return $this->client->createIndex($indexName);
     }
 
-
+    /**
+     * @param string $indexName
+     * @param array<string, mixed> $updateSettingsBody
+     */
     public function setElasticSearchIndexSettings(string $indexName, array $updateSettingsBody = null): Amp\Promise
     {
         return $this->client->updateIndexSettings($indexName, $updateSettingsBody);
     }
 
-
+    /**
+     * @param string $indexName
+     * @param array<string, mixed> $updateMappingBody
+     */
     public function setElasticSearchIndexMapping(string $indexName, array $updateMappingBody = null): Amp\Promise
     {
         return $this->client->updateMappings($indexName, $updateMappingBody);
     }
 
+    /**
+     * @param string $indexName
+     * @param array<string, mixed> $aliasBody
+     */
     public function setElasticSearchIndexAlias(string $indexName, string $aliasName, array $aliasBody = null): Amp\Promise
     {
         return $this->client->createOrUpdateAlias($indexName, $aliasName, $aliasBody);

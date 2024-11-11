@@ -111,7 +111,7 @@ final class QueueManager implements ProducerQueueManagerInterface, WorkerQueueMa
                     );
                 }
 
-                if ($this->flowConfig->getElasticSearchIndexUpdateAliasesBody()) {
+                if ($this->flowConfig->getElasticSearchIndexUpdateAliasesBody() !== null) {
                     $elasticSearchIndexUpdateAliases = $this->flowConfig->getElasticSearchIndexUpdateAliasesBody();
                     foreach ($elasticSearchIndexUpdateAliases as $aliasName => $aliasBody) {
                         yield $this->elasticSearch->setElasticSearchIndexAlias(

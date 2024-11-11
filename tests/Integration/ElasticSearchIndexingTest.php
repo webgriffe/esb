@@ -241,7 +241,7 @@ class ElasticSearchIndexingTest extends KernelTestCase
             'flows' => [
                 self::FLOW_CODE => [
                     'description' => 'ElasticSearch Indexing Test Repeat Flow',
-                    'es_index_settings' => ['index' => ['mapping' => ['total_fields' => ['limit' => 2000]]]],
+                    'es_index_settings' => ['index' => ['mapping' => ['total_fields' => ['limit' => 3000]]]],
                     'producer' => ['service' => DummyFilesystemRepeatProducer::class],
                     'worker' => ['service' => DummyFilesystemWorker::class],
                 ]
@@ -269,7 +269,7 @@ class ElasticSearchIndexingTest extends KernelTestCase
 
         Promise\wait($this->esClient->refresh());
         $search = Promise\wait($this->esClient->uriSearchOneIndex(self::FLOW_CODE, ''));
-        $this->assertCount(1, $search['hits']['hits']);
+        $this->assertCount(2, $search['hits']['hits']);
         $this->assertFalse($this->logHandler()->hasErrorThatContains('Job could not be indexed in ElasticSearch'));
         $logRecords = $this->logHandler()->getRecords();
         $successfullyIndexedLog = array_filter(
