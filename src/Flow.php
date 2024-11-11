@@ -53,18 +53,17 @@ class Flow
 
     public function boot(): void
     {
-        $this->logger->info(
-            'Booting flow',
-            ['flow' => $this->flowConfig->getDescription(), 'tube' => $this->flowConfig->getTube()]
-        );
         Loop::defer(function () {
+            $this->logger->info(
+                'Booting flow',
+                ['flow' => $this->flowConfig->getDescription(), 'tube' => $this->flowConfig->getTube()]
+            );
+
             yield $this->producerInstance->boot();
-        });
-        foreach ($this->workerInstances as $workerInstance) {
-            Loop::defer(function () use ($workerInstance) {
+            foreach ($this->workerInstances as $workerInstance) {
                 yield $workerInstance->boot();
-            });
-        }
+            }
+        });
     }
 
     public function getCode(): string
