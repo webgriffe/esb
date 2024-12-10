@@ -69,12 +69,12 @@ class TwoFlowsTest extends KernelTestCase
         self::$kernel->boot();
 
         $workerFileLines = $this->getFileLines($workerFile1);
-        $this->assertContains('job1', $workerFileLines[0]);
-        $this->assertContains('job2', $workerFileLines[1]);
+        $this->assertStringContainsString('job1', $workerFileLines[0]);
+        $this->assertStringContainsString('job2', $workerFileLines[1]);
         $this->assertReadyJobsCountInTube(0, self::TUBE1);
         $workerFileLines = $this->getFileLines($workerFile2);
-        $this->assertContains('job1', $workerFileLines[0]);
-        $this->assertContains('job2', $workerFileLines[1]);
+        $this->assertStringContainsString('job1', $workerFileLines[0]);
+        $this->assertStringContainsString('job2', $workerFileLines[1]);
         $this->assertReadyJobsCountInTube(0, self::TUBE1);
     }
 }

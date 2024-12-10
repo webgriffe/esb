@@ -50,7 +50,7 @@ class NonUtf8DataHandlingTest extends KernelTestCase
 
         self::$kernel->boot();
 
-        $this->assertNotContains('Successfully produced a new Job  []', $this->dumpLog());
-        $this->assertNotContains('Successfully worked a Job  []', $this->dumpLog());
+        $this->assertStringNotContainsString('Successfully produced a new Job  []', $this->dumpLog());
+        $this->assertStringNotContainsString('Successfully worked a Job  []', $this->dumpLog());
     }
 }

@@ -2,13 +2,14 @@
 
 namespace Webgriffe\Esb\Integration;
 
-use Amp\Artax\DefaultClient;
-use Amp\Artax\Request;
-use Amp\Artax\Response;
+use Amp\Http\Client\HttpClientBuilder;
+use Amp\Http\Client\Request;
+use Amp\Http\Client\Response;
 use Amp\Loop;
 use Amp\Promise;
 use Amp\Socket\ClientSocket;
 use Amp\Socket\ConnectException;
+use Amp\Socket\Socket;
 use Monolog\Logger;
 use org\bovigo\vfs\vfsStream;
 use Webgriffe\Esb\DummyFilesystemWorker;
@@ -28,7 +29,7 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
 
     const TUBE = 'sample_tube';
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
         $this->workerFile = vfsStream::url('root/worker.data');
@@ -55,11 +56,15 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
         Loop::delay(100, function () {
             yield $this->waitForConnectionAvailable("tcp://127.0.0.1:{$this->httpPort}");
             $payload = json_encode(['jobs' => ['job1', 'job2', 'job3']]);
-            $client = new DefaultClient();
-            $request = (new Request("http://127.0.0.1:{$this->httpPort}/dummy", 'POST'))->withBody($payload);
+            $client = HttpClientBuilder::buildDefault();
+            $request = new Request("http://127.0.0.1:{$this->httpPort}/dummy", 'POST');
+            $request->setBody($payload);
             /** @var Response $response */
             $response = yield $client->request($request);
-            $this->assertContains('"Successfully scheduled 3 job(s) to be queued."', yield $response->getBody());
+            $this->assertContains(
+                '"Successfully scheduled 3 job(s) to be queued."',
+                yield $response->getBody()->read()
+            );
         });
         $this->stopWhen(function () {
             return (yield exists($this->workerFile)) && count($this->getFileLines($this->workerFile)) === 3;
@@ -92,8 +97,9 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
         Loop::delay(100, function () {
             yield $this->waitForConnectionAvailable("tcp://127.0.0.1:{$this->httpPort}");
             $payload = json_encode(['jobs' => ['job1', 'job2', 'job3']]);
-            $client = new DefaultClient();
-            $request = (new Request("http://127.0.0.1:{$this->httpPort}/wrong-uri", 'POST'))->withBody($payload);
+            $client = HttpClientBuilder::buildDefault();
+            $request = new Request("http://127.0.0.1:{$this->httpPort}/wrong-uri", 'POST');
+            $request->setBody($payload);
             /** @var Response $response */
             $response = yield $client->request($request);
             $this->assertEquals(404, $response->getStatus());
@@ -104,7 +110,7 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
 
         self::$kernel->boot();
 
-        $this->assertFileNotExists($this->workerFile);
+        $this->assertFileDoesNotExist($this->workerFile);
         $this->assertReadyJobsCountInTube(0, self::TUBE);
     }
 
@@ -113,8 +119,8 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
         return call(function () use ($uri) {
             do {
                 try {
-                    /** @var ClientSocket $connection */
-                    $connection = yield connect($uri);
+                    /** @var Socket $connection */
+                    $connection = yield from connect($uri);
                 } catch (ConnectException $e) {
                     $connection = null;
                 }

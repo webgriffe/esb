@@ -2,7 +2,7 @@
 
 namespace Webgriffe\Esb;
 
-use Amp\File\BlockingDriver;
+use Amp\File\Driver\BlockingDriver;
 use Amp\Loop;
 use Monolog\Handler\TestHandler;
 use org\bovigo\vfs\vfsStream;
@@ -21,13 +21,13 @@ class KernelTestCase extends BeanstalkTestCase
     /**
      * @throws \Error
      */
-    public function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
         filesystem(new BlockingDriver());
     }
 
-    protected function tearDown()
+    protected function tearDown(): void
     {
         parent::tearDown();
         self::$kernel = null;
