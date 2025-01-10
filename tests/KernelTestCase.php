@@ -8,7 +8,6 @@ use Monolog\Handler\TestHandler;
 use org\bovigo\vfs\vfsStream;
 use Symfony\Component\Yaml\Yaml;
 use function Amp\call;
-use function Amp\File\exists;
 use function Amp\File\filesystem;
 
 class KernelTestCase extends BeanstalkTestCase
