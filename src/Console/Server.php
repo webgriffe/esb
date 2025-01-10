@@ -85,7 +85,7 @@ class Server
         $uri = $request->getUri()->getPath();
         $filePath = __DIR__ . '/public/' . ltrim($uri, '/');
         if ((yield File\exists($filePath)) && (yield File\isfile($filePath))) {
-            return new Response(Status::OK, [], yield File\get($filePath));
+            return new Response(Status::OK, [], yield File\read($filePath));
         }
 
         $twig = yield $this->getTwig();
@@ -122,10 +122,10 @@ class Server
         return call(function () {
             $templates = [];
             $viewsPath = __DIR__ . '/views';
-            $files = yield File\scandir($viewsPath);
+            $files = yield File\listFiles($viewsPath);
             foreach ($files as $file) {
                 if (preg_match('/^.*?\.html\.twig$/', $file)) {
-                    $templates[$file] = yield File\get(rtrim($viewsPath, '/') . '/' . $file);
+                    $templates[$file] = yield File\read(rtrim($viewsPath, '/') . '/' . $file);
                 }
             }
             $loader = new \Twig_Loader_Array($templates);
