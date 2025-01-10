@@ -17,6 +17,7 @@ services:
 
   Monolog\Handler\TestHandler:
     class: \Monolog\Handler\TestHandler
+    public: true
 
   Psr\Log\LoggerInterface:
     class: \Monolog\Logger
