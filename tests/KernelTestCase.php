@@ -2,7 +2,7 @@
 
 namespace Webgriffe\Esb;
 
-use Amp\File\BlockingDriver;
+use Amp\File\Driver\BlockingDriver;
 use Amp\Loop;
 use Monolog\Handler\TestHandler;
 use org\bovigo\vfs\vfsStream;
