@@ -120,7 +120,7 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
             do {
                 try {
                     /** @var Socket $connection */
-                    $connection = yield from connect($uri);
+                    $connection = yield connect($uri);
                 } catch (ConnectException $e) {
                     $connection = null;
                 }
