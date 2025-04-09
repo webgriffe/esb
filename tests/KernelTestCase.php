@@ -34,6 +34,10 @@ class KernelTestCase extends BeanstalkTestCase
         parent::setUp();
         filesystem(new BlockingDriver());
         $this->esClient = new Client(getenv('ES_BASE_URI') ?: 'http://127.0.0.1:9200');
+        $this->esClient->setCredentials(
+            getenv('ES_USERNAME') ?: 'elastic',
+            getenv('ES_PASSWORD') ?: 'mySecretPassword'
+        );
         $this->elasticSearchReset();
     }
 

@@ -8,6 +8,8 @@ parameters:
   console_password: p4ssw0rd
   console_log_file: ~
   elasticsearch_base_uri: '%env(string:ES_BASE_URI)%'
+  elasticsearch_user: '%env(string:ES_USER)%'
+  elasticsearch_password: '%env(string:ES_PASSWORD)%'
 
 imports:
   - { resource: services.yml}
