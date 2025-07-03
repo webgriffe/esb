@@ -78,7 +78,7 @@ class Server implements ContainerAwareInterface
     /**
      * @inheritDoc
      */
-    public function setContainer(ContainerInterface $container = null): void
+    public function setContainer(?ContainerInterface $container = null): void
     {
         $this->container = $container;
     }

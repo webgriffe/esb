@@ -58,7 +58,7 @@ final class ProducerInstance implements ProducerInstanceInterface
         HttpProducersServer $httpProducersServer,
         CronProducersServer $cronProducersServer,
         ?ElasticSearch $elasticSearch,
-        ProducerQueueManagerInterface $queueManager = null
+        ?ProducerQueueManagerInterface $queueManager = null
     ) {
         if ($beanstalkClient !== null) {
             trigger_deprecation(

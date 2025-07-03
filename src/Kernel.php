@@ -39,7 +39,7 @@ class Kernel
      * @param string $environment
      * @throws \Exception
      */
-    public function __construct(string $localConfigFilePath, string $environment = null)
+    public function __construct(string $localConfigFilePath, ?string $environment = null)
     {
         AnnotationRegistry::registerUniqueLoader('class_exists');
         $this->localConfigFilePath = $localConfigFilePath;

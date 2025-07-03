@@ -11,5 +11,5 @@ interface DateTimeBuilderInterface
      * @param \DateTimeZone|null $timezone
      * @return \DateTime
      */
-    public function build($time = 'now', \DateTimeZone $timezone = null): \DateTime;
+    public function build($time = 'now', ?\DateTimeZone $timezone = null): \DateTime;
 }

@@ -118,7 +118,7 @@ class ElasticSearch
      * @param string $indexName
      * @param array<string, mixed> $updateSettingsBody
      */
-    public function setElasticSearchIndexSettings(string $indexName, array $updateSettingsBody = null): Amp\Promise
+    public function setElasticSearchIndexSettings(string $indexName, ?array $updateSettingsBody = null): Amp\Promise
     {
         return $this->client->updateIndexSettings($indexName, $updateSettingsBody);
     }
@@ -127,7 +127,7 @@ class ElasticSearch
      * @param string $indexName
      * @param array<string, mixed> $updateMappingBody
      */
-    public function setElasticSearchIndexMapping(string $indexName, array $updateMappingBody = null): Amp\Promise
+    public function setElasticSearchIndexMapping(string $indexName, ?array $updateMappingBody = null): Amp\Promise
     {
         return $this->client->updateMappings($indexName, $updateMappingBody);
     }
@@ -136,7 +136,7 @@ class ElasticSearch
      * @param string $indexName
      * @param array<string, mixed> $aliasBody
      */
-    public function setElasticSearchIndexAlias(string $indexName, string $aliasName, array $aliasBody = null): Amp\Promise
+    public function setElasticSearchIndexAlias(string $indexName, string $aliasName, ?array $aliasBody = null): Amp\Promise
     {
         return $this->client->createOrUpdateAlias($indexName, $aliasName, $aliasBody);
     }
