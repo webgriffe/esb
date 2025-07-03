@@ -54,7 +54,7 @@ final class Job implements JobInterface
         int $delay = 0,
         $priority = 0,
         array $events = [],
-        string $uuid = null
+        ?string $uuid = null
     ) {
         if ($uuid === null) {
             $uuid = Uuid::uuid1()->toString();

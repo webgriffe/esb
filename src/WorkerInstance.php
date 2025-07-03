@@ -58,7 +58,7 @@ final class WorkerInstance implements WorkerInstanceInterface
         ?BeanstalkClient $beanstalkClient,
         LoggerInterface $logger,
         ?ElasticSearch $elasticSearch,
-        WorkerQueueManagerInterface $queueManager = null
+        ?WorkerQueueManagerInterface $queueManager = null
     ) {
         if ($beanstalkClient !== null) {
             trigger_deprecation(
