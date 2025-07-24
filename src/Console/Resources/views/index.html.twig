@@ -1,31 +1,56 @@
 {% extends '_layout.html.twig' %}
 
 {% block content %}
-    <h2 class="my-4">Flows</h2>
-    <table class="table">
-        <thead>
-        <tr>
-            <th scope="col">Flow</th>
-            <th scope="col">Description</th>
-            <th scope="col">Producer</th>
-            <th scope="col">Worker</th>
-            <th scope="col">Worked Jobs</th>
-            <th scope="col">Errored Jobs</th>
-            <th scope="col">Total Jobs</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for flow in flows %}
-            <tr>
-                <th scope="row"><a href="/flow/{{ flow.code }}">{{ flow.code }}</a></th>
-                <td>{{ flow.description }}</td>
-                <td><pre>{{ flow.producer }}</pre></td>
-                <td><pre>{{ flow.worker }}</pre></td>
-                <td><a href="/flow/{{ flow.code }}?query=lastEvent.type.keyword:worked" class="badge badge-success">{{ flow.workedJobs }}</a></td>
-                <td><a href="/flow/{{ flow.code }}?query=lastEvent.type.keyword:errored" class="badge badge-warning">{{ flow.erroredJobs }}</a></td>
-                <td><a href="/flow/{{ flow.code }}" class="badge badge-secondary">{{ flow.totalJobs }}</a></td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+    <div class="row">
+        <div class="col-12">
+            <h2 class="">Flows</h2>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12 table-responsive">
+            <table class="table table-striped table-hover table-sm small">
+                <thead>
+                <tr>
+                    <th scope="col">Flow</th>
+                    <th scope="col">Worked Jobs</th>
+                    <th scope="col">Errored Jobs</th>
+                    <th scope="col">Total Jobs</th>
+                    <th scope="col">Description</th>
+                    <th scope="col">Producer</th>
+                    <th scope="col">Worker</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for flow in flows %}
+                    <tr>
+                        <th scope="row">
+                            <a href="/flow/{{ flow.code }}">
+                                {{ flow.code }}
+                            </a>
+                        </th>
+                        <td>
+                            <a href="/flow/{{ flow.code }}?query=lastEvent.type.keyword:worked" class="badge text-bg-success">
+                                {{ flow.workedJobs }}
+                            </a>
+                        </td>
+                        <td>
+                            <a href="/flow/{{ flow.code }}?query=lastEvent.type.keyword:errored" class="badge text-bg-warning">
+                                {{ flow.erroredJobs }}
+                            </a>
+                        </td>
+                        <td>
+                            <a href="/flow/{{ flow.code }}" class="badge text-bg-secondary">
+                                {{ flow.totalJobs }}
+                            </a>
+                        </td>
+                        <td>{{ flow.description }}</td>
+                        <td><pre>{{ flow.producer }}</pre></td>
+                        <td><pre>{{ flow.worker }}</pre></td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 {% endblock %}

@@ -1,55 +1,68 @@
 {% extends '_layout.html.twig' %}
 
 {% block content %}
-    <h2 class="my-4">
-        Job <small class="text-muted">{{ flow }}</small> / <small class="text-muted">{{ job.uuid }}</small>
-        <div class="float-right">
-            <a class="btn btn-secondary btn-sm" role="button" href="/flow/{{ flow }}">&laquo; Back</a>
-            <a class="btn btn-primary btn-sm" role="button" href="/flow/{{ flow }}/job/{{ job.uuid }}/requeue">
-                <span class="oi oi-action-redo"></span> Requeue
+    <div class="row">
+        <div class="col-12">
+            <a class="btn btn-secondary" role="button" href="/flow/{{ flow }}">
+                <i class="bi bi-arrow-left-circle"></i> Back
+            </a>
+            <a class="btn btn-primary" role="button" href="/flow/{{ flow }}/job/{{ job.uuid }}/requeue">
+                <i class="bi bi-arrow-clockwise"></i> Requeue
             </a>
         </div>
-    </h2>
+    </div>
+
+    <div class="row my-2">
+        <div class="col-12">
+            <h2 class="my-4">
+                Job <small class="text-muted">{{ flow }}</small> / <small class="text-muted">{{ job.uuid }}</small>
+            </h2>
+        </div>
+    </div>
 
     {% if requeued %}
-        <div class="alert alert-success" role="alert">
-            Job <strong>{{ job.uuid }}</strong> has been successfully re-queued!
+        <div class="row my-2">
+            <div class="col-12">
+                <div class="alert alert-success" role="alert">
+                    Job <strong>{{ job.uuid }}</strong> has been successfully re-queued!
+                </div>
+            </div>
         </div>
     {% endif %}
 
-    <div class="row">
-        <div class="col">
-            <h4>Details</h4>
+    <div class="row my-2">
+        <div class="col-12 col-md-6 table-responsive">
+            <h3>Details</h3>
             <table class="table table-striped">
                 <tbody>
-                    <tr>
-                        <th>ID</th>
-                        <td>{{ job.uuid }}</td>
-                    </tr>
-                    <tr>
-                        <th>Last event</th>
-                        <td>
-                            {{ job.lastEvent.time|date('Y-m-d H:i:s') }}<br />
-                            <pre>{{ class(job.lastEvent) }}</pre>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th>Timeout</th>
-                        <td>{{ job.timeout }}</td>
-                    </tr>
-                    <tr>
-                        <th>Delay</th>
-                        <td>{{ job.delay }}</td>
-                    </tr>
-                    <tr>
-                        <th>Priority</th>
-                        <td>{{ job.priority }}</td>
-                    </tr>
+                <tr>
+                    <th>ID</th>
+                    <td>{{ job.uuid }}</td>
+                </tr>
+                <tr>
+                    <th>Last event</th>
+                    <td>
+                        {{ job.lastEvent.time|date('Y-m-d H:i:s') }}<br />
+                        <pre>{{ class(job.lastEvent) }}</pre>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Timeout</th>
+                    <td>{{ job.timeout }}</td>
+                </tr>
+                <tr>
+                    <th>Delay</th>
+                    <td>{{ job.delay }}</td>
+                </tr>
+                <tr>
+                    <th>Priority</th>
+                    <td>{{ job.priority }}</td>
+                </tr>
                 </tbody>
             </table>
         </div>
-        <div class="col">
-            <h4>Payload</h4>
+        <div class="col-12 col-md-6">
+            <h3>Payload</h3>
             <div class="card bg-light my-3">
                 <div class="card-body">
                     <pre class="mb-0">{{ job.payloadData|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre>
@@ -58,10 +71,12 @@
         </div>
     </div>
 
-    <div class="row">
-        <div class="col">
-            <h4>Job Events ({{ job.events|length }})</h4>
+    <div class="row mt-4">
+        <div class="col-12">
+            <h3>Job Events ({{ job.events|length }})</h3>
+        </div>
 
+        <div class="col-12 table-responsive">
             <table class="table table-striped">
                 <thead>
                 <tr>
@@ -101,5 +116,4 @@
             </table>
         </div>
     </div>
-
 {% endblock %}
