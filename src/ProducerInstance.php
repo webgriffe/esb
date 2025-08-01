@@ -8,7 +8,7 @@ use Amp\Beanstalk\BeanstalkClient;
 use function Amp\call;
 use Amp\Loop;
 use Amp\Promise;
-use Psr\Log\LoggerInterface;
+use Webgriffe\Esb\Logger\LoggerResettableInterface;
 use Webgriffe\Esb\Model\FlowConfig;
 use Webgriffe\Esb\Model\Job;
 use Webgriffe\Esb\Model\ProducedJobEvent;
@@ -31,7 +31,7 @@ final class ProducerInstance implements ProducerInstanceInterface
     private $producer;
 
     /**
-     * @var LoggerInterface
+     * @var LoggerResettableInterface
      */
     private $logger;
 
@@ -54,7 +54,7 @@ final class ProducerInstance implements ProducerInstanceInterface
         FlowConfig $flowConfig,
         ProducerInterface $producer,
         ?BeanstalkClient $beanstalkClient,
-        LoggerInterface $logger,
+        LoggerResettableInterface $logger,
         HttpProducersServer $httpProducersServer,
         CronProducersServer $cronProducersServer,
         ?ElasticSearch $elasticSearch,
@@ -185,6 +185,8 @@ final class ProducerInstance implements ProducerInstanceInterface
                         'error' => $error->getMessage(),
                     ]
                 );
+            } finally {
+                $this->logger->reset();
             }
             return $jobsCount;
         });
