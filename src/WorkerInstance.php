@@ -190,7 +190,11 @@ final class WorkerInstance implements WorkerInstanceInterface
                         'An error occurred while working a Job.',
                         array_merge(
                             $logContext,
-                            ['work_count' => self::$workCounts[$jobUuid], 'error' => $e->getMessage()]
+                            [
+                                'work_count' => self::$workCounts[$jobUuid],
+                                'error' => $e->getMessage(),
+                                'stack_trace' => $e->getTraceAsString(),
+                            ]
                         )
                     );
 
