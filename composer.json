@@ -66,5 +66,13 @@
         "phpstan": "vendor/bin/phpstan analyse --no-progress -l max -c phpstan.neon src/",
         "phpunit": "vendor/bin/phpunit",
         "tests": ["@ecs", "@phpstan", "@phpunit"]
+    },
+    "config": {
+        "audit": {
+            "ignore": {
+                "PKSA-yhcn-xrg3-68b1": "Needs upgrade to Twig 3.",
+                "PKSA-2wrf-1xmk-1pky": "Needs upgrade to Twig 3."
+            }
+        }
     }
 }
