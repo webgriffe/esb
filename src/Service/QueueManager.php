@@ -17,6 +17,8 @@ use Webgriffe\Esb\NonUtf8Cleaner;
 
 final class QueueManager implements ProducerQueueManagerInterface, WorkerQueueManagerInterface
 {
+    private const DEFAULT_BATCH_ID = 'default';
+
     /**
      * @var BeanstalkClient
      */
@@ -38,9 +40,9 @@ final class QueueManager implements ProducerQueueManagerInterface, WorkerQueueMa
     private $logger;
 
     /**
-     * @var JobInterface[]
+     * @var array<string, array<string, JobInterface>>
      */
-    private $batch = [];
+    private $batches = [];
 
     /**
      * @TODO This map is static because it must be shared between each QueueManager instance: it could be refactored
@@ -142,9 +144,13 @@ final class QueueManager implements ProducerQueueManagerInterface, WorkerQueueMa
     /**
      * @inheritdoc
      */
-    public function enqueue(JobInterface $job): Promise
+    public function enqueue(JobInterface $job, ?string $batchId = null): Promise
     {
-        return call(function () use ($job) {
+        if ($batchId === null) {
+            $batchId = self::DEFAULT_BATCH_ID;
+        }
+
+        return call(function () use ($job, $batchId) {
             $jobExists = yield $this->jobExists($job->getUuid());
             if ($jobExists) {
                 throw new \RuntimeException(
@@ -154,14 +160,14 @@ final class QueueManager implements ProducerQueueManagerInterface, WorkerQueueMa
                     )
                 );
             }
-            $this->batch[$job->getUuid()] = $job;
+            $this->addJobToBatch($batchId, $job);
 
-            $count = count($this->batch);
+            $count = count($this->getBatch($batchId));
             if ($count < $this->batchSize) {
                 return 0;   //Number of jobs actually added to the queue
             }
 
-            yield from $this->processBatch();
+            yield from $this->processBatch($batchId);
             return $count;
         });
     }
@@ -169,12 +175,16 @@ final class QueueManager implements ProducerQueueManagerInterface, WorkerQueueMa
     /**
      * @inheritdoc
      */
-    public function flush(): Promise
+    public function flush(?string $batchId = null): Promise
     {
-        return call(function () {
-            $jobsCount = count($this->batch);
+        if ($batchId === null) {
+            $batchId = self::DEFAULT_BATCH_ID;
+        }
+
+        return call(function () use ($batchId) {
+            $jobsCount = count($this->getBatch($batchId));
             if ($jobsCount > 0) {
-                yield from $this->processBatch();
+                yield from $this->processBatch($batchId);
             }
             return $jobsCount;
         });
@@ -273,33 +283,33 @@ final class QueueManager implements ProducerQueueManagerInterface, WorkerQueueMa
     /**
      * @return \Generator<Promise>
      */
-    private function processBatch(): \Generator
+    private function processBatch(string $batchId): \Generator
     {
         $this->logger->debug('Processing batch');
-        $result = yield $this->elasticSearch->bulkIndexJobs($this->batch, $this->flowConfig->getTube());
+        $result = yield $this->elasticSearch->bulkIndexJobs($this->getBatch($batchId), $this->flowConfig->getTube());
 
         if ($result['errors'] === true) {
             foreach ($result['items'] as $item) {
                 if (!array_key_exists('index', $item)) {
                     $this->logger->error(
                         'Unexpected response item in bulk index response',
-                        ['bulk_index_response_item' => $item]
+                        ['bulk_index_response_item' => $item, 'batch_id' => $batchId]
                     );
                     continue;
                 }
                 $itemStatusCode = $item['index']['status'] ?? null;
                 if (!$this->isSuccessfulStatusCode($itemStatusCode)) {
                     $uuid = $item['index']['_id'];
-                    unset($this->batch[$uuid]);
+                    $this->removeJobFromBatch($batchId, $uuid);
                     $this->logger->error(
                         'Job could not be indexed in ElasticSearch',
-                        ['bulk_index_response_item' => $item]
+                        ['bulk_index_response_item' => $item, 'batch_id' => $batchId]
                     );
                 }
             }
         }
 
-        foreach ($this->batch as $singleJob) {
+        foreach ($this->getBatch($batchId) as $singleJob) {
             yield $this->beanstalkClient->put(
                 $singleJob->getUuid(),
                 $singleJob->getTimeout(),
@@ -311,12 +321,13 @@ final class QueueManager implements ProducerQueueManagerInterface, WorkerQueueMa
                 [
                     'flow_name' => $this->flowConfig->getName(),
                     'job_uuid' => $singleJob->getUuid(),
-                    'payload_data' => NonUtf8Cleaner::clean($singleJob->getPayloadData())
+                    'payload_data' => NonUtf8Cleaner::clean($singleJob->getPayloadData()),
+                    'batch_id' => $batchId
                 ]
             );
         }
 
-        $this->batch = [];
+        $this->clearBatch($batchId);
     }
 
     /**
@@ -345,5 +356,33 @@ final class QueueManager implements ProducerQueueManagerInterface, WorkerQueueMa
     public function isSuccessfulStatusCode(?int $statusCode): bool
     {
         return $statusCode !== null && $statusCode >= 200 && $statusCode < 300;
+    }
+
+    /**
+     * @param string $batchId
+     * @return array<string, JobInterface>
+     */
+    private function getBatch(string $batchId): array
+    {
+        return $this->batches[$batchId] ?? [];
+    }
+
+    private function addJobToBatch(string $batchId, JobInterface $job): void
+    {
+        $this->batches[$batchId][$job->getUuid()] = $job;
+    }
+
+    private function removeJobFromBatch(string $batchId, string $jobUuid): void
+    {
+        unset($this->batches[$batchId][$jobUuid]);
+    }
+
+    private function clearBatch(string $batchId): void
+    {
+        if (!array_key_exists($batchId, $this->batches)) {
+            return;
+        }
+
+        $this->batches[$batchId] = [];
     }
 }
