@@ -9,6 +9,7 @@ use function Amp\call;
 use Amp\Loop;
 use Amp\Promise;
 use Psr\Log\LoggerInterface;
+use Ramsey\Uuid\Uuid;
 use Webgriffe\Esb\Model\FlowConfig;
 use Webgriffe\Esb\Model\Job;
 use Webgriffe\Esb\Model\ProducedJobEvent;
@@ -164,6 +165,7 @@ final class ProducerInstance implements ProducerInstanceInterface
     public function produceAndQueueJobs($data = null): Promise
     {
         return call(function () use ($data) {
+            $batchId = Uuid::uuid1()->toString();
             $jobsCount = 0;
             $job = null;
             try {
@@ -172,10 +174,18 @@ final class ProducerInstance implements ProducerInstanceInterface
                     /** @var Job $job */
                     $job = $jobs->getCurrent();
                     $job->addEvent(new ProducedJobEvent(new \DateTime(), \get_class($this->producer)));
-                    $jobsCount += yield $this->queueManager->enqueue($job);
+                    if ($this->queueManager instanceof QueueManager) {
+                        $jobsCount += yield $this->queueManager->enqueue($job, $batchId);
+                    } else {
+                        $jobsCount += yield $this->queueManager->enqueue($job);
+                    }
                 }
 
-                $jobsCount += yield $this->queueManager->flush();
+                if ($this->queueManager instanceof QueueManager) {
+                    $jobsCount += yield $this->queueManager->flush($batchId);
+                } else {
+                    $jobsCount += yield $this->queueManager->flush();
+                }
             } catch (\Throwable $error) {
                 $this->logger->error(
                     'An error occurred producing/queueing jobs.',
@@ -183,6 +193,7 @@ final class ProducerInstance implements ProducerInstanceInterface
                         'producer' => \get_class($this->producer),
                         'last_job_payload_data' => $job ? NonUtf8Cleaner::clean($job->getPayloadData()) : null,
                         'error' => $error->getMessage(),
+                        'batch_id' => $batchId,
                     ]
                 );
             }

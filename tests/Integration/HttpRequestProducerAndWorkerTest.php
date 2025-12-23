@@ -171,7 +171,7 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
             ]
         );
         $httpPort = self::$kernel->getContainer()->getParameter('http_server_port');
-        
+
         Loop::delay(100, function () use ($httpPort) {
             yield $this->waitForConnectionAvailable("tcp://127.0.0.1:{$httpPort}");
             $payload = json_encode(['jobs' => ['job1', 'job2', 'job3']]);
@@ -188,6 +188,67 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
         self::$kernel->boot();
 
         $this->assertFileDoesNotExist($workerFile);
+        $this->assertReadyJobsCountInTube(0, self::FLOW_CODE);
+    }
+
+    public function testConcurrentHttpRequestsForSameFlow()
+    {
+        $workerFile = vfsStream::url('root/worker.data');
+        self::createKernel(
+            [
+                'services' => [
+                    DummyHttpRequestProducer::class => ['arguments' => []],
+                    DummyFilesystemWorker::class => ['arguments' => [$workerFile]],
+                ],
+                'flows' => [
+                    self::FLOW_CODE => [
+                        'description' => 'Http Request Producer And Worker Test Flow',
+                        'producer' => ['service' => DummyHttpRequestProducer::class],
+                        'worker' => ['service' => DummyFilesystemWorker::class],
+                    ]
+                ]
+            ]
+        );
+        $httpPort = self::$kernel->getContainer()->getParameter('http_server_port');
+
+        Loop::delay(100, function () use ($httpPort) {
+            yield $this->waitForConnectionAvailable("tcp://127.0.0.1:{$httpPort}");
+            $payload1 = json_encode(['jobs' => ['job1']]);
+            $client1 = HttpClientBuilder::buildDefault();
+            $request1 = new Request("http://127.0.0.1:{$httpPort}/dummy", 'POST');
+            $request1->setBody($payload1);
+            $payload2 = json_encode(['jobs' => ['job2']]);
+            $client2 = HttpClientBuilder::buildDefault();
+            $request2 = new Request("http://127.0.0.1:{$httpPort}/dummy", 'POST');
+            $request2->setBody($payload2);
+            $responses = yield [$client1->request($request1), $client2->request($request2)];
+            $this->assertStringContainsString(
+                '"Successfully scheduled 1 job(s) to be queued."',
+                yield $responses[0]->getBody()->read()
+            );
+            $this->assertStringContainsString(
+                '"Successfully scheduled 1 job(s) to be queued."',
+                yield $responses[1]->getBody()->read()
+            );
+        });
+        $this->stopWhen(function () use ($workerFile) {
+            return (yield exists($workerFile)) && count($this->getFileLines($workerFile)) === 2;
+        });
+
+        self::$kernel->boot();
+
+        $workerFileLines = $this->getFileLines($workerFile);
+        $this->assertCount(2, $workerFileLines);
+        $this->assertStringContainsString('job1', implode(PHP_EOL, $workerFileLines));
+        $this->assertStringContainsString('job2', implode(PHP_EOL, $workerFileLines));
+        $this->logHandler()->hasRecordThatMatches(
+            '/Successfully produced a new Job .*? "payload_data":["job1"]/',
+            Logger::INFO
+        );
+        $this->logHandler()->hasRecordThatMatches(
+            '/Successfully produced a new Job .*? "payload_data":["job2"]/',
+            Logger::INFO
+        );
         $this->assertReadyJobsCountInTube(0, self::FLOW_CODE);
     }
 
