@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Webgriffe\Esb;
 
-use Amp\Beanstalk\BeanstalkClient;
 use function Amp\call;
 use Amp\Loop;
 use Amp\Promise;
@@ -12,115 +11,31 @@ use Psr\Log\LoggerInterface;
 use Webgriffe\Esb\Model\FlowConfig;
 use Webgriffe\Esb\Model\Job;
 use Webgriffe\Esb\Model\ProducedJobEvent;
+use Webgriffe\Esb\Service\BatchManagerFactory;
 use Webgriffe\Esb\Service\CronProducersServer;
-use Webgriffe\Esb\Service\ElasticSearch;
+
 use Webgriffe\Esb\Service\HttpProducersServer;
-use Webgriffe\Esb\Service\ProducerQueueManagerInterface;
-use Webgriffe\Esb\Service\QueueManager;
+
+use Webgriffe\Esb\Service\QueueBackendInterface;
 
 final class ProducerInstance implements ProducerInstanceInterface
 {
-    /**
-     * @var FlowConfig
-     */
-    private $flowConfig;
-
-    /**
-     * @var ProducerInterface
-     */
-    private $producer;
-
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
-
-    /**
-     * @var HttpProducersServer
-     */
-    private $httpProducersServer;
-
-    /**
-     * @var CronProducersServer
-     */
-    private $cronProducersServer;
-
-    /**
-     * @var ProducerQueueManagerInterface
-     */
-    private $queueManager;
-
     public function __construct(
-        FlowConfig $flowConfig,
-        ProducerInterface $producer,
-        ?BeanstalkClient $beanstalkClient,
-        LoggerInterface $logger,
-        HttpProducersServer $httpProducersServer,
-        CronProducersServer $cronProducersServer,
-        ?ElasticSearch $elasticSearch,
-        ?ProducerQueueManagerInterface $queueManager = null
+        private readonly FlowConfig $flowConfig,
+        private readonly ProducerInterface $producer,
+        private readonly LoggerInterface $logger,
+        private readonly HttpProducersServer $httpProducersServer,
+        private readonly CronProducersServer $cronProducersServer,
+        private readonly QueueBackendInterface $queueBackend,
+        private readonly BatchManagerFactory $batchManagerFactory,
     ) {
-        if ($beanstalkClient !== null) {
-            trigger_deprecation(
-                'webgriffe/esb',
-                '2.2',
-                'Passing a "%s" to "%s" is deprecated and will be removed in 3.0. ' .
-                'Please pass a "%s" instead.',
-                BeanstalkClient::class,
-                __CLASS__,
-                ProducerQueueManagerInterface::class
-            );
-        }
-        if ($elasticSearch !== null) {
-            trigger_deprecation(
-                'webgriffe/esb',
-                '2.2',
-                'Passing a "%s" to "%s" is deprecated and will be removed in 3.0. ' .
-                'Please pass a "%s" instead.',
-                ElasticSearch::class,
-                __CLASS__,
-                ProducerQueueManagerInterface::class
-            );
-        }
-        $this->flowConfig = $flowConfig;
-        $this->producer = $producer;
-        $this->logger = $logger;
-        $this->httpProducersServer = $httpProducersServer;
-        $this->cronProducersServer = $cronProducersServer;
-
-        if ($queueManager === null) {
-            trigger_deprecation(
-                'webgriffe/esb',
-                '2.2',
-                'Not passing a "%s" to "%s" is deprecated and will be required in 3.0.',
-                ProducerQueueManagerInterface::class,
-                __CLASS__
-            );
-
-            if (!$beanstalkClient) {
-                throw new \RuntimeException('Cannot create a QueueManager without the Beanstalk client!');
-            }
-
-            if (!$elasticSearch) {
-                throw new \RuntimeException('Cannot create a QueueManager without the ElasticSearch client');
-            }
-
-            $queueManager = new QueueManager(
-                $this->flowConfig,
-                $beanstalkClient,
-                $elasticSearch,
-                $this->logger,
-                1000
-            );
-        }
-        $this->queueManager = $queueManager;
     }
 
     public function boot(): Promise
     {
         return call(function () {
             yield $this->producer->init();
-            yield $this->queueManager->boot();
+            yield $this->queueBackend->boot();
 
             $this->logger->info(
                 'A Producer has been successfully initialized',
@@ -164,6 +79,7 @@ final class ProducerInstance implements ProducerInstanceInterface
     public function produceAndQueueJobs($data = null): Promise
     {
         return call(function () use ($data) {
+            $batchManager = $this->batchManagerFactory->create();
             $jobsCount = 0;
             $job = null;
             try {
@@ -172,10 +88,10 @@ final class ProducerInstance implements ProducerInstanceInterface
                     /** @var Job $job */
                     $job = $jobs->getCurrent();
                     $job->addEvent(new ProducedJobEvent(new \DateTime(), \get_class($this->producer)));
-                    $jobsCount += yield $this->queueManager->enqueue($job);
+                    $jobsCount += yield $batchManager->enqueue($job);
                 }
 
-                $jobsCount += yield $this->queueManager->flush();
+                $jobsCount += yield $batchManager->flush();
             } catch (\Throwable $error) {
                 $this->logger->error(
                     'An error occurred producing/queueing jobs.',

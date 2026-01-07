@@ -7,10 +7,10 @@ namespace Webgriffe\Esb\Service;
 use Amp\Promise;
 use Webgriffe\Esb\Model\JobInterface;
 
-interface WorkerQueueManagerInterface
+interface QueueBackendInterface
 {
     /**
-     * Initializes this queue manager. Must be called before this can be used
+     * Initializes this queue backend. Must be called before this can be used
      *
      * @return Promise<null>
      */
@@ -58,4 +58,16 @@ interface WorkerQueueManagerInterface
      * @return Promise<bool>
      */
     public function isEmpty(string $queueName): Promise;
+
+    /**
+     * @param string $jobUuid
+     * @return Promise<bool>
+     */
+    public function jobExists(string $jobUuid): Promise;
+
+    /**
+     * @param JobInterface[] $jobs
+     * @return Promise<null>
+     */
+    public function enqueueJobs(array $jobs): Promise;
 }

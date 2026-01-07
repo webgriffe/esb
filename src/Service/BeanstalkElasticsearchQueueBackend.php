@@ -13,9 +13,10 @@ use Webgriffe\Esb\Exception\FatalQueueException;
 use Webgriffe\Esb\Model\FlowConfig;
 use Webgriffe\Esb\Model\Job;
 use Webgriffe\Esb\Model\JobInterface;
+
 use Webgriffe\Esb\NonUtf8Cleaner;
 
-final class QueueManager implements ProducerQueueManagerInterface, WorkerQueueManagerInterface
+final class BeanstalkElasticsearchQueueBackend implements QueueBackendInterface
 {
     /**
      * @var BeanstalkClient
@@ -38,33 +39,22 @@ final class QueueManager implements ProducerQueueManagerInterface, WorkerQueueMa
     private $logger;
 
     /**
-     * @var JobInterface[]
-     */
-    private $batch = [];
-
-    /**
-     * @TODO This map is static because it must be shared between each QueueManager instance: it could be refactored
+     * @TODO This map is static because it must be shared between each QueueBackend instance: it could be refactored
      *       extracting the mapping service to a dedicated class
      * @var int[]
      */
     private static $uuidToBeanstalkIdMap = [];
-    /**
-     * @var int
-     */
-    private $batchSize;
 
     public function __construct(
         FlowConfig $flowConfig,
         BeanstalkClient $beanstalkClient,
         ElasticSearch $elasticSearch,
         LoggerInterface $logger,
-        int $batchSize
     ) {
         $this->flowConfig = $flowConfig;
         $this->beanstalkClient = $beanstalkClient;
         $this->elasticSearch = $elasticSearch;
         $this->logger = $logger;
-        $this->batchSize = $batchSize;
     }
 
     /**
@@ -136,47 +126,6 @@ final class QueueManager implements ProducerQueueManagerInterface, WorkerQueueMa
             //Worker
             yield $this->beanstalkClient->watch($this->flowConfig->getTube());
             yield $this->beanstalkClient->ignore('default');
-        });
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function enqueue(JobInterface $job): Promise
-    {
-        return call(function () use ($job) {
-            $jobExists = yield $this->jobExists($job->getUuid());
-            if ($jobExists) {
-                throw new \RuntimeException(
-                    sprintf(
-                        'A job with UUID "%s" already exists but this should be a new job.',
-                        $job->getUuid()
-                    )
-                );
-            }
-            $this->batch[$job->getUuid()] = $job;
-
-            $count = count($this->batch);
-            if ($count < $this->batchSize) {
-                return 0;   //Number of jobs actually added to the queue
-            }
-
-            yield from $this->processBatch();
-            return $count;
-        });
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function flush(): Promise
-    {
-        return call(function () {
-            $jobsCount = count($this->batch);
-            if ($jobsCount > 0) {
-                yield from $this->processBatch();
-            }
-            return $jobsCount;
         });
     }
 
@@ -258,7 +207,7 @@ final class QueueManager implements ProducerQueueManagerInterface, WorkerQueueMa
      * @param string $jobUuid
      * @return Promise<bool>
      */
-    private function jobExists(string $jobUuid): Promise
+    public function jobExists(string $jobUuid): Promise
     {
         return call(function () use ($jobUuid) {
             try {
@@ -271,52 +220,52 @@ final class QueueManager implements ProducerQueueManagerInterface, WorkerQueueMa
     }
 
     /**
-     * @return \Generator<Promise>
+     * @param array<JobInterface> $jobs
      */
-    private function processBatch(): \Generator
+    public function enqueueJobs(array $jobs): Promise
     {
-        $this->logger->debug('Processing batch');
-        $result = yield $this->elasticSearch->bulkIndexJobs($this->batch, $this->flowConfig->getTube());
+        return call(function () use ($jobs) {
+            $this->logger->debug('Enqueuing jobs batch...');
+            $result = yield $this->elasticSearch->bulkIndexJobs($jobs, $this->flowConfig->getTube());
 
-        if ($result['errors'] === true) {
-            foreach ($result['items'] as $item) {
-                if (!array_key_exists('index', $item)) {
-                    $this->logger->error(
-                        'Unexpected response item in bulk index response',
-                        ['bulk_index_response_item' => $item]
-                    );
-                    continue;
-                }
-                $itemStatusCode = $item['index']['status'] ?? null;
-                if (!$this->isSuccessfulStatusCode($itemStatusCode)) {
-                    $uuid = $item['index']['_id'];
-                    unset($this->batch[$uuid]);
-                    $this->logger->error(
-                        'Job could not be indexed in ElasticSearch',
-                        ['bulk_index_response_item' => $item]
-                    );
+            if ($result['errors'] === true) {
+                foreach ($result['items'] as $item) {
+                    if (!array_key_exists('index', $item)) {
+                        $this->logger->error(
+                            'Unexpected response item in bulk index response',
+                            ['bulk_index_response_item' => $item]
+                        );
+                        continue;
+                    }
+                    $itemStatusCode = $item['index']['status'] ?? null;
+                    if (!$this->isSuccessfulStatusCode($itemStatusCode)) {
+                        $uuid = $item['index']['_id'];
+                        unset($jobs[$uuid]);
+                        $this->logger->error(
+                            'Job could not be indexed in ElasticSearch',
+                            ['bulk_index_response_item' => $item]
+                        );
+                    }
                 }
             }
-        }
 
-        foreach ($this->batch as $singleJob) {
-            yield $this->beanstalkClient->put(
-                $singleJob->getUuid(),
-                $singleJob->getTimeout(),
-                $singleJob->getDelay(),
-                $singleJob->getPriority()
-            );
-            $this->logger->info(
-                'Successfully enqueued a new Job',
-                [
-                    'flow_name' => $this->flowConfig->getName(),
-                    'job_uuid' => $singleJob->getUuid(),
-                    'payload_data' => NonUtf8Cleaner::clean($singleJob->getPayloadData())
-                ]
-            );
-        }
-
-        $this->batch = [];
+            foreach ($jobs as $singleJob) {
+                yield $this->beanstalkClient->put(
+                    $singleJob->getUuid(),
+                    $singleJob->getTimeout(),
+                    $singleJob->getDelay(),
+                    $singleJob->getPriority()
+                );
+                $this->logger->info(
+                    'Successfully enqueued a new Job',
+                    [
+                        'flow_name' => $this->flowConfig->getName(),
+                        'job_uuid' => $singleJob->getUuid(),
+                        'payload_data' => NonUtf8Cleaner::clean($singleJob->getPayloadData())
+                    ]
+                );
+            }
+        });
     }
 
     /**
