@@ -79,7 +79,7 @@ final class ProducerInstance implements ProducerInstanceInterface
     public function produceAndQueueJobs($data = null): Promise
     {
         return call(function () use ($data) {
-            $batchManager = $this->batchManagerFactory->create();
+            $batchManager = $this->batchManagerFactory->create($this->queueBackend);
             $jobsCount = 0;
             $job = null;
             try {

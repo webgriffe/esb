@@ -102,7 +102,6 @@ final class FlowExtension implements ExtensionInterface, CompilerPassInterface
                     ->setShared(false)
                     ->setAutowired(true)
                     ->setClass(BatchManagerFactory::class)
-                    ->setArgument('$queueBackend', new Reference($queueBackendId))
                     ->setArgument('$batchSize', $flowConfig->getProducerBatchSize())
                 ;
                 $container->setDefinition($batchManagerFactoryId, $batchManagerFactoryDefinition);
