@@ -134,7 +134,7 @@ final class WorkerInstance implements WorkerInstanceInterface
                     yield $this->queueBackend->requeue($job, $this->flowConfig->getWorkerReleaseDelay());
                     $this->logger->info(
                         'Worker released a Job',
-                        array_merge($logContext, ['release_delay' => $this->flowConfig->getWorkerReleaseDelay()])
+                        array_merge($logContext, ['error_retry_delay' => $this->flowConfig->getWorkerReleaseDelay()])
                     );
                 }
             }
