@@ -18,6 +18,8 @@ use Webgriffe\Esb\NonUtf8Cleaner;
 
 final class BeanstalkElasticsearchQueueBackend implements QueueBackendInterface
 {
+    private const DEFAULT_BATCH_ID = 'default';
+
     /**
      * @var BeanstalkClient
      */
@@ -41,6 +43,7 @@ final class BeanstalkElasticsearchQueueBackend implements QueueBackendInterface
     /**
      * @TODO This map is static because it must be shared between each QueueBackend instance: it could be refactored
      *       extracting the mapping service to a dedicated class
+     *
      * @var int[]
      */
     private static $uuidToBeanstalkIdMap = [];
@@ -291,7 +294,7 @@ final class BeanstalkElasticsearchQueueBackend implements QueueBackendInterface
         throw new \RuntimeException("Unknown Beanstalk id for job {$uuid}");
     }
 
-    public function isSuccessfulStatusCode(?int $statusCode): bool
+    private function isSuccessfulStatusCode(?int $statusCode): bool
     {
         return $statusCode !== null && $statusCode >= 200 && $statusCode < 300;
     }
