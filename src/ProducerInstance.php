@@ -8,7 +8,6 @@ use function Amp\call;
 use Amp\Loop;
 use Amp\Promise;
 use Psr\Log\LoggerInterface;
-use Ramsey\Uuid\Uuid;
 use Webgriffe\Esb\Model\FlowConfig;
 use Webgriffe\Esb\Model\Job;
 use Webgriffe\Esb\Model\ProducedJobEvent;
