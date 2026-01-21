@@ -29,11 +29,14 @@ services:
       - "${MAILHOG_WEB_PORT_HOST}:8025"
 
   elasticsearch:
-    image: "docker.elastic.co/elasticsearch/elasticsearch-oss:7.8.0"
+    image: 'elastic/elasticsearch:8.4.2'
     env_file:
       - .env
     environment:
       - "discovery.type=${ES_DISCOVERY_TYPE:-single-node}"
       - "ES_JAVA_OPTS=${ES_JAVA_OPTS:--Xms512m -Xmx512m}"
+      - xpack.security.enabled=true
+      - action.destructive_requires_name= false # because in unit tests setup we delete all indexes, and wildcards and _all are not allowed with security enabled
+      - ELASTIC_PASSWORD=mySecretPassword
     ports:
       - "${ES_PORT_HOST}:9200"

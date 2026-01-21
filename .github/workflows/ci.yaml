@@ -25,6 +25,8 @@ jobs:
       ESB_HTTP_SERVER_MAX_BODY_SIZE: 10485760
       ESB_BEANSTALKD_URL: tcp://127.0.0.1:11300
       ES_BASE_URI: http://127.0.0.1:9200
+      ES_USER: elastic
+      ES_PASSWORD: mySecretPassword
 
     steps:
       - uses: actions/checkout@v4

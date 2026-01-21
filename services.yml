@@ -50,6 +50,11 @@ services:
   Webgriffe\AmpElasticsearch\Client:
     arguments:
       $baseUri: '%elasticsearch_base_uri%'
+    calls:
+      - method: 'setCredentials'
+        arguments:
+          - '%elasticsearch_user%'
+          - '%elasticsearch_password%'
 
   annotation_reader:
     class: \Doctrine\Common\Annotations\AnnotationReader

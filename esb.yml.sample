@@ -8,6 +8,8 @@ parameters:
   console_password: password                                                       # Web console password
   console_log_file: /tmp/esb_console.log                                           # Web console server log file
   elasticsearch_base_uri: '%env(string:ES_BASE_URI)%'                              # ElasticSearch base URI (i.e. http://elasticsearch:9200)
+  elasticsearch_user: '%env(string:ES_USER)%'                                      # ElasticSearch base URI (i.e. http://elasticsearch:9200)
+  elasticsearch_password: '%env(string:ES_PASSWORD)%'                              # ElasticSearch base URI (i.e. http://elasticsearch:9200)
 
 services:
   _defaults:
