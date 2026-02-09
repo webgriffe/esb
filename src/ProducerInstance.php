@@ -74,7 +74,7 @@ final class ProducerInstance implements ProducerInstanceInterface
 
     /**
      * @param mixed $data
-     * @return Promise<null>
+     * @return Promise<int>
      */
     public function produceAndQueueJobs($data = null): Promise
     {
