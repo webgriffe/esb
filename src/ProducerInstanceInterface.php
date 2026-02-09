@@ -14,7 +14,7 @@ interface ProducerInstanceInterface
     public function boot(): Promise;
 
     /**
-     * @param null $data
+     * @param mixed $data
      * @return Promise<int>
      */
     public function produceAndQueueJobs($data = null): Promise;
