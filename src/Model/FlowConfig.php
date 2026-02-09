@@ -59,7 +59,7 @@ class FlowConfig
         return $this->config['worker']['instances'];
     }
 
-    public function getWorkerReleaseDelay(): int
+    public function getWorkerErrorRetryDelay(): int
     {
         return $this->config['worker']['error_retry_delay'];
     }
