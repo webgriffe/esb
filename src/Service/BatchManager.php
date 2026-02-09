@@ -12,7 +12,7 @@ use Webgriffe\Esb\Model\JobInterface;
 final class BatchManager implements BatchManagerInterface
 {
     /**
-     * @var JobInterface[]
+     * @var array<string, JobInterface>
      */
     private $batch = [];
 
