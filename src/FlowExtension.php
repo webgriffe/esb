@@ -115,7 +115,7 @@ final class FlowExtension implements ExtensionInterface, CompilerPassInterface
                     ->setArgument('$queueBackend', new Reference($queueBackendId))
                     ->setArgument('$batchManagerFactory', new Reference($batchManagerFactoryId))
                 ;
-                $producerInstanceId = 'flow.producer_instance' . $flowName;
+                $producerInstanceId = 'flow.producer_instance.' . $flowName;
                 $container->setDefinition($producerInstanceId, $producerInstanceDefinition);
 
                 $flowDefinition->setArgument('$producerInstance', new Reference($producerInstanceId));
