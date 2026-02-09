@@ -15,7 +15,7 @@ interface ProducerInstanceInterface
 
     /**
      * @param null $data
-     * @return Promise<null>
+     * @return Promise<int>
      */
     public function produceAndQueueJobs($data = null): Promise;
 
