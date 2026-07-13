@@ -228,6 +228,17 @@ final class BeanstalkElasticsearchQueueBackend implements QueueBackendInterface
     public function enqueueJobs(array $jobs): Promise
     {
         return call(function () use ($jobs) {
+            //Make sure that the jobs array is indexed by job uuid
+            $jobs = array_combine(
+                array_map(
+                    function (JobInterface $job) {
+                        return $job->getUuid();
+                    },
+                    $jobs,
+                ),
+                $jobs,
+            );
+
             $this->logger->debug('Enqueuing jobs batch...');
             $result = yield $this->elasticSearch->bulkIndexJobs($jobs, $this->flowConfig->getTube());
 
@@ -243,14 +254,7 @@ final class BeanstalkElasticsearchQueueBackend implements QueueBackendInterface
                     $itemStatusCode = $item['index']['status'] ?? null;
                     if (!$this->isSuccessfulStatusCode($itemStatusCode)) {
                         $uuid = $item['index']['_id'];
-                        foreach ($jobs as $index => $job) {
-                            if ($job->getUuid() === $uuid) {
-                                unset($jobs[$index]);
-
-                                break;
-                            }
-                        }
-
+                        unset($jobs[$uuid]);
                         $this->logger->error(
                             'Job could not be indexed in ElasticSearch',
                             ['bulk_index_response_item' => $item]
