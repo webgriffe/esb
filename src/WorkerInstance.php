@@ -62,9 +62,7 @@ final class WorkerInstance implements WorkerInstanceInterface
 
                 try {
                     /** @var JobInterface $job */
-                    if (!($job = yield $this->queueBackend->getNextJob())) {
-                        break;
-                    }
+                    $job = yield $this->queueBackend->getNextJob();
                 } catch (FatalQueueException $ex) {
                     //Let this pass to stop the loop
                     throw $ex;
