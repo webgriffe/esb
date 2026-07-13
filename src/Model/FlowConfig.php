@@ -59,10 +59,9 @@ class FlowConfig
         return $this->config['worker']['instances'];
     }
 
-    public function getWorkerReleaseDelay(): int
+    public function getWorkerErrorRetryDelay(): int
     {
-        //error_retry_delay is the new name, so give precedence to that
-        return $this->config['worker']['error_retry_delay'] ?: $this->config['worker']['release_delay'];
+        return $this->config['worker']['error_retry_delay'];
     }
 
     public function getWorkerMaxRetry(): int

@@ -224,55 +224,10 @@ class AsyncPager implements PagerfantaInterface
      */
     public function setCurrentPage($currentPage)
     {
-        $this->useDeprecatedCurrentPageBooleanArguments(func_get_args());
-
         $this->currentPage = $this->filterCurrentPage($currentPage);
         $this->resetForCurrentPageChange();
 
         return $this;
-    }
-
-    /**
-     * @param array<bool> $arguments
-     */
-    private function useDeprecatedCurrentPageBooleanArguments($arguments): void
-    {
-        $this->useDeprecatedCurrentPageAllowOutOfRangePagesBooleanArgument($arguments);
-        $this->useDeprecatedCurrentPageNormalizeOutOfRangePagesBooleanArgument($arguments);
-    }
-
-    /**
-     * @param array<bool> $arguments
-     */
-    private function useDeprecatedCurrentPageAllowOutOfRangePagesBooleanArgument($arguments): void
-    {
-        $index = 1;
-        $method = 'setAllowOutOfRangePages';
-
-        $this->useDeprecatedBooleanArgument($arguments, $index, $method);
-    }
-
-    /**
-     * @param array<bool> $arguments
-     */
-    private function useDeprecatedCurrentPageNormalizeOutOfRangePagesBooleanArgument($arguments): void
-    {
-        $index = 2;
-        $method = 'setNormalizeOutOfRangePages';
-
-        $this->useDeprecatedBooleanArgument($arguments, $index, $method);
-    }
-
-    /**
-     * @param array<bool> $arguments
-     * @param int $index
-     * @param string $method
-     */
-    private function useDeprecatedBooleanArgument($arguments, $index, $method): void
-    {
-        if (isset($arguments[$index])) {
-            $this->$method($arguments[$index]);
-        }
     }
 
     /**

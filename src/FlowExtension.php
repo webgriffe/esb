@@ -13,7 +13,9 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
 use Symfony\Component\DependencyInjection\Reference;
 use Webgriffe\Esb\Model\FlowConfig;
-use Webgriffe\Esb\Service\QueueManager;
+use Webgriffe\Esb\Service\BatchManager;
+use Webgriffe\Esb\Service\BatchManagerFactory;
+use Webgriffe\Esb\Service\BeanstalkElasticsearchQueueBackend;
 
 final class FlowExtension implements ExtensionInterface, CompilerPassInterface
 {
@@ -66,10 +68,12 @@ final class FlowExtension implements ExtensionInterface, CompilerPassInterface
     {
         //These classes are defined manually. Remove the default definitions otherwise the container generates errors
         //trying to autowire them
-        $container->removeDefinition(QueueManager::class);
+        $container->removeDefinition(BeanstalkElasticsearchQueueBackend::class);
         $container->removeDefinition(FlowConfig::class);
         $container->removeDefinition(ProducerInstance::class);
         $container->removeDefinition(WorkerInstance::class);
+        $container->removeDefinition(BatchManager::class);
+        $container->removeDefinition(BatchManagerFactory::class);
 
         $flowManagerDefinition = $container->findDefinition(FlowManager::class);
         foreach ($this->flowsConfig as $flowName => $flowConfigData) {
@@ -78,32 +82,40 @@ final class FlowExtension implements ExtensionInterface, CompilerPassInterface
             $flowDefinition = new Definition(Flow::class);
             $flowDefinition->setAutowired(true);
             $flowDefinition->setArgument('$flowConfig', $flowConfig);
-            $queueManagerId = 'flow.queue_manager.' . $flowName;
+            $queueBackendId = 'flow.queue_backend.' . $flowName;
+            $batchManagerFactoryId = 'flow.batch_manager_factory.' . $flowName;
             try {
                 $producerDefinition = $container->findDefinition($flowConfig->getProducerServiceId());
                 $producerDefinition->setShared(false);
 
-                $queueManagerDefinition = new Definition();
-                $queueManagerDefinition
+                $queueBackendDefinition = new Definition();
+                $queueBackendDefinition
                     ->setShared(false)
                     ->setAutowired(true)
-                    ->setClass(QueueManager::class)
+                    ->setClass(BeanstalkElasticsearchQueueBackend::class)
                     ->setArgument('$flowConfig', $flowConfig)
+                ;
+                $container->setDefinition($queueBackendId, $queueBackendDefinition);
+
+                $batchManagerFactoryDefinition = new Definition();
+                $batchManagerFactoryDefinition
+                    ->setShared(false)
+                    ->setAutowired(true)
+                    ->setClass(BatchManagerFactory::class)
                     ->setArgument('$batchSize', $flowConfig->getProducerBatchSize())
                 ;
-                $container->setDefinition($queueManagerId, $queueManagerDefinition);
+                $container->setDefinition($batchManagerFactoryId, $batchManagerFactoryDefinition);
 
                 $producerInstanceDefinition = new Definition();
                 $producerInstanceDefinition
                     ->setAutowired(true)
                     ->setClass(ProducerInstance::class)
-                    ->setArgument('$producer', new Reference($flowConfig->getProducerServiceId()))
                     ->setArgument('$flowConfig', $flowConfig)
-                    ->setArgument('$queueManager', new Reference($queueManagerId))
-                    ->setArgument('$beanstalkClient', null)
-                    ->setArgument('$elasticSearch', null)
+                    ->setArgument('$producer', new Reference($flowConfig->getProducerServiceId()))
+                    ->setArgument('$queueBackend', new Reference($queueBackendId))
+                    ->setArgument('$batchManagerFactory', new Reference($batchManagerFactoryId))
                 ;
-                $producerInstanceId = 'flow.producer_instance' . $flowName;
+                $producerInstanceId = 'flow.producer_instance.' . $flowName;
                 $container->setDefinition($producerInstanceId, $producerInstanceDefinition);
 
                 $flowDefinition->setArgument('$producerInstance', new Reference($producerInstanceId));
@@ -129,9 +141,7 @@ final class FlowExtension implements ExtensionInterface, CompilerPassInterface
                         ->setArgument('$flowConfig', $flowConfig)
                         ->setArgument('$instanceId', $instanceId)
                         ->setArgument('$worker', new Reference($flowConfig->getWorkerServiceId()))
-                        ->setArgument('$queueManager', new Reference($queueManagerId))
-                        ->setArgument('$beanstalkClient', null)
-                        ->setArgument('$elasticSearch', null)
+                        ->setArgument('$queueBackend', new Reference($queueBackendId))
                     ;
                     $workerInstanceId = sprintf('flow.worker_instance.%s.%s', $flowName, $instanceId);
                     $container->setDefinition($workerInstanceId, $workerInstanceDefinition);

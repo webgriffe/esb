@@ -7,15 +7,8 @@ namespace Webgriffe\Esb\Service;
 use Amp\Promise;
 use Webgriffe\Esb\Model\JobInterface;
 
-interface ProducerQueueManagerInterface
+interface BatchManagerInterface
 {
-    /**
-     * Initializes this queue manager. Must be called before this can be used
-     *
-     * @return Promise<null>
-     */
-    public function boot(): Promise;
-
     /**
      * Adds a new job to the queue managed by this object. The method returns a promise that resolves to the number of
      * jobs that were actually added to the underlying queue. In the simplest case this number is 1, but if the
