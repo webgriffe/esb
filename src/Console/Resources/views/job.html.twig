@@ -8,6 +8,14 @@
         <a class="btn btn-primary" role="button" href="/flow/{{ flow }}/job/{{ job.uuid }}/requeue">
             <i class="bi bi-arrow-clockwise"></i> Requeue
         </a>
+        {% if canCancel %}
+            <form action="/flow/{{ flow }}/job/{{ job.uuid }}/cancel" method="post"
+                  onsubmit="return confirm('Cancel this job? This only works if it has not started yet.');">
+                <button type="submit" class="btn btn-outline-danger">
+                    <i class="bi bi-x-circle"></i> Cancel
+                </button>
+            </form>
+        {% endif %}
         <h2 class="mb-0">
             Job <small class="text-body-secondary">{{ flow }}</small> / <small class="text-body-secondary">{{ job.uuid }}</small>
         </h2>
@@ -17,6 +25,18 @@
         <div class="alert alert-success d-flex align-items-center gap-2" role="alert">
             <i class="bi bi-check-circle-fill"></i>
             Job <strong>{{ job.uuid }}</strong> has been successfully re-queued!
+        </div>
+    {% endif %}
+
+    {% if cancelled == '1' %}
+        <div class="alert alert-success d-flex align-items-center gap-2" role="alert">
+            <i class="bi bi-check-circle-fill"></i>
+            Job <strong>{{ job.uuid }}</strong> has been successfully cancelled.
+        </div>
+    {% elseif cancelled == '0' %}
+        <div class="alert alert-warning d-flex align-items-center gap-2" role="alert">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            Could not cancel job <strong>{{ job.uuid }}</strong>: it is already being processed or has already completed.
         </div>
     {% endif %}
 

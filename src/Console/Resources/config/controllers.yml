@@ -40,3 +40,10 @@ services:
     class: '\Webgriffe\Esb\Console\Controller\RunController'
     arguments:
       - '@Psr\Log\LoggerInterface'
+
+  console.controller.cancel:
+    parent: console.controller.abstract
+    class: '\Webgriffe\Esb\Console\Controller\CancelController'
+    arguments:
+      - '@Psr\Log\LoggerInterface'
+      - '@Amp\Beanstalk\BeanstalkClient'

@@ -126,6 +126,15 @@
                                             <i class="bi bi-arrow-clockwise"></i>
                                             Requeue
                                         </a>
+                                        {% if job.lastEvent.type not in ['worked', 'cancelled'] %}
+                                            {# This button is not a <form> on purpose: it lives inside the mass-action
+                                               form above, and nested <form> elements are invalid HTML. #}
+                                            <button type="button" class="btn btn-outline-danger"
+                                                    onclick="cancelJob('{{ flowCode }}', '{{ job.uuid }}'); return false;">
+                                                <i class="bi bi-x-circle"></i>
+                                                Cancel
+                                            </button>
+                                        {% endif %}
                                     </div>
                                 </td>
                             </tr>
@@ -142,6 +151,17 @@
     </div>
 
     <script type="text/javascript">
+        function cancelJob(flow, jobId) {
+            if (!confirm('Cancel this job? This only works if it has not started yet.')) {
+                return;
+            }
+            fetch('/flow/' + encodeURIComponent(flow) + '/job/' + encodeURIComponent(jobId) + '/cancel', {
+                method: 'POST'
+            }).then(function () {
+                window.location.reload();
+            });
+        }
+
         document.onreadystatechange = function () {
             if (document.readyState === "complete") {
                 document.querySelectorAll('.job-select-control').forEach(function (el) {

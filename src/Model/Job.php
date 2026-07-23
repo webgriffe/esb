@@ -32,6 +32,10 @@ final class Job implements JobInterface
      * @var JobEventInterface[]
      */
     private $events;
+    /**
+     * @var int|null
+     */
+    private $beanstalkId;
 
     /**
      * Job constructor.
@@ -41,11 +45,12 @@ final class Job implements JobInterface
      * @param int $priority
      * @param array<JobEventInterface> $events
      * @param string|null $uuid
+     * @param int|null $beanstalkId
      * @throws \Exception
      *
-     * TODO:    $events and $uuid constructor argument shouldn't be set by ProducerInterface implementations.
-     *          They are declared as constructor arguments because the Serializer should be able to set them when
-     *          deserializing/denormalizing Jobs.
+     * TODO:    $events, $uuid and $beanstalkId constructor arguments shouldn't be set by ProducerInterface
+     *          implementations. They are declared as constructor arguments because the Serializer should be able
+     *          to set them when deserializing/denormalizing Jobs.
      *          Maybe we need to change the design of this?
      */
     public function __construct(
@@ -54,7 +59,8 @@ final class Job implements JobInterface
         int $delay = 0,
         $priority = 0,
         array $events = [],
-        ?string $uuid = null
+        ?string $uuid = null,
+        ?int $beanstalkId = null
     ) {
         if ($uuid === null) {
             $uuid = Uuid::uuid1()->toString();
@@ -65,6 +71,7 @@ final class Job implements JobInterface
         $this->delay = $delay;
         $this->priority = $priority;
         $this->events = $events;
+        $this->beanstalkId = $beanstalkId;
     }
 
     /**
@@ -142,5 +149,18 @@ final class Job implements JobInterface
             return null;
         }
         return array_slice($this->events, -1)[0];
+    }
+
+    /**
+     * The Beanstalk job id currently backing this Job, if it is still sitting in (or being worked from) a tube.
+     */
+    public function getBeanstalkId(): ?int
+    {
+        return $this->beanstalkId;
+    }
+
+    public function setBeanstalkId(int $beanstalkId): void
+    {
+        $this->beanstalkId = $beanstalkId;
     }
 }
