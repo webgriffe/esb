@@ -64,7 +64,19 @@ class MassActionController extends AbstractController
             }
             $jobsCount = count($jobs);
 
-            return new Response(302, ['Location' => ["/flow/$flow?massActionSuccess=$action&massActionCount=$jobsCount"]]);
+            $queryParams = [];
+            parse_str($request->getUri()->getQuery(), $queryParams);
+            $query = (string)($queryParams['query'] ?? '');
+            $page = (string)($queryParams['page'] ?? '1');
+
+            $redirectQuery = http_build_query([
+                'query' => $query,
+                'page' => $page,
+                'massActionSuccess' => $action,
+                'massActionCount' => $jobsCount,
+            ]);
+
+            return new Response(302, ['Location' => ["/flow/$flow?$redirectQuery"]]);
         });
     }
 

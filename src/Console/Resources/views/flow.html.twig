@@ -61,7 +61,7 @@
     </div>
 
     {% if pager.getCurrentPageResults|length > 0 %}
-        <form action="/flow/{{ flowCode }}/mass-action" method="POST">
+        <form action="/flow/{{ flowCode }}/mass-action?query={{ query|url_encode }}&page={{ pager.getCurrentPage }}" method="POST">
             <div class="navbar navbar-expand-lg bg-body-tertiary rounded-top border sticky-top">
                 <div class="container-fluid">
                     <ul class="navbar-nav">
@@ -147,7 +147,7 @@
     {% endif %}
 
     <div class="d-flex justify-content-center">
-        {{ pagerfanta(pager, '/flow/'~ flowCode ~'?page={page}') }}
+        {{ pagerfanta(pager, '/flow/'~ flowCode ~'?query=' ~ query|url_encode ~ '&page={page}') }}
     </div>
 
     <script type="text/javascript">
