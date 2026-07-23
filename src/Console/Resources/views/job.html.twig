@@ -1,69 +1,61 @@
 {% extends '_layout.html.twig' %}
 
 {% block content %}
-    <div class="row">
-        <div class="col-12">
-            <a class="btn btn-secondary" role="button" href="/flow/{{ flow }}">
-                <i class="bi bi-arrow-left-circle"></i> Back
-            </a>
-            <a class="btn btn-primary" role="button" href="/flow/{{ flow }}/job/{{ job.uuid }}/requeue">
-                <i class="bi bi-arrow-clockwise"></i> Requeue
-            </a>
-        </div>
-    </div>
-
-    <div class="row my-2">
-        <div class="col-12">
-            <h2 class="my-4">
-                Job <small class="text-muted">{{ flow }}</small> / <small class="text-muted">{{ job.uuid }}</small>
-            </h2>
-        </div>
+    <div class="d-flex align-items-center gap-3 mb-3">
+        <a class="btn btn-outline-secondary" role="button" href="/flow/{{ flow }}">
+            <i class="bi bi-arrow-left-circle"></i> Back
+        </a>
+        <a class="btn btn-primary" role="button" href="/flow/{{ flow }}/job/{{ job.uuid }}/requeue">
+            <i class="bi bi-arrow-clockwise"></i> Requeue
+        </a>
+        <h2 class="mb-0">
+            Job <small class="text-body-secondary">{{ flow }}</small> / <small class="text-body-secondary">{{ job.uuid }}</small>
+        </h2>
     </div>
 
     {% if requeued %}
-        <div class="row my-2">
-            <div class="col-12">
-                <div class="alert alert-success" role="alert">
-                    Job <strong>{{ job.uuid }}</strong> has been successfully re-queued!
-                </div>
-            </div>
+        <div class="alert alert-success d-flex align-items-center gap-2" role="alert">
+            <i class="bi bi-check-circle-fill"></i>
+            Job <strong>{{ job.uuid }}</strong> has been successfully re-queued!
         </div>
     {% endif %}
 
-    <div class="row my-2">
-        <div class="col-12 col-md-6 table-responsive">
-            <h3>Details</h3>
-            <table class="table table-striped">
-                <tbody>
-                <tr>
-                    <th>ID</th>
-                    <td>{{ job.uuid }}</td>
-                </tr>
-                <tr>
-                    <th>Last event</th>
-                    <td>
-                        {{ job.lastEvent.time|date('Y-m-d H:i:s') }}<br />
-                        <pre>{{ class(job.lastEvent) }}</pre>
-                    </td>
-                </tr>
-                <tr>
-                    <th>Timeout</th>
-                    <td>{{ job.timeout }}</td>
-                </tr>
-                <tr>
-                    <th>Delay</th>
-                    <td>{{ job.delay }}</td>
-                </tr>
-                <tr>
-                    <th>Priority</th>
-                    <td>{{ job.priority }}</td>
-                </tr>
-                </tbody>
-            </table>
+    <div class="row g-3 my-1">
+        <div class="col-12 col-md-6">
+            <h3 class="h5">Details</h3>
+            <div class="card shadow-sm">
+                <table class="table table-striped mb-0">
+                    <tbody>
+                    <tr>
+                        <th>ID</th>
+                        <td><code class="small">{{ job.uuid }}</code></td>
+                    </tr>
+                    <tr>
+                        <th>Last event</th>
+                        <td>
+                            {{ job.lastEvent.time|date('Y-m-d H:i:s') }}<br />
+                            <code class="small">{{ class(job.lastEvent) }}</code>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Timeout</th>
+                        <td>{{ job.timeout }}</td>
+                    </tr>
+                    <tr>
+                        <th>Delay</th>
+                        <td>{{ job.delay }}</td>
+                    </tr>
+                    <tr>
+                        <th>Priority</th>
+                        <td>{{ job.priority }}</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
         <div class="col-12 col-md-6">
-            <h3>Payload</h3>
-            <div class="card bg-light my-3">
+            <h3 class="h5">Payload</h3>
+            <div class="card shadow-sm">
                 <div class="card-body">
                     <pre class="mb-0">{{ job.payloadData|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre>
                 </div>
@@ -71,49 +63,49 @@
         </div>
     </div>
 
-    <div class="row mt-4">
-        <div class="col-12">
-            <h3>Job Events ({{ job.events|length }})</h3>
-        </div>
+    <div class="mt-4">
+        <h3 class="h5">Job Events ({{ job.events|length }})</h3>
 
-        <div class="col-12 table-responsive">
-            <table class="table table-striped">
-                <thead>
-                <tr>
-                    <th>
-                        Date/time
-                        <span class="oi oi-sort-descending"></span>
-                    </th>
-                    <th>Event type</th>
-                    <th>Producer / Worker</th>
-                    <th>Error message</th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for event in job.events|reverse %}
+        <div class="card shadow-sm">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle mb-0">
+                    <thead>
                     <tr>
-                        <td>{{ event.time|date('Y-m-d H:i:s') }}</td>
-                        <td><pre>{{ class(event) }}</pre></td>
-                        <td>
-                            {% if event.producerFqcn is defined %}
-                                <pre>{{ event.producerFqcn }}</pre>
-                            {% elseif event.workerFqcn is defined %}
-                                <pre>{{ event.workerFqcn }}</pre>
-                            {% else %}
-                                n/a
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if event.errorMessage is defined %}
-                                {{ event.errorMessage }}
-                            {% else %}
-                                n/a
-                            {% endif %}
-                        </td>
+                        <th>
+                            Date/time
+                            <i class="bi bi-sort-down"></i>
+                        </th>
+                        <th>Event type</th>
+                        <th>Producer / Worker</th>
+                        <th>Error message</th>
                     </tr>
-                {% endfor %}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                    {% for event in job.events|reverse %}
+                        <tr>
+                            <td>{{ event.time|date('Y-m-d H:i:s') }}</td>
+                            <td><code class="small">{{ class(event) }}</code></td>
+                            <td>
+                                {% if event.producerFqcn is defined %}
+                                    <code class="small">{{ event.producerFqcn }}</code>
+                                {% elseif event.workerFqcn is defined %}
+                                    <code class="small">{{ event.workerFqcn }}</code>
+                                {% else %}
+                                    <span class="text-body-secondary">n/a</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if event.errorMessage is defined %}
+                                    <span class="text-danger">{{ event.errorMessage }}</span>
+                                {% else %}
+                                    <span class="text-body-secondary">n/a</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 {% endblock %}

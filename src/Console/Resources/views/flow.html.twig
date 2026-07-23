@@ -1,134 +1,120 @@
 {% extends '_layout.html.twig' %}
 
 {% block content %}
-    <div class="row">
-        <div class="col-12">
-            <a class="btn btn-secondary" role="button" href="/">
-                <i class="bi bi-arrow-left-circle"></i> Back
-            </a>
-        </div>
-    </div>
-
-    <div class="row my-2">
-        <div class="col-12">
-            <h2>
-                Flow <small class="text-muted">{{ flowCode }}</small>
-            </h2>
-        </div>
+    <div class="d-flex align-items-center gap-3 mb-3">
+        <a class="btn btn-outline-secondary" role="button" href="/">
+            <i class="bi bi-arrow-left-circle"></i> Back
+        </a>
+        <h2 class="mb-0">
+            Flow <small class="text-body-secondary">{{ flowCode }}</small>
+        </h2>
     </div>
 
     {% if massActionSuccess == 'requeue' %}
-        <div class="row my-2">
-            <div class="col-12">
-                <div class="alert alert-success" role="alert">
-                    {% if massActionCount is not defined %}
-                        Selected jobs has been successfully re-queued!
-                    {% else %}
-                        {{ massActionCount }} selected job(s) has been successfully re-queued!
-                    {% endif %}
-                </div>
-            </div>
+        <div class="alert alert-success d-flex align-items-center gap-2" role="alert">
+            <i class="bi bi-check-circle-fill"></i>
+            {% if massActionCount is not defined %}
+                Selected jobs has been successfully re-queued!
+            {% else %}
+                {{ massActionCount }} selected job(s) has been successfully re-queued!
+            {% endif %}
         </div>
     {% endif %}
 
-    <div class="row my-2">
-        <div class="col-12">
-            <h4>Search</h4>
+    <div class="card shadow-sm my-3">
+        <div class="card-body">
             <form action="/flow/{{ flowCode }}" method="get">
-                <div class="form-group">
-                    <input type="search"
-                           class="form-control form-control-lg"
-                           id="query"
-                           aria-describedby="queryHelp"
-                           placeholder="Enter a query"
-                           name="query"
-                           value="{{ query }}">
-                    <small id="queryHelp" class="form-text text-muted">
-                        Search for jobs in this flow
-                        (use <a href="https://lucene.apache.org/core/2_9_4/queryparsersyntax.html" target="_blank">Lucene query syntax</a>).
-                    </small>
+                <label for="query" class="form-label fw-semibold">Search</label>
+                <input type="search"
+                       class="form-control form-control-lg"
+                       id="query"
+                       aria-describedby="queryHelp"
+                       placeholder="Enter a query"
+                       name="query"
+                       value="{{ query }}">
+                <div id="queryHelp" class="form-text">
+                    Search for jobs in this flow
+                    (use <a href="https://lucene.apache.org/core/2_9_4/queryparsersyntax.html" target="_blank">Lucene query syntax</a>).
                 </div>
             </form>
         </div>
     </div>
 
     {% if pager.getCurrentPageResults|length > 0 %}
-        <div class="row my-2">
-            <div class="col-12">
-                <form action="/flow/{{ flowCode }}/mass-action" method="POST">
-                    <div class="navbar navbar-expand-lg navbar-light bg-light sticky-top d-flex">
-                        <ul class="navbar-nav">
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
-                                   data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                    <span class="oi oi-task"></span>
-                                    <span data-selected-count="">0</span> selected
-                                </a>
-                                <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                                    <a class="dropdown-item" href="#" onclick="selectAll(); return false;">Select All</a>
-                                    <a class="dropdown-item" href="#" onclick="unselectAll(); return false;">Unselect All</a>
-                                    <div class="dropdown-divider"></div>
-                                    <a class="dropdown-item" href="#" onclick="selectVisible(); return false;">Select Visible</a>
-                                    <a class="dropdown-item" href="#" onclick="unselectVisible(); return false;">Unselect Visible</a>
-                                </div>
-                            </li>
-                        </ul>
+        <form action="/flow/{{ flowCode }}/mass-action" method="POST">
+            <div class="navbar navbar-expand-lg bg-body-tertiary rounded-top border sticky-top">
+                <div class="container-fluid">
+                    <ul class="navbar-nav">
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
+                               data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class="bi bi-check2-square"></i>
+                                <span data-selected-count="">0</span> selected
+                            </a>
+                            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                <a class="dropdown-item" href="#" onclick="selectAll(); return false;">Select All</a>
+                                <a class="dropdown-item" href="#" onclick="unselectAll(); return false;">Unselect All</a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="#" onclick="selectVisible(); return false;">Select Visible</a>
+                                <a class="dropdown-item" href="#" onclick="unselectVisible(); return false;">Unselect Visible</a>
+                            </div>
+                        </li>
+                    </ul>
 
-                        <div class="form-inline ml-auto">
-                            <input type="hidden" data-remaining-count="{{ pager.getNbResults - pager.getCurrentPageResults|length }}" name="remaining-selected" value="" />
-                            <button type="submit" name="job-select-action" value="requeue" class="btn btn-secondary" disabled="disabled">
-                                <span class="oi oi-action-redo"></span>
-                                Requeue <span data-selected-count="">0</span> job(s)
-                            </button>
-                        </div>
+                    <div class="d-flex align-items-center ms-auto">
+                        <input type="hidden" data-remaining-count="{{ pager.getNbResults - pager.getCurrentPageResults|length }}" name="remaining-selected" value="" />
+                        <button type="submit" name="job-select-action" value="requeue" class="btn btn-secondary" disabled="disabled">
+                            <i class="bi bi-arrow-clockwise"></i>
+                            Requeue <span data-selected-count="">0</span> job(s)
+                        </button>
                     </div>
-
-                    <div class="table-responsive">
-                        <table class="table table-striped">
-                            <thead>
-                            <tr>
-                                <th scope="col"></th>
-                                <th scope="col">Job ID</th>
-                                <th scope="col">Job Payload</th>
-                                <th scope="col">Job Last Event</th>
-                                <th scope="col">Actions</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            {% for job in pager.getCurrentPageResults %}
-                                <tr>
-                                    <td>
-                                        <div class="form-check">
-                                            <input class="form-check-input position-static job-select-control" type="checkbox"
-                                                   name="selected[]" value="{{ job.uuid }}" aria-label="...">
-                                        </div>
-                                    </td>
-                                    <th scope="row">{{ job.uuid }}</th>
-                                    {% set payload = job.payloadData|json_encode() %}
-                                    <td><pre>{{ payload|length > 70 ? payload|slice(0, 70) ~ '...' : payload }}</pre></td>
-                                    <td><pre>{{ job.lastEvent.type }}</pre></td>
-                                    <td>
-                                        <div class="btn-group btn-group-sm" role="group" aria-label="Actions">
-                                            <a class="btn btn-info" href="/flow/{{ flowCode }}/job/{{ job.uuid }}">
-                                                <span class="oi oi-eye"></span>
-                                                View
-                                            </a>
-                                        </div>
-                                        <div class="btn-group btn-group-sm" role="group" aria-label="Actions">
-                                            <a class="btn btn-secondary" href="/flow/{{ flowCode }}/job/{{ job.uuid }}/requeue">
-                                                <span class="oi oi-action-redo"></span>
-                                                Requeue
-                                            </a>
-                                        </div>
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </form>
+                </div>
             </div>
-        </div>
+
+            <div class="card shadow-sm rounded-top-0">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover align-middle mb-0">
+                        <thead>
+                        <tr>
+                            <th scope="col"></th>
+                            <th scope="col">Job ID</th>
+                            <th scope="col">Job Payload</th>
+                            <th scope="col">Job Last Event</th>
+                            <th scope="col">Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for job in pager.getCurrentPageResults %}
+                            <tr>
+                                <td>
+                                    <div class="form-check">
+                                        <input class="form-check-input position-static job-select-control" type="checkbox"
+                                               name="selected[]" value="{{ job.uuid }}" aria-label="...">
+                                    </div>
+                                </td>
+                                <th scope="row"><code class="small">{{ job.uuid }}</code></th>
+                                {% set payload = job.payloadData|json_encode() %}
+                                <td><code class="small">{{ payload|length > 70 ? payload|slice(0, 70) ~ '...' : payload }}</code></td>
+                                <td><span class="badge text-bg-light border">{{ job.lastEvent.type }}</span></td>
+                                <td>
+                                    <div class="btn-group btn-group-sm" role="group" aria-label="Actions">
+                                        <a class="btn btn-outline-primary" href="/flow/{{ flowCode }}/job/{{ job.uuid }}">
+                                            <i class="bi bi-eye"></i>
+                                            View
+                                        </a>
+                                        <a class="btn btn-outline-secondary" href="/flow/{{ flowCode }}/job/{{ job.uuid }}/requeue">
+                                            <i class="bi bi-arrow-clockwise"></i>
+                                            Requeue
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </form>
     {% endif %}
 
     <div class="d-flex justify-content-center">
