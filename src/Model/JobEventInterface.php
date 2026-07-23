@@ -12,7 +12,8 @@ use Symfony\Component\Serializer\Annotation\DiscriminatorMap;
  *    "reserved"="Webgriffe\Esb\Model\ReservedJobEvent",
  *    "worked"="Webgriffe\Esb\Model\WorkedJobEvent",
  *    "errored"="Webgriffe\Esb\Model\ErroredJobEvent",
- *    "requeued"="Webgriffe\Esb\Model\RequeuedJobEvent"
+ *    "requeued"="Webgriffe\Esb\Model\RequeuedJobEvent",
+ *    "cancelled"="Webgriffe\Esb\Model\CancelledJobEvent"
  * })
  */
 interface JobEventInterface

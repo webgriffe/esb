@@ -213,6 +213,7 @@ final class QueueManager implements ProducerQueueManagerInterface, WorkerQueueMa
                 throw new JobNotFoundException($jobUuid, 0, $exception);
             }
 
+            $job->setBeanstalkId($jobBeanstalkId);
             $this->saveJobBeanstalkId($job, $jobBeanstalkId);
 
             return $job;
@@ -310,12 +311,16 @@ final class QueueManager implements ProducerQueueManagerInterface, WorkerQueueMa
         }
 
         foreach ($this->getBatch($batchId) as $singleJob) {
-            yield $this->beanstalkClient->put(
+            $jobBeanstalkId = yield $this->beanstalkClient->put(
                 $singleJob->getUuid(),
                 $singleJob->getTimeout(),
                 $singleJob->getDelay(),
                 $singleJob->getPriority()
             );
+            if ($singleJob instanceof Job) {
+                $singleJob->setBeanstalkId($jobBeanstalkId);
+                $this->saveJobBeanstalkId($singleJob, $jobBeanstalkId);
+            }
             $this->logger->info(
                 'Successfully enqueued a new Job',
                 [
@@ -326,6 +331,10 @@ final class QueueManager implements ProducerQueueManagerInterface, WorkerQueueMa
                 ]
             );
         }
+
+        // Re-index the batch now that each Job knows its own Beanstalk id, so it can later be cancelled
+        // (deleted from the tube) while still unreserved.
+        yield $this->elasticSearch->bulkIndexJobs($this->getBatch($batchId), $this->flowConfig->getTube());
 
         $this->clearBatch($batchId);
     }

@@ -12,6 +12,7 @@ use Amp\Promise;
 use Psr\Log\LoggerInterface;
 use Twig\Environment;
 use Webgriffe\Esb\FlowManager;
+use Webgriffe\Esb\Model\Job;
 use Webgriffe\Esb\Model\RequeuedJobEvent;
 use Webgriffe\Esb\NonUtf8Cleaner;
 use Webgriffe\Esb\Service\ElasticSearch;
@@ -60,6 +61,10 @@ class RequeueController extends AbstractController
                 $job->getDelay(),
                 $job->getPriority()
             );
+            if ($job instanceof Job) {
+                $job->setBeanstalkId($jobBeanstalkId);
+                yield $this->getElasticsearch()->indexJob($job, $flow);
+            }
 
             $this->logger->info(
                 'Successfully re-queued a Job',

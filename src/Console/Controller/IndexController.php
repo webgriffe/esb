@@ -31,6 +31,7 @@ class IndexController extends AbstractController
                     'description' => $flow->getDescription(),
                     'producer' => $flow->getProducerClassName(),
                     'worker' => $flow->getWorkerClassName(),
+                    'canRun' => $flow->canRunManually(),
                     'workedJobs' => yield $this->getWorkedJobs($flowCode),
                     'erroredJobs' => yield $this->getErroredJobs($flowCode),
                     'totalJobs' => yield $this->getTotalJobs($flowCode),
