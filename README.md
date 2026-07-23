@@ -314,9 +314,13 @@ Contributing
 
 To contribute simply fork this repository, do your changes and then propose a pull request.
 
-We recommend to use Docker. Indeed a [`docker-compose.yml`](https://github.com/webgriffe/esb/blob/master/docker-compose.yml) file is provided.
+We recommend to use Docker. Indeed a [`compose.yaml`](https://github.com/webgriffe/esb/blob/master/compose.yaml) file is provided.
 
 Just copy the `.env.dist` file to `.env` and adjust the environment variables values according to your environment.
+
+```bash
+cp .env.dist .env
+```
 
 For example, to **run the entire test suite** (PHP Code Sniffer, PHPStan, PHPUnit, etc...) you can simply run:
 
@@ -330,12 +334,24 @@ Or to only run PHPUnit tests you can use:
 docker-compose run php vendor/bin/phpunit
 ```
 
-The test suite uses the `ESB_BEANSTALKD_URL` environment variable to get the connection URL of the Beanstalkd instance. This environment variable is already set in the provided [`docker-compose.yml`](https://github.com/webgriffe/esb/blob/master/docker-compose.yml) file.
+The test suite uses the `ESB_BEANSTALKD_URL` environment variable to get the connection URL of the Beanstalkd instance. This environment variable is already set in the provided [`compose.yaml`](https://github.com/webgriffe/esb/blob/master/compose.yaml) file.
 
-You can also run an instance of the ESB locally using Docker. You must create an `esb.yml` configuration file in the root directory and then run:
+You can also run an instance of the ESB locally using Docker. You must create an `esb.yml` configuration file starting from the sample provided:
+
+```bash
+cp esb.yml.dist esb.yml
+```
+
+Then in the root directory run:
 
 ```bash
 docker-compose up
+```
+
+If you don't have changed any port you will access your dashboard at:
+
+```bash
+open 127.0.0.1:8080
 ```
 
 License

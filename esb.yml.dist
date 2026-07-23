@@ -1,0 +1,28 @@
+parameters:
+  beanstalkd: '%env(string:ESB_BEANSTALKD_URL)%'
+  http_server_port: '%env(int:ESB_HTTP_SERVER_PORT)%'
+  logger_mail_to: toemail@address.com
+  logger_mail_from: "From Name <fromemail@address.com>"
+  console_port: '%env(int:ESB_CONSOLE_PORT)%'
+  console_username: admin
+  console_password: password
+  console_log_file: /tmp/esb_console.log
+  elasticsearch_base_uri: '%env(string:ES_BASE_URI)%'
+
+services:
+  _defaults:
+    autowire: true
+
+  Webgriffe\Esb\Producer\CleanOldJobs:
+    arguments: ['6 15 * * *']
+
+  Webgriffe\Esb\Worker\CleanOldJobs:
+    arguments: ['@Webgriffe\AmpElasticsearch\Client', 30]
+
+flows:
+  clean_old_jobs_flow:
+    description: Cleans jobs for which the last event is older than the given number of days
+    producer:
+      service: Webgriffe\Esb\Producer\CleanOldJobs
+    worker:
+      service: Webgriffe\Esb\Worker\CleanOldJobs
