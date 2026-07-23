@@ -72,17 +72,18 @@
                                 <span data-selected-count="">0</span> selected
                             </a>
                             <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                                <a class="dropdown-item" href="#" onclick="selectAll(); return false;">Select All</a>
-                                <a class="dropdown-item" href="#" onclick="unselectAll(); return false;">Unselect All</a>
+                                <a class="dropdown-item" href="#" onclick="selectAll(); return false;">
+                                    Select all {{ pager.getNbResults }} matching job(s)
+                                </a>
+                                <a class="dropdown-item" href="#" onclick="selectVisible(); return false;">Select this page</a>
                                 <div class="dropdown-divider"></div>
-                                <a class="dropdown-item" href="#" onclick="selectVisible(); return false;">Select Visible</a>
-                                <a class="dropdown-item" href="#" onclick="unselectVisible(); return false;">Unselect Visible</a>
+                                <a class="dropdown-item" href="#" onclick="unselectAll(); return false;">Clear selection</a>
                             </div>
                         </li>
                     </ul>
 
                     <div class="d-flex align-items-center ms-auto">
-                        <input type="hidden" data-remaining-count="{{ pager.getNbResults - pager.getCurrentPageResults|length }}" name="remaining-selected" value="" />
+                        <input type="hidden" data-total-count="{{ pager.getNbResults }}" name="select-all-matching" value="" />
                         <button type="submit" name="job-select-action" value="requeue" class="btn btn-secondary" disabled="disabled">
                             <i class="bi bi-arrow-clockwise"></i>
                             Requeue <span data-selected-count="">0</span> job(s)
@@ -170,64 +171,63 @@
             }
         };
 
-        function updateSelectionState() {
-            var checkboxes = document.querySelectorAll('.job-select-control:checked');
-            var selected = checkboxes.length;
-            var countDisplay = document.querySelectorAll('[data-selected-count]');
+        // "select-all-matching" is the source of truth for what gets submitted: either every job matching the
+        // current search (value '1', checkboxes are just a visual echo and get disabled so they can't drift out
+        // of sync), or whatever is actually checked on this page (value '', the normal per-checkbox case).
+        function isSelectingAllMatching() {
+            var input = document.querySelector('input[name="select-all-matching"]');
+            return !!input && input.value === '1';
+        }
 
-            countDisplay.forEach(function (el) {
+        function setSelectingAllMatching(value) {
+            var input = document.querySelector('input[name="select-all-matching"]');
+            if (input) {
+                input.value = value;
+            }
+        }
+
+        function updateSelectionState() {
+            var selected;
+            if (isSelectingAllMatching()) {
+                var input = document.querySelector('input[name="select-all-matching"]');
+                selected = parseInt(input.dataset.totalCount, 10) || 0;
+            } else {
+                selected = document.querySelectorAll('.job-select-control:checked').length;
+            }
+
+            document.querySelectorAll('[data-selected-count]').forEach(function (el) {
                 el.textContent = selected;
             });
 
-            var remainingInput = document.querySelector('input[name="remaining-selected"]');
-            if (remainingInput && remainingInput.value) {
-                var remaining = parseInt(remainingInput.dataset.remainingCount, 10) || 0;
-                selected += remaining;
-
-                countDisplay.forEach(function (el) {
-                    el.textContent = selected;
-                });
-            }
-
-            var actionButtons = document.querySelectorAll('button[name="job-select-action"]');
-            actionButtons.forEach(function (btn) {
+            document.querySelectorAll('button[name="job-select-action"]').forEach(function (btn) {
                 btn.disabled = selected === 0;
             });
         }
 
         function selectVisible() {
+            setSelectingAllMatching('');
             document.querySelectorAll('.job-select-control').forEach(function (el) {
+                el.disabled = false;
                 el.checked = true;
-            });
-            updateSelectionState();
-        }
-
-        function unselectVisible() {
-            document.querySelectorAll('.job-select-control').forEach(function (el) {
-                el.checked = false;
             });
             updateSelectionState();
         }
 
         function selectAll() {
+            setSelectingAllMatching('1');
             document.querySelectorAll('.job-select-control').forEach(function (el) {
                 el.checked = true;
+                el.disabled = true;
             });
-            var remainingInput = document.querySelector('input[name="remaining-selected"]');
-            if (remainingInput) {
-                remainingInput.value = '1';
-            }
             updateSelectionState();
         }
 
         function unselectAll() {
+            setSelectingAllMatching('');
             document.querySelectorAll('.job-select-control').forEach(function (el) {
                 el.checked = false;
+                el.disabled = false;
             });
-            var remainingInput = document.querySelector('input[name="remaining-selected"]');
-            if (remainingInput) {
-                remainingInput.value = '';
-            }
             updateSelectionState();
         }
     </script>
