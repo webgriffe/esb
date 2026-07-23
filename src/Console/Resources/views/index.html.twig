@@ -17,6 +17,7 @@
                     <th scope="col">Description</th>
                     <th scope="col">Producer</th>
                     <th scope="col">Worker</th>
+                    <th scope="col">Actions</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -45,6 +46,21 @@
                         <td class="text-body-secondary">{{ flow.description }}</td>
                         <td><code class="small">{{ flow.producer }}</code></td>
                         <td><code class="small">{{ flow.worker }}</code></td>
+                        <td>
+                            {% if flow.canRun %}
+                                <form action="/flow/{{ flow.code }}/run" method="post"
+                                      onsubmit="return confirm('Run the producer for &quot;{{ flow.code }}&quot; now?');">
+                                    <button type="submit" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-play-fill"></i> Run now
+                                    </button>
+                                </form>
+                            {% else %}
+                                <button type="button" class="btn btn-sm btn-outline-secondary" disabled
+                                        title="HTTP request producers cannot be run manually">
+                                    <i class="bi bi-play-fill"></i> Run now
+                                </button>
+                            {% endif %}
+                        </td>
                     </tr>
                 {% endfor %}
                 </tbody>

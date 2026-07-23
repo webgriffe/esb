@@ -86,4 +86,18 @@ class Flow
         $workerInstance = $this->workerInstances[0];
         return get_class($workerInstance->getWorker());
     }
+
+    public function getProducerInstance(): ProducerInstance
+    {
+        return $this->producerInstance;
+    }
+
+    /**
+     * HTTP producers derive the jobs they produce from the incoming request, so they cannot be triggered
+     * out-of-band with no request data behind them.
+     */
+    public function canRunManually(): bool
+    {
+        return !$this->producerInstance->getProducer() instanceof HttpRequestProducerInterface;
+    }
 }

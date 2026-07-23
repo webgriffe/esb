@@ -29,6 +29,15 @@ class FlowController extends AbstractController
             $page = (int)($queryParams['page'] ?? '1');
             $massActionSuccess = $queryParams['massActionSuccess'] ?? false;
             $massActionCount = $queryParams['massActionCount'] ?? 0;
+            $ran = $queryParams['ran'] ?? false;
+            $ranCount = $queryParams['ranCount'] ?? 0;
+            $canRun = true;
+            foreach ($this->getFlowManager()->getFlows() as $flowObject) {
+                if ($flowObject->getCode() === $flowCode) {
+                    $canRun = $flowObject->canRunManually();
+                    break;
+                }
+            }
             $adapter = new AmpElasticsearchUriSearchAdapter(
                 $this->getElasticsearch()->getClient(),
                 $flowCode,
@@ -47,7 +56,10 @@ class FlowController extends AbstractController
                         'pager' => $pager,
                         'query' => $query,
                         'massActionSuccess' => $massActionSuccess,
-                        'massActionCount' => $massActionCount
+                        'massActionCount' => $massActionCount,
+                        'ran' => $ran,
+                        'ranCount' => $ranCount,
+                        'canRun' => $canRun,
                     ]
                 )
             );

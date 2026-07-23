@@ -34,3 +34,9 @@ services:
     arguments:
       - '@Psr\Log\LoggerInterface'
       - '@Amp\Beanstalk\BeanstalkClient'
+
+  console.controller.run:
+    parent: console.controller.abstract
+    class: '\Webgriffe\Esb\Console\Controller\RunController'
+    arguments:
+      - '@Psr\Log\LoggerInterface'

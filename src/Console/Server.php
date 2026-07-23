@@ -151,6 +151,7 @@ class Server implements ContainerAwareInterface
                     $this->container->get('console.controller.requeue')
                 );
                 $r->addRoute('POST', '/flow/{flow}/mass-action', $this->container->get('console.controller.mass_action'));
+                $r->addRoute('POST', '/flow/{flow}/run', $this->container->get('console.controller.run'));
             }
         );
     }
