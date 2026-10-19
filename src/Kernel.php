@@ -20,18 +20,19 @@ use Webgriffe\Esb\Console\Server;
  */
 class Kernel
 {
-    /**
-     * @var ContainerBuilder
-     */
-    private $container;
+    private readonly ?string $environment;
+
+    private readonly ContainerBuilder $container;
 
     /**
      * @throws \Exception
      */
     public function __construct(
         private readonly string $localConfigFilePath,
-        private readonly ?string $environment = null,
+        ?string $environment = null,
     ) {
+        $this->environment = $environment;
+
         AnnotationRegistry::registerUniqueLoader('class_exists');
         $this->container = new ContainerBuilder();
         $loader = new YamlFileLoader($this->container, new FileLocator(dirname(__DIR__)));

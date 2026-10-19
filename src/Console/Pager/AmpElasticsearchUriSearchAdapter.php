@@ -12,6 +12,9 @@ use Webgriffe\AmpElasticsearch\Error as AmpElasticsearchError;
 
 final class AmpElasticsearchUriSearchAdapter implements AsyncPagerAdapterInterface
 {
+    /** @var array<string, string|int>  */
+    private readonly array $options;
+
     private ?int $totalHits = null;
 
     /**
@@ -21,8 +24,9 @@ final class AmpElasticsearchUriSearchAdapter implements AsyncPagerAdapterInterfa
         private readonly Client $client,
         private readonly string $index,
         private readonly string $query,
-        private readonly array $options = [],
+        array $options = [],
     ) {
+        $this->options = $options;
     }
 
     public function getNbResults(): Promise

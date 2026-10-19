@@ -8,10 +8,13 @@ use Ramsey\Uuid\Uuid;
 
 final class Job implements JobInterface
 {
-    /**
-     * @var string
-     */
-    private $uuid;
+    private readonly string $uuid;
+
+    private readonly int $timeout;
+
+    private readonly int $delay;
+
+    private readonly int $priority;
 
     /**
      * @param array<string, mixed> $payloadData
@@ -26,9 +29,9 @@ final class Job implements JobInterface
      */
     public function __construct(
         private readonly array $payloadData,
-        private readonly int $timeout = 60,
-        private readonly int $delay = 0,
-        private readonly int $priority = 0,
+        int $timeout = 60,
+        int $delay = 0,
+        int $priority = 0,
         private array $events = [],
         ?string $uuid = null
     ) {
@@ -36,6 +39,10 @@ final class Job implements JobInterface
             $uuid = Uuid::uuid1()->toString();
         }
         $this->uuid = $uuid;
+
+        $this->timeout = $timeout;
+        $this->delay = $delay;
+        $this->priority = $priority;
     }
 
     /**
