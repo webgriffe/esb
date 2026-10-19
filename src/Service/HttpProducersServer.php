@@ -29,7 +29,7 @@ class HttpProducersServer
     /** @var ProducerInstance[] */
     private array $producerInstances = [];
 
-    private ?HttpServer $httpServer;
+    private ?HttpServer $httpServer = null;
 
     public function __construct(
         private readonly int $port,
