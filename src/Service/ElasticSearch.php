@@ -49,7 +49,7 @@ class ElasticSearch
     public function indexJob(JobInterface $job, string $indexName): Amp\Promise
     {
         return Amp\call(function () use ($job, $indexName) {
-            yield from $this->doIndexJob($job, $indexName, 0);
+            yield from $this->doIndexJob($job, $indexName);
         });
     }
 
@@ -74,7 +74,7 @@ class ElasticSearch
     {
         return Amp\call(function () use ($uuid, $indexName) {
             try {
-                $response = yield from $this->doFetchJob($uuid, $indexName, 0);
+                $response = yield from $this->doFetchJob($uuid, $indexName);
             } catch (Error $error) {
                 if ($error->getCode() === 404) {
                     throw new JobNotFoundException($uuid);
@@ -144,32 +144,34 @@ class ElasticSearch
     /**
      * @param JobInterface $job
      * @param string $indexName
-     * @param int $retry
+     *
      * @return Generator<Amp\Promise>
      * @throws ExceptionInterface
      */
-    private function doIndexJob(JobInterface $job, string $indexName, int $retry): Generator
+    private function doIndexJob(JobInterface $job, string $indexName): Generator
     {
-        try {
-            yield $this->client->indexDocument(
-                $indexName,
-                $job->getUuid(),
-                (array)$this->normalizer->normalize($job, 'json')
-            );
-        } catch (Error $error) {
-            $errorData = $error->getData();
-            if (null === $errorData) {
+        $normalizedJob = (array)$this->normalizer->normalize($job, 'json');
+
+        $retry = 0;
+        while (true) {
+            try {
+                return yield $this->client->indexDocument($indexName, $job->getUuid(), $normalizedJob);
+            } catch (Error $error) {
+                $errorData = $error->getData();
+                if (null === $errorData) {
+                    throw $error;
+                }
+                $errorType = $errorData['error']['type'] ?? null;
+                if ($errorType === 'no_shard_available_action_exception' &&
+                    ++$retry <= self::NO_SHARD_AVAILABLE_INDEX_MAX_RETRY) {
+                    // TODO Log no shard available and number of retrials
+                    yield Amp\delay(1000);
+
+                    continue;
+                }
+
                 throw $error;
             }
-            $errorType = $errorData['error']['type'] ?? null;
-            if ($errorType === 'no_shard_available_action_exception' &&
-                $retry < self::NO_SHARD_AVAILABLE_INDEX_MAX_RETRY) {
-                // TODO Log no shard available retrials and refactor
-                yield Amp\delay(1000);
-                yield from $this->doIndexJob($job, $indexName, ++$retry);
-                return;
-            }
-            throw $error;
         }
     }
 
@@ -186,35 +188,38 @@ class ElasticSearch
             $body[] = ['index' => ['_id' => $job->getUuid()]];
             $body[] = (array)$this->normalizer->normalize($job, 'json');
         }
+
         return yield $this->client->bulk($body, $indexName);
     }
 
     /**
      * @param string $uuid
      * @param string $indexName
-     * @param int $retry
+     *
      * @return Generator<Amp\Promise>
      */
-    private function doFetchJob(string $uuid, string $indexName, int $retry): Generator
+    private function doFetchJob(string $uuid, string $indexName): Generator
     {
-        try {
-            return yield $this->client->getDocument(
-                $indexName,
-                $uuid
-            );
-        } catch (Error $error) {
-            $errorData = $error->getData();
-            if (null === $errorData) {
+        $retry = 0;
+        while (true) {
+            try {
+                return yield $this->client->getDocument($indexName, $uuid);
+            } catch (Error $error) {
+                $errorData = $error->getData();
+                if (null === $errorData) {
+                    throw $error;
+                }
+                $errorType = $errorData['error']['type'] ?? null;
+                if ($errorType === 'no_shard_available_action_exception' &&
+                    ++$retry < self::NO_SHARD_AVAILABLE_INDEX_MAX_RETRY) {
+                    // TODO Log no shard available retrials and refactor
+                    yield Amp\delay(1000);
+
+                    continue;
+                }
+
                 throw $error;
             }
-            $errorType = $errorData['error']['type'] ?? null;
-            if ($errorType === 'no_shard_available_action_exception' &&
-                $retry < self::NO_SHARD_AVAILABLE_INDEX_MAX_RETRY) {
-                // TODO Log no shard available retrials and refactor
-                yield Amp\delay(1000);
-                return yield from $this->doFetchJob($uuid, $indexName, ++$retry);
-            }
-            throw $error;
         }
     }
 }
