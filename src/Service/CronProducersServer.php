@@ -23,7 +23,7 @@ class CronProducersServer
     /** @var ProducerInstance[] */
     private array $producerInstances = [];
 
-    private ?string $cronTickWatcherId;
+    private ?string $cronTickWatcherId = null;
 
     public function __construct(
         private readonly DateTimeBuilderInterface $dateTimeBuilder,
