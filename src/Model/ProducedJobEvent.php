@@ -6,19 +6,10 @@ namespace Webgriffe\Esb\Model;
 
 final class ProducedJobEvent implements JobEventInterface
 {
-    /**
-     * @var \DateTime
-     */
-    private $time;
-    /**
-     * @var string
-     */
-    private $producerFqcn;
-
-    public function __construct(\DateTime $time, string $producerFqcn)
-    {
-        $this->time = $time;
-        $this->producerFqcn = $producerFqcn;
+    public function __construct(
+        private readonly \DateTime $time,
+        private readonly string $producerFqcn,
+    ) {
     }
 
     public function getTime(): \DateTime

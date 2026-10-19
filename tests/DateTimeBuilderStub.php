@@ -4,9 +4,9 @@ namespace Webgriffe\Esb;
 
 final class DateTimeBuilderStub implements DateTimeBuilderInterface
 {
-    public static $forcedNow;
+    public static ?string $forcedNow = null;
 
-    public function build($time = 'now', \DateTimeZone $timezone = null): \DateTime
+    public function build(string $time = 'now', \DateTimeZone $timezone = null): \DateTime
     {
         if (self::$forcedNow) {
             $dateTime = new \DateTime(self::$forcedNow, $timezone);

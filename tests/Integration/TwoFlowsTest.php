@@ -18,7 +18,7 @@ class TwoFlowsTest extends KernelTestCase
 
     use TestUtils;
 
-    public function testTwoFlows()
+    public function testTwoFlows(): void
     {
         $producerDir1 = vfsStream::url('root/producer_dir_1');
         $workerFile1 = vfsStream::url('root/worker_1.data');

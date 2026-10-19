@@ -16,24 +16,13 @@ use function Amp\call;
  */
 final class DummyFilesystemWorker implements WorkerInterface
 {
-    /**
-     * @var string
-     */
-    private $filename;
-
-    /**
-     * @var int
-     */
-    private $duration;
-
-    public function __construct(string $filename, int $duration = 0)
-    {
-        $this->filename = $filename;
-        $this->duration = $duration;
+    public function __construct(
+        private readonly string $filename,
+        private readonly int $duration = 0,
+    ) {
     }
 
     /**
-     * @return Promise
      * @throws \Error
      */
     public function init(): Promise

@@ -10,29 +10,11 @@ use Webgriffe\Esb\Service\ElasticSearch;
 
 abstract class AbstractController
 {
-    /**
-     * @var Environment
-     */
-    private $twig;
-
-    /**
-     * @var FlowManager
-     */
-    private $flowManager;
-
-    /**
-     * @var ElasticSearch
-     */
-    private $elasticSearch;
-
     public function __construct(
-        Environment $twig,
-        FlowManager $flowManager,
-        ElasticSearch $elasticSearch
+        private readonly Environment $twig,
+        private readonly FlowManager $flowManager,
+        private readonly ElasticSearch $elasticSearch,
     ) {
-        $this->twig = $twig;
-        $this->flowManager = $flowManager;
-        $this->elasticSearch = $elasticSearch;
     }
 
     /**

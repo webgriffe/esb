@@ -10,7 +10,7 @@ use Webgriffe\Esb\KernelTestCase;
 
 class UncaughtExceptionTest extends KernelTestCase
 {
-    public function testUncaughtExceptionIsLoggedAndThrown()
+    public function testUncaughtExceptionIsLoggedAndThrown(): void
     {
         self::createKernel([
             'parameters' => ['beanstalkd' => 'tcp://invalid-host:11300'],
@@ -35,7 +35,7 @@ class UncaughtExceptionTest extends KernelTestCase
         }
     }
 
-    public function testMultiReasonExceptionIsLoggedAndThrown()
+    public function testMultiReasonExceptionIsLoggedAndThrown(): void
     {
         self::createKernel([
             'services' => [

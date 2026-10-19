@@ -13,7 +13,7 @@ class FailingJobHandlingTest extends KernelTestCase
 {
     private const FLOW_CODE = 'failing_jobs_flow';
 
-    public function testFailingJobIsReleasedWithProperDelayAndThenDeletedAftetProperMaxRetries()
+    public function testFailingJobIsReleasedWithProperDelayAndThenDeletedAfterProperMaxRetries(): void
     {
         self::createKernel([
             'services' => [
@@ -26,7 +26,7 @@ class FailingJobHandlingTest extends KernelTestCase
                     'producer' => ['service' => DummyRepeatProducer::class],
                     'worker' => [
                         'service' => AlwaysFailingWorker::class,
-                        'release_delay' => 1,
+                        'error_retry_delay' => 1,
                         'max_retry' => 2
                     ],
                 ]
@@ -50,7 +50,7 @@ class FailingJobHandlingTest extends KernelTestCase
         $this->assertTrue(
             $this->logHandler()->hasInfoThatPasses(
                 function (array $record) {
-                    return $record['message'] === 'Worker released a Job' && $record['context']['release_delay'] === 1;
+                    return $record['message'] === 'Worker released a Job' && $record['context']['error_retry_delay'] === 1;
                 }
             )
         );

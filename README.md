@@ -28,7 +28,7 @@ Webgriffe ESB is designed to use a single binary which is used as the main entry
 
 Requirements
 ------------
-* PHP 8.1, 8.2, 8.3, 8.4
+* PHP 8.1, 8.2, 8.3, 8.4, 8.5
 * Beanstalk
 * Elasticsearch 7.*
 
@@ -72,7 +72,6 @@ flows:
       service: My\Esb\Worker            # A worker service ID defined above
       instances: 1                      # The number of worker instances to spawn for this flow
       error_retry_delay: 0              # The number of seconds to wait before an errored job can be retried. The default is 0 (errored jobs can be retried immediately). Useful when "retrying later" might solve the problem.
-      release_delay: 0                  # (deprecated) older name of the error_retry_delay parameter
       max_retry: 5                      # The number of maximum work retries for a job in this tube/flow before being buried
     dependencies:                       # This whole section can be omitted if the current flow has no dependencies
       flows: ['other_flow_1', 'other_flow_2']  # Optional: dependencies of this flow toward other flow(s)

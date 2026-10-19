@@ -19,5 +19,5 @@ interface ProducerInterface
      * @param mixed $data
      * @return Iterator<JobInterface> An Amp Iterator that must emit Jobs.
      */
-    public function produce($data = null): Iterator;
+    public function produce(mixed $data = null): Iterator;
 }

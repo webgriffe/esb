@@ -32,11 +32,11 @@ final class DummyHttpRequestProducer implements HttpRequestProducerInterface
 
     /**
      * @param Request $data
-     * @return Iterator
+     *
      * @throws \InvalidArgumentException
      * @throws \Error
      */
-    public function produce($data = null): Iterator
+    public function produce(mixed $data = null): Iterator
     {
         return new Producer(function (callable $emit) use ($data) {
             if (!$data instanceof Request) {

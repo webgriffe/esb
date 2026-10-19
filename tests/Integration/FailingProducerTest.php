@@ -16,7 +16,7 @@ class FailingProducerTest extends KernelTestCase
 
     private const FLOW_CODE = 'failing_producer_flow';
 
-    public function testFailingProducerShouldBeCaughtAndLogged()
+    public function testFailingProducerShouldBeCaughtAndLogged(): void
     {
         $workerFile = vfsStream::url('root/worker.data');
         self::createKernel([

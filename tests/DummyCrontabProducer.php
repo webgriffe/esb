@@ -12,7 +12,7 @@ final class DummyCrontabProducer implements CrontabProducerInterface
     /**
      * @var Job[]
      */
-    public static $jobs = [];
+    public static array $jobs = [];
 
     public function getCrontab(): string
     {
@@ -20,7 +20,6 @@ final class DummyCrontabProducer implements CrontabProducerInterface
     }
 
     /**
-     * @return Promise
      * @throws \Error
      */
     public function init(): Promise
@@ -29,11 +28,9 @@ final class DummyCrontabProducer implements CrontabProducerInterface
     }
 
     /**
-     * @param mixed $data
-     * @return Iterator
      * @throws \TypeError
      */
-    public function produce($data = null): Iterator
+    public function produce(mixed $data = null): Iterator
     {
         $iterator = Iterator\fromIterable(self::$jobs);
         self::$jobs = [];

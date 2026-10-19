@@ -27,7 +27,7 @@ class FlowsDependencyTest extends KernelTestCase
      *
      * @throws Exception
      */
-    public function testTwoFlowsWithDependencies()
+    public function testTwoFlowsWithDependencies(): void
     {
         $producerDir1 = vfsStream::url('root/producer_dir_1');
         $workerFile1 = vfsStream::url('root/worker_1.data');
@@ -130,7 +130,7 @@ class FlowsDependencyTest extends KernelTestCase
      *
      * @throws Exception
      */
-    public function testDependencyQueue()
+    public function testDependencyQueue(): void
     {
         $producerDir1 = vfsStream::url('root/producer_dir_1');
         $workerFile1 = vfsStream::url('root/worker_1.data');
@@ -242,10 +242,6 @@ class FlowsDependencyTest extends KernelTestCase
         );
     }
 
-    /**
-     * @param string $worker1Line
-     * @return float
-     */
     private function getLogLineTimestamp(string $worker1Line): float
     {
         $matches = [];

@@ -14,10 +14,8 @@ use function Amp\Promise\wait;
 class CleanOldJobsTest extends TestCase
 {
     const CRONTAB_EXPRESSION = '0 15 10 ? * *';
-    /**
-     * @var CleanOldJobs
-     */
-    private $producer;
+
+    private ?CleanOldJobs $producer = null;
 
     protected function setUp(): void
     {
@@ -27,7 +25,7 @@ class CleanOldJobsTest extends TestCase
     /**
      * @test
      */
-    public function it_is_a_crontab_producer()
+    public function it_is_a_crontab_producer(): void
     {
         $this->assertInstanceOf(CrontabProducerInterface::class, $this->producer);
     }
@@ -35,14 +33,15 @@ class CleanOldJobsTest extends TestCase
     /**
      * @test
      */
-    public function it_has_a_crontab_expression()
+    public function it_has_a_crontab_expression(): void
     {
         $this->assertEquals(self::CRONTAB_EXPRESSION, $this->producer->getCrontab());
     }
+
     /**
      * @test
      */
-    public function it_produces_just_one_job_with_empty_payload()
+    public function it_produces_just_one_job_with_empty_payload(): void
     {
         $jobs = wait($this->runIterator($this->producer->produce()));
         $this->assertCount(1, $jobs);
@@ -50,10 +49,6 @@ class CleanOldJobsTest extends TestCase
         $this->assertEmpty($job->getPayloadData());
     }
 
-    /**
-     * @param Iterator $iterator
-     * @return Promise
-     */
     private function runIterator(Iterator $iterator): Promise
     {
         return call(function () use ($iterator) {

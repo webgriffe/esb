@@ -8,11 +8,9 @@ use Webgriffe\Esb\Model\JobEventInterface;
 
 class DummyJobEvent implements JobEventInterface
 {
-    private $time;
-
-    public function __construct(\DateTime $time)
-    {
-        $this->time = $time;
+    public function __construct(
+        private readonly \DateTime $time,
+    ) {
     }
 
     public function getTime(): \DateTime

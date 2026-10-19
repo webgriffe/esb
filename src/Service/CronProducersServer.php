@@ -20,27 +20,15 @@ class CronProducersServer
 {
     public const CRON_TICK_SECONDS = 60;
 
-    /**
-     * @var ProducerInstance[]
-     */
-    private $producerInstances = [];
-    /**
-     * @var DateTimeBuilderInterface
-     */
-    private $dateTimeBuilder;
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
-    /**
-     * @var string
-     */
-    private $cronTickWatcherId;
+    /** @var ProducerInstance[] */
+    private array $producerInstances = [];
 
-    public function __construct(DateTimeBuilderInterface $dateTimeBuilder, LoggerInterface $logger)
-    {
-        $this->dateTimeBuilder = $dateTimeBuilder;
-        $this->logger = $logger;
+    private ?string $cronTickWatcherId = null;
+
+    public function __construct(
+        private readonly DateTimeBuilderInterface $dateTimeBuilder,
+        private readonly LoggerInterface $logger,
+    ) {
     }
 
     public function addProducerInstance(ProducerInstance $producerInstance): void
@@ -92,6 +80,7 @@ class CronProducersServer
                         'cron_expression' => $producer->getCrontab()
                     ]
                 );
+
                 yield $producerInstance->produceAndQueueJobs();
             }
         }

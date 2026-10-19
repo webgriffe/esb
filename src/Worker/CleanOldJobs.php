@@ -13,19 +13,10 @@ use Webgriffe\Esb\WorkerInterface;
 
 class CleanOldJobs implements WorkerInterface
 {
-    /**
-     * @var Client
-     */
-    private $client;
-    /**
-     * @var int
-     */
-    private $maxAgeInDays;
-
-    public function __construct(Client $client, int $maxAgeInDays)
-    {
-        $this->client = $client;
-        $this->maxAgeInDays = $maxAgeInDays;
+    public function __construct(
+        private readonly Client $client,
+        private readonly int $maxAgeInDays,
+    ) {
     }
 
     /**

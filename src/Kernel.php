@@ -20,30 +20,20 @@ use Webgriffe\Esb\Console\Server;
  */
 class Kernel
 {
-    /**
-     * @var ContainerBuilder
-     */
-    private $container;
-    /**
-     * @var string|null
-     */
-    private $environment;
-    /**
-     * @var string
-     */
-    private $localConfigFilePath;
+    private readonly ?string $environment;
+
+    private readonly ContainerBuilder $container;
 
     /**
-     * Kernel constructor.
-     * @param string $localConfigFilePath Local configuration absolute file path
-     * @param string $environment
      * @throws \Exception
      */
-    public function __construct(string $localConfigFilePath, ?string $environment = null)
-    {
-        AnnotationRegistry::registerUniqueLoader('class_exists');
-        $this->localConfigFilePath = $localConfigFilePath;
+    public function __construct(
+        private readonly string $localConfigFilePath,
+        ?string $environment = null,
+    ) {
         $this->environment = $environment;
+
+        AnnotationRegistry::registerUniqueLoader('class_exists');
         $this->container = new ContainerBuilder();
         $loader = new YamlFileLoader($this->container, new FileLocator(dirname(__DIR__)));
         $this->loadSystemConfiguration($loader);
@@ -69,16 +59,12 @@ class Kernel
         Loop::run();
     }
 
-    /**
-     * @return ContainerBuilder
-     */
     public function getContainer(): ContainerBuilder
     {
         return $this->container;
     }
 
     /**
-     * @param \Throwable $exception
      * @throws \Throwable
      */
     public function errorHandler(\Throwable $exception): void

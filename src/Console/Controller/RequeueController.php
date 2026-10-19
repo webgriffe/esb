@@ -21,26 +21,14 @@ use Webgriffe\Esb\Service\ElasticSearch;
  */
 class RequeueController extends AbstractController
 {
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
-
-    /**
-     * @var BeanstalkClient
-     */
-    private $beanstalkClient;
-
     public function __construct(
         Environment $twig,
         FlowManager $flowManager,
         ElasticSearch $elasticSearch,
-        LoggerInterface $logger,
-        BeanstalkClient $beanstalkClient
+        private readonly LoggerInterface $logger,
+        private readonly BeanstalkClient $beanstalkClient,
     ) {
         parent::__construct($twig, $flowManager, $elasticSearch);
-        $this->logger = $logger;
-        $this->beanstalkClient = $beanstalkClient;
     }
 
     /**

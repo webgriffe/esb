@@ -12,44 +12,20 @@ use Webgriffe\AmpElasticsearch\Error as AmpElasticsearchError;
 
 final class AmpElasticsearchUriSearchAdapter implements AsyncPagerAdapterInterface
 {
-    /**
-     * @var Client
-     */
-    private $client;
+    /** @var array<string, string|int>  */
+    private readonly array $options;
+
+    private ?int $totalHits = null;
 
     /**
-     * @var string
-     */
-    private $index;
-
-    /**
-     * @var string
-     */
-    private $query;
-
-    /**
-     * @var array<string, string|int>
-     */
-    private $options;
-
-    /**
-     * @var int|null
-     */
-    private $totalHits;
-
-
-    /**
-     * AmpElasticsearchAdapter constructor.
-     * @param Client $client
-     * @param string $index
-     * @param string $query
      * @param array<string, string|int> $options
      */
-    public function __construct(Client $client, string $index, string $query, array $options = [])
-    {
-        $this->client = $client;
-        $this->index = $index;
-        $this->query = $query;
+    public function __construct(
+        private readonly Client $client,
+        private readonly string $index,
+        private readonly string $query,
+        array $options = [],
+    ) {
         $this->options = $options;
     }
 

@@ -32,9 +32,9 @@ interface JobInterface
     public function getPriority(): int;
 
     /**
-     * @param JobEventInterface $tag
+     * @param JobEventInterface $event
      */
-    public function addEvent(JobEventInterface $tag): void;
+    public function addEvent(JobEventInterface $event): void;
 
     /**
      * @return JobEventInterface[]
