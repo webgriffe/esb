@@ -20,10 +20,14 @@ class ElasticSearch
 {
     private const NO_SHARD_AVAILABLE_INDEX_MAX_RETRY = 10;
 
+    /**
+     * @param NormalizerInterface&DenormalizerInterface $normalizer
+     */
     public function __construct(
         private readonly Client $client,
-        private readonly NormalizerInterface&DenormalizerInterface $normalizer,
+        private readonly NormalizerInterface $normalizer,
     ) {
+        Assert::isInstanceOf(DenormalizerInterface::class, $normalizer);
     }
 
     /**
