@@ -13,7 +13,6 @@ use Webgriffe\Esb\Model\FlowConfig;
  */
 class Flow
 {
-
     /**
      * @param array<WorkerInstanceInterface> $workerInstances
      */
