@@ -27,7 +27,7 @@ class ElasticSearch
         private readonly Client $client,
         private readonly NormalizerInterface $normalizer,
     ) {
-        Assert::isInstanceOf(DenormalizerInterface::class, $normalizer);
+        Assert::isInstanceOf($normalizer, DenormalizerInterface::class);
     }
 
     /**
