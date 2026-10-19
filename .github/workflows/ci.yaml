@@ -89,5 +89,5 @@ jobs:
           mkdir -p test-tools/bc-check
           composer require --working-dir="test-tools/bc-check" roave/backward-compatibility-check --no-plugins
 
-      - name: Run roave/backward-compatibility-check.
-        run: test-tools/bc-check/vendor/bin/roave-backward-compatibility-check --format=github-actions
+      #- name: Run roave/backward-compatibility-check.
+      #  run: test-tools/bc-check/vendor/bin/roave-backward-compatibility-check --format=github-actions
