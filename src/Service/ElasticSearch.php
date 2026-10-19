@@ -212,7 +212,7 @@ class ElasticSearch
                 $errorType = $errorData['error']['type'] ?? null;
                 if ($errorType === 'no_shard_available_action_exception' &&
                     ++$retry < self::NO_SHARD_AVAILABLE_INDEX_MAX_RETRY) {
-                    // TODO Log no shard available retrials and refactor
+                    // TODO Log no shard available retrials
                     yield Amp\delay(1000);
 
                     continue;
