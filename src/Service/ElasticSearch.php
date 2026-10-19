@@ -20,30 +20,13 @@ class ElasticSearch
 {
     private const NO_SHARD_AVAILABLE_INDEX_MAX_RETRY = 10;
 
-    /**
-     * @var Client
-     */
-    private $client;
-    /**
-     * @var NormalizerInterface&DenormalizerInterface
-     */
-    private $normalizer;
-
-    /**
-     * @param Client $client
-     * @param NormalizerInterface&DenormalizerInterface $normalizer
-     */
-    public function __construct(Client $client, $normalizer)
-    {
-        $this->client = $client;
-        Assert::isInstanceOf($normalizer, NormalizerInterface::class);
-        Assert::isInstanceOf($normalizer, DenormalizerInterface::class);
-        $this->normalizer = $normalizer;
+    public function __construct(
+        private readonly Client $client,
+        private readonly NormalizerInterface&DenormalizerInterface $normalizer,
+    ) {
     }
 
     /**
-     * @param JobInterface $job
-     * @param string $indexName
      * @return Amp\Promise<null>
      */
     public function indexJob(JobInterface $job, string $indexName): Amp\Promise
@@ -55,7 +38,7 @@ class ElasticSearch
 
     /**
      * @param JobInterface[] $jobs
-     * @param string $indexName
+     *
      * @return Amp\Promise<null>
      */
     public function bulkIndexJobs(array $jobs, string $indexName): Amp\Promise
@@ -66,8 +49,6 @@ class ElasticSearch
     }
 
     /**
-     * @param string $uuid
-     * @param string $indexName
      * @return Amp\Promise<JobInterface>
      */
     public function fetchJob(string $uuid, string $indexName): Amp\Promise
@@ -81,6 +62,7 @@ class ElasticSearch
                 }
                 throw $error;
             }
+
             Assert::keyExists($response, '_source');
             return $this->normalizer->denormalize($response['_source'], Job::class, 'json');
         });
@@ -115,7 +97,6 @@ class ElasticSearch
     }
 
     /**
-     * @param string $indexName
      * @param array<string, mixed> $updateSettingsBody
      */
     public function setElasticSearchIndexSettings(string $indexName, ?array $updateSettingsBody = null): Amp\Promise
@@ -124,7 +105,6 @@ class ElasticSearch
     }
 
     /**
-     * @param string $indexName
      * @param array<string, mixed> $updateMappingBody
      */
     public function setElasticSearchIndexMapping(string $indexName, ?array $updateMappingBody = null): Amp\Promise
@@ -133,7 +113,6 @@ class ElasticSearch
     }
 
     /**
-     * @param string $indexName
      * @param array<string, mixed> $aliasBody
      */
     public function setElasticSearchIndexAlias(string $indexName, string $aliasName, ?array $aliasBody = null): Amp\Promise
@@ -142,9 +121,6 @@ class ElasticSearch
     }
 
     /**
-     * @param JobInterface $job
-     * @param string $indexName
-     *
      * @return Generator<Amp\Promise>
      * @throws ExceptionInterface
      */
@@ -177,7 +153,7 @@ class ElasticSearch
 
     /**
      * @param JobInterface[] $jobs
-     * @param string $indexName
+     *
      * @return Generator<Amp\Promise>
      * @throws ExceptionInterface
      */
@@ -193,9 +169,6 @@ class ElasticSearch
     }
 
     /**
-     * @param string $uuid
-     * @param string $indexName
-     *
      * @return Generator<Amp\Promise>
      */
     private function doFetchJob(string $uuid, string $indexName): Generator

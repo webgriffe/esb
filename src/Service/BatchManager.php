@@ -14,11 +14,11 @@ final class BatchManager implements BatchManagerInterface
     /**
      * @var array<string, JobInterface>
      */
-    private $batch = [];
+    private array $batch = [];
 
     public function __construct(
         private readonly QueueBackendInterface $queueBackend,
-        private readonly int $batchSize
+        private readonly int $batchSize,
     ) {
     }
 

@@ -17,7 +17,6 @@ interface BatchManagerInterface
      * To be sure that all jobs are actually pushed to the queue, use the flush() method after the last call to
      * enqueue()
      *
-     * @param JobInterface $job The job to add to the queue
      * @return Promise<int>
      */
     public function enqueue(JobInterface $job): Promise;

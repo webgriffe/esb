@@ -26,33 +26,16 @@ class HttpProducersServer
 {
     use CallableMaker;
 
-    /**
-     * @var int
-     */
-    private $port;
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
-    /**
-     * @var ProducerInstance[]
-     */
-    private $producerInstances = [];
-    /**
-     * @var HttpServer|null
-     */
-    private $httpServer;
+    /** @var ProducerInstance[] */
+    private array $producerInstances = [];
 
-    /**
-     * @var int|null
-     */
-    private $maxBodySize;
+    private ?HttpServer $httpServer;
 
-    public function __construct(int $port, LoggerInterface $logger, ?int $maxBodySize)
-    {
-        $this->port = $port;
-        $this->logger = $logger;
-        $this->maxBodySize = $maxBodySize;
+    public function __construct(
+        private readonly int $port,
+        private readonly LoggerInterface $logger,
+        private readonly ?int $maxBodySize,
+    ) {
     }
 
     /**
@@ -102,7 +85,6 @@ class HttpProducersServer
 
     /** @noinspection PhpUnusedPrivateMethodInspection */
     /**
-     * @param Request $request
      * @return \Generator<Promise>
      */
     private function requestHandler(Request $request)
@@ -130,7 +112,6 @@ class HttpProducersServer
     }
 
     /**
-     * @param Request $request
      * @return ProducerInstance[]
      */
     private function matchProducerInstance(Request $request)

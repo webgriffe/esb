@@ -18,46 +18,20 @@ use Webgriffe\Esb\NonUtf8Cleaner;
 
 final class BeanstalkElasticsearchQueueBackend implements QueueBackendInterface
 {
-    private const DEFAULT_BATCH_ID = 'default';
-
     /**
-     * @var BeanstalkClient
-     */
-    private $beanstalkClient;
-
-    /**
-     * @var ElasticSearch
-     */
-    private $elasticSearch;
-
-    /**
-     * @var FlowConfig
-     */
-    private $flowConfig;
-
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
-
-    /**
-     * @TODO This map is static because it must be shared between each QueueBackend instance: it could be refactored
-     *       extracting the mapping service to a dedicated class
+     * @TODO This map is static because it must be shared between all QueueBackend instance.
+     *       It could be refactored extracting the mapping service to a dedicated class
      *
      * @var int[]
      */
     private static $uuidToBeanstalkIdMap = [];
 
     public function __construct(
-        FlowConfig $flowConfig,
-        BeanstalkClient $beanstalkClient,
-        ElasticSearch $elasticSearch,
-        LoggerInterface $logger,
+        private readonly FlowConfig $flowConfig,
+        private readonly BeanstalkClient $beanstalkClient,
+        private readonly ElasticSearch $elasticSearch,
+        private readonly LoggerInterface $logger,
     ) {
-        $this->flowConfig = $flowConfig;
-        $this->beanstalkClient = $beanstalkClient;
-        $this->elasticSearch = $elasticSearch;
-        $this->logger = $logger;
     }
 
     /**
@@ -123,6 +97,7 @@ final class BeanstalkElasticsearchQueueBackend implements QueueBackendInterface
                     }
                 }
             }
+
             //Producer
             yield $this->beanstalkClient->use($this->flowConfig->getTube());
 
