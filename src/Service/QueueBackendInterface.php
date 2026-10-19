@@ -28,6 +28,7 @@ interface QueueBackendInterface
      * Updates the data of the specified job in the queue
      *
      * @param JobInterface $job
+     *
      * @return Promise<null>
      */
     public function updateJob(JobInterface $job): Promise;
@@ -38,6 +39,7 @@ interface QueueBackendInterface
      *
      * @param JobInterface $job
      * @param int $delay
+     *
      * @return Promise<null>
      */
     public function requeue(JobInterface $job, int $delay = 0): Promise;
@@ -46,6 +48,7 @@ interface QueueBackendInterface
      * Removes a job from the queue
      *
      * @param JobInterface $job
+     *
      * @return Promise<null>
      */
     public function dequeue(JobInterface $job): Promise;
@@ -55,19 +58,22 @@ interface QueueBackendInterface
      * Returns a promise that resolves to a boolean value
      *
      * @param string $queueName
+     *
      * @return Promise<bool>
      */
     public function isEmpty(string $queueName): Promise;
 
     /**
      * @param string $jobUuid
+     *
      * @return Promise<bool>
      */
     public function jobExists(string $jobUuid): Promise;
 
     /**
      * @param JobInterface[] $jobs
-     * @return Promise<null>
+     *
+     * @return Promise<int>
      */
     public function enqueueJobs(array $jobs): Promise;
 }
