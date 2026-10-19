@@ -54,11 +54,11 @@ final class BatchManager implements BatchManagerInterface
     public function flush(): Promise
     {
         return call(function () {
-            $jobsCount = count($this->batch);
-            if ($jobsCount > 0) {
-                yield $this->queueBackend->enqueueJobs($this->batch);
+            $jobsCount = 0;
+            if (!empty($this->batch)) {
+                $jobsCount = yield $this->queueBackend->enqueueJobs($this->batch);
+                $this->batch = [];
             }
-            $this->batch = [];
 
             return $jobsCount;
         });

@@ -208,6 +208,7 @@ final class BeanstalkElasticsearchQueueBackend implements QueueBackendInterface
 
     /**
      * @param string $jobUuid
+     *
      * @return Promise<bool>
      */
     public function jobExists(string $jobUuid): Promise
@@ -224,6 +225,8 @@ final class BeanstalkElasticsearchQueueBackend implements QueueBackendInterface
 
     /**
      * @param JobInterface[] $jobs
+     *
+     * @return Promise<int>
      */
     public function enqueueJobs(array $jobs): Promise
     {
@@ -279,6 +282,9 @@ final class BeanstalkElasticsearchQueueBackend implements QueueBackendInterface
                     ]
                 );
             }
+
+            // Return the number of jobs that were actually enqueued
+            return count($jobs);
         });
     }
 
