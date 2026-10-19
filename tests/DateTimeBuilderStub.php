@@ -4,7 +4,7 @@ namespace Webgriffe\Esb;
 
 final class DateTimeBuilderStub implements DateTimeBuilderInterface
 {
-    public static bool $forcedNow;
+    public static ?string $forcedNow = null;
 
     public function build(string $time = 'now', \DateTimeZone $timezone = null): \DateTime
     {
