@@ -19,50 +19,27 @@ use Webmozart\Assert\Assert;
  */
 class AsyncPager implements PagerfantaInterface
 {
-    /**
-     * @var AsyncPagerAdapterInterface
-     */
-    private $adapter;
-    /**
-     * @var int|null
-     */
-    private $nbResults;
-    /**
-     * @var iterable<mixed>|null
-     */
+    private ?int $nbResults = null;
+
+    /** @var iterable<mixed>|null */
     private $slice;
-    /**
-     * @var bool
-     */
-    private $allowOutOfRangePages;
-    /**
-     * @var bool
-     */
-    private $normalizeOutOfRangePages;
-    /**
-     * @var int
-     */
-    private $maxPerPage;
-    /**
-     * @var int
-     */
-    private $currentPage;
-    /**
-     * @var iterable<mixed>|null
-     */
+
+    private bool $allowOutOfRangePages = false;
+
+    private bool $normalizeOutOfRangePages = false;
+
+    /** @var iterable<mixed>|null */
     private $currentPageResults;
 
     /**
      * @noinspection MagicMethodsValidityInspection
      * @noinspection PhpMissingParentConstructorInspection
      */
-    public function __construct(AsyncPagerAdapterInterface $adapter, int $maxPerPage = 10, int $currentPage = 1)
-    {
-        $this->adapter = $adapter;
-        $this->allowOutOfRangePages = false;
-        $this->normalizeOutOfRangePages = false;
-        $this->maxPerPage = $maxPerPage;
-        $this->currentPage = $currentPage;
+    public function __construct(
+        private readonly AsyncPagerAdapterInterface $adapter,
+        private int $maxPerPage = 10,
+        private int $currentPage = 1,
+    ) {
     }
 
     /**
@@ -78,12 +55,7 @@ class AsyncPager implements PagerfantaInterface
         });
     }
 
-    /**
-     * Returns the adapter.
-     *
-     * @return AsyncPagerAdapterInterface The adapter.
-     */
-    public function getAdapter()
+    public function getAdapter(): AsyncPagerAdapterInterface
     {
         return $this->adapter;
     }
@@ -91,21 +63,17 @@ class AsyncPager implements PagerfantaInterface
     /**
      * Sets whether or not allow out of range pages.
      *
-     * @param boolean $value
-     *
      * @return self
      */
-    public function setAllowOutOfRangePages($value)
+    public function setAllowOutOfRangePages(bool $allowOutOfRangePages)
     {
-        $this->allowOutOfRangePages = $this->filterBoolean($value);
+        $this->allowOutOfRangePages = $this->filterBoolean($allowOutOfRangePages);
 
         return $this;
     }
 
     /**
      * Returns whether or not allow out of range pages.
-     *
-     * @return boolean
      */
     public function getAllowOutOfRangePages(): bool
     {
@@ -115,13 +83,11 @@ class AsyncPager implements PagerfantaInterface
     /**
      * Sets whether or not normalize out of range pages.
      *
-     * @param boolean $value
-     *
      * @return self
      */
-    public function setNormalizeOutOfRangePages($value)
+    public function setNormalizeOutOfRangePages(bool $normalizeOutOfRangePages)
     {
-        $this->normalizeOutOfRangePages = $this->filterBoolean($value);
+        $this->normalizeOutOfRangePages = $this->filterBoolean($normalizeOutOfRangePages);
 
         return $this;
     }
@@ -152,14 +118,12 @@ class AsyncPager implements PagerfantaInterface
      *
      * Tries to convert from string and float.
      *
-     * @param integer $maxPerPage
-     *
      * @return self
      *
      * @throws NotValidMaxPerPageException If the max per page is not an integer even converting.
      * @throws LessThan1MaxPerPageException  If the max per page is less than 1.
      */
-    public function setMaxPerPage($maxPerPage)
+    public function setMaxPerPage(int $maxPerPage)
     {
         $this->maxPerPage = $this->filterMaxPerPage($maxPerPage);
         $this->resetForMaxPerPageChange();
@@ -201,10 +165,8 @@ class AsyncPager implements PagerfantaInterface
 
     /**
      * Returns the max per page.
-     *
-     * @return integer
      */
-    public function getMaxPerPage()
+    public function getMaxPerPage(): int
     {
         return $this->maxPerPage;
     }
@@ -214,15 +176,13 @@ class AsyncPager implements PagerfantaInterface
      *
      * Tries to convert from string and float.
      *
-     * @param integer $currentPage
-     *
      * @return self
      *
      * @throws NotValidCurrentPageException If the current page is not an integer even converting.
      * @throws LessThan1CurrentPageException  If the current page is less than 1.
      * @throws OutOfRangeCurrentPageException If It is not allowed out of range pages and they are not normalized.
      */
-    public function setCurrentPage($currentPage)
+    public function setCurrentPage(int $currentPage)
     {
         $this->currentPage = $this->filterCurrentPage($currentPage);
         $this->resetForCurrentPageChange();
@@ -231,10 +191,9 @@ class AsyncPager implements PagerfantaInterface
     }
 
     /**
-     * @param mixed $currentPage
      * @return int
      */
-    private function filterCurrentPage($currentPage): int
+    private function filterCurrentPage(int $currentPage): int
     {
         $currentPage = $this->toInteger($currentPage);
         $this->checkCurrentPage($currentPage);
@@ -276,13 +235,11 @@ class AsyncPager implements PagerfantaInterface
     }
 
     /**
-     * @param int $currentPage
-     *
      * @return int
      *
      * @throws OutOfRangeCurrentPageException If the page should not be normalized
      */
-    private function normalizeOutOfRangeCurrentPage($currentPage): int
+    private function normalizeOutOfRangeCurrentPage(int $currentPage): int
     {
         if ($this->getNormalizeOutOfRangePages()) {
             return $this->getNbPages();

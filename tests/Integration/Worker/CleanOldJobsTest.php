@@ -18,7 +18,7 @@ class CleanOldJobsTest extends KernelTestCase
     /**
      * @test
      */
-    public function itDoesNothingIfThereAreNoOldJobs()
+    public function itDoesNothingIfThereAreNoOldJobs(): void
     {
         self::createKernel([]);
         $container = self::$kernel->getContainer();
@@ -38,7 +38,7 @@ class CleanOldJobsTest extends KernelTestCase
     /**
      * @test
      */
-    public function itDeletesOldJobs()
+    public function itDeletesOldJobs(): void
     {
         self::createKernel([]);
         $container = self::$kernel->getContainer();

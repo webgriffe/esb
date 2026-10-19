@@ -10,10 +10,7 @@ use Webgriffe\Esb\Model\JobEventInterface;
 
 class JobTest extends TestCase
 {
-    /**
-     * @var string|null
-     */
-    private $originalTimezone;
+    private ?string $originalTimezone = null;
 
     protected function setUp(): void
     {
@@ -26,7 +23,7 @@ class JobTest extends TestCase
     /**
      * @test
      */
-    public function it_allows_to_add_events()
+    public function it_allows_to_add_events(): void
     {
         $job = new Job([]);
         $job->addEvent(new DummyJobEvent(new \DateTime('2019-10-29 19:40:00')));
@@ -39,7 +36,7 @@ class JobTest extends TestCase
     /**
      * @test
      */
-    public function it_returns_last_event()
+    public function it_returns_last_event(): void
     {
         $job = new Job([]);
         $job->addEvent(new DummyJobEvent(new \DateTime('2019-10-29 19:40:00')));
@@ -53,7 +50,7 @@ class JobTest extends TestCase
     /**
      * @test
      */
-    public function it_returns_no_last_event_if_there_is_no_event_at_all()
+    public function it_returns_no_last_event_if_there_is_no_event_at_all(): void
     {
         $job = new Job([]);
 
@@ -63,7 +60,7 @@ class JobTest extends TestCase
     /**
      * @test
      */
-    public function it_should_not_allow_to_add_event_happened_before_the_last_one()
+    public function it_should_not_allow_to_add_event_happened_before_the_last_one(): void
     {
         $job = new Job([]);
         $job->addEvent(new DummyJobEvent(new \DateTime('2019-10-29 19:40:00')));

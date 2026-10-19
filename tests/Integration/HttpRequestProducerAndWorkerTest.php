@@ -24,7 +24,7 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
 
     private const FLOW_CODE = 'http_producer_flow';
 
-    public function testHttpRequestProducerAndWorker()
+    public function testHttpRequestProducerAndWorker(): void
     {
         $workerFile = vfsStream::url('root/worker.data');
         self::createKernel(
@@ -82,7 +82,7 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
         $this->assertReadyJobsCountInTube(0, self::FLOW_CODE);
     }
 
-    public function testMultipleHttpRequestProducersForSameRequest()
+    public function testMultipleHttpRequestProducersForSameRequest(): void
     {
         $firstWorkerFile = vfsStream::url('root/first-worker.data');
         $secondWorkerFile = vfsStream::url('root/second-worker.data');
@@ -152,7 +152,7 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
         $this->assertReadyJobsCountInTube(0, 'second_http_producer_flow');
     }
 
-    public function testHttpRequestProducerWithWrongUriShouldReturn404()
+    public function testHttpRequestProducerWithWrongUriShouldReturn404(): void
     {
         $workerFile = vfsStream::url('root/worker.data');
         self::createKernel(
@@ -191,7 +191,7 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
         $this->assertReadyJobsCountInTube(0, self::FLOW_CODE);
     }
 
-    public function testConcurrentHttpRequestsForSameFlow()
+    public function testConcurrentHttpRequestsForSameFlow(): void
     {
         $workerFile = vfsStream::url('root/worker.data');
         self::createKernel(

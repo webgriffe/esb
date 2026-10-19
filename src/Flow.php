@@ -13,42 +13,16 @@ use Webgriffe\Esb\Model\FlowConfig;
  */
 class Flow
 {
-    /**
-     * @var FlowConfig
-     */
-    private $flowConfig;
 
     /**
-     * @var ProducerInstance
-     */
-    private $producerInstance;
-
-    /**
-     * @var WorkerInstanceInterface[]
-     */
-    private $workerInstances;
-
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
-
-    /**
-     * @param FlowConfig $flowConfig
-     * @param ProducerInstance $producerInstance
      * @param array<WorkerInstanceInterface> $workerInstances
-     * @param LoggerInterface $logger
      */
     public function __construct(
-        FlowConfig $flowConfig,
-        ProducerInstance $producerInstance,
-        array $workerInstances,
-        LoggerInterface $logger
+        private readonly FlowConfig $flowConfig,
+        private readonly ProducerInstance $producerInstance,
+        private readonly array $workerInstances,
+        private readonly LoggerInterface $logger
     ) {
-        $this->flowConfig = $flowConfig;
-        $this->producerInstance = $producerInstance;
-        $this->workerInstances = $workerInstances;
-        $this->logger = $logger;
     }
 
     public function boot(): void

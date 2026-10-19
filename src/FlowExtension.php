@@ -22,7 +22,7 @@ final class FlowExtension implements ExtensionInterface, CompilerPassInterface
     /**
      * @var array<string, array>
      */
-    private $flowsConfig = [];
+    private array $flowsConfig = [];
 
     /**
      * Loads a specific configuration.

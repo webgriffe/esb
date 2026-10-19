@@ -20,7 +20,7 @@ class CrontabProducerAndWorkerTest extends KernelTestCase
 
     use TestUtils;
 
-    public function testCrontabProducerAndWorkerDoesNotProduceIfIsNotTheRightTime()
+    public function testCrontabProducerAndWorkerDoesNotProduceIfIsNotTheRightTime(): void
     {
         vfsStream::setup();
         DummyCrontabProducer::$jobs = [new Job(['job1']), new Job(['job2'])];
@@ -50,7 +50,7 @@ class CrontabProducerAndWorkerTest extends KernelTestCase
         $this->assertFileDoesNotExist($workerFile);
     }
 
-    public function testCrontabProducerAndWorkerProducesIfItsTheRightTime()
+    public function testCrontabProducerAndWorkerProducesIfItsTheRightTime(): void
     {
         vfsStream::setup();
         DummyCrontabProducer::$jobs = [new Job(['job1']), new Job(['job2'])];

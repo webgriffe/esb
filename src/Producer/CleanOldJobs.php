@@ -13,18 +13,9 @@ use Webgriffe\Esb\Model\Job;
 
 class CleanOldJobs implements CrontabProducerInterface
 {
-    /**
-     * @var string
-     */
-    private $cronExpression;
-
-    /**
-     * CleanOldElasticsearchDocuments constructor.
-     * @param string $cronExpression
-     */
-    public function __construct(string $cronExpression)
-    {
-        $this->cronExpression = $cronExpression;
+    public function __construct(
+        private readonly string $cronExpression,
+    ) {
     }
 
     /**

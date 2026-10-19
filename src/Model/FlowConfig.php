@@ -10,22 +10,12 @@ namespace Webgriffe\Esb\Model;
 class FlowConfig
 {
     /**
-     * @var string
-     */
-    private $tube;
-    /**
-     * @var array<string, mixed>
-     */
-    private $config;
-
-    /**
-     * @param string $tube
      * @param array<string, mixed> $config
      */
-    public function __construct(string $tube, array $config)
-    {
-        $this->tube = $tube;
-        $this->config = $config;
+    public function __construct(
+        private readonly string $tube,
+        private readonly array $config,
+    ) {
     }
 
     public function getName(): string

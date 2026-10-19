@@ -18,10 +18,8 @@ use Webgriffe\Esb\Service\QueueBackendInterface;
 
 final class WorkerInstance implements WorkerInstanceInterface
 {
-    /**
-     * @var array<int>
-     */
-    private static $workCounts = [];
+    /** @var array<int> */
+    private static array $workCounts = [];
 
     public function __construct(
         private readonly FlowConfig $flowConfig,

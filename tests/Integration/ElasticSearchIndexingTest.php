@@ -28,7 +28,7 @@ class ElasticSearchIndexingTest extends KernelTestCase
     /**
      * @test
      */
-    public function itIndexSuccessfulJobsOntoElasticSearchWithAllEvents()
+    public function itIndexSuccessfulJobsOntoElasticSearchWithAllEvents(): void
     {
         $producerDir = vfsStream::url('root/producer_dir');
         $workerFile = vfsStream::url('root/worker.data');
@@ -97,7 +97,7 @@ class ElasticSearchIndexingTest extends KernelTestCase
     /**
      * @test
      */
-    public function itIndexErroredJobsOntoElasticSearchWithErrorEvents()
+    public function itIndexErroredJobsOntoElasticSearchWithErrorEvents(): void
     {
         $producerDir = vfsStream::url('root/producer_dir');
         self::createKernel([
@@ -175,7 +175,7 @@ class ElasticSearchIndexingTest extends KernelTestCase
     /**
      * @test
      */
-    public function itLogsAndSkipsJobsThatCouldNotBeIndexedOntoElasticSearch()
+    public function itLogsAndSkipsJobsThatCouldNotBeIndexedOntoElasticSearch(): void
     {
         $producerDir = vfsStream::url('root/producer_dir');
         $workerFile = vfsStream::url('root/worker.data');
@@ -229,7 +229,7 @@ class ElasticSearchIndexingTest extends KernelTestCase
     /**
      * @test
      */
-    public function itUpdatesIndexSettingsAccordingToFlowConfigTest()
+    public function itUpdatesIndexSettingsAccordingToFlowConfigTest(): void
     {
         $producerDir = vfsStream::url('root/producer_dir');
         $workerFile = vfsStream::url('root/worker.data');
@@ -281,7 +281,7 @@ class ElasticSearchIndexingTest extends KernelTestCase
         $this->assertCount(2, $successfullyIndexedLog);
     }
 
-    private function assertForEachJob(callable $callable, array $jobsData)
+    private function assertForEachJob(callable $callable, array $jobsData): void
     {
         /** @var Serializer $serializer */
         $serializer = self::$kernel->getContainer()->get('serializer');

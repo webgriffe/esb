@@ -27,26 +27,14 @@ class MassActionController extends AbstractController
     public const ACTION_FIELD_NAME = 'job-select-action';
     public const ACTION_REQUEUE = 'requeue';
 
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
-
-    /**
-     * @var BeanstalkClient
-     */
-    private $beanstalkClient;
-
     public function __construct(
         Environment $twig,
         FlowManager $flowManager,
         ElasticSearch $elasticSearch,
-        LoggerInterface $logger,
-        BeanstalkClient $beanstalkClient
+        private readonly LoggerInterface $logger,
+        private readonly BeanstalkClient $beanstalkClient,
     ) {
         parent::__construct($twig, $flowManager, $elasticSearch);
-        $this->logger = $logger;
-        $this->beanstalkClient = $beanstalkClient;
     }
 
     /**

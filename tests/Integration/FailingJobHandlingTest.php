@@ -13,7 +13,7 @@ class FailingJobHandlingTest extends KernelTestCase
 {
     private const FLOW_CODE = 'failing_jobs_flow';
 
-    public function testFailingJobIsReleasedWithProperDelayAndThenDeletedAftetProperMaxRetries()
+    public function testFailingJobIsReleasedWithProperDelayAndThenDeletedAfterProperMaxRetries(): void
     {
         self::createKernel([
             'services' => [

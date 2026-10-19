@@ -10,9 +10,6 @@ use function Amp\call;
 
 final class MultiReasonInitFailingWorker implements WorkerInterface
 {
-    /**
-     * @return Promise
-     */
     public function init(): Promise
     {
         return Promise\some([

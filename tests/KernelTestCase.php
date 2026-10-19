@@ -17,14 +17,9 @@ class KernelTestCase extends BeanstalkTestCase
 {
     private const ELASTICSEARCH_CONNECTION_TIMEOUT = 60;
 
-    /**
-     * @var Kernel|null
-     */
-    protected static $kernel;
-    /**
-     * @var Client
-     */
-    protected $esClient;
+    protected static ?Kernel $kernel = null;
+
+    protected ?Client $esClient = null;
 
     /**
      * @throws \Throwable

@@ -16,7 +16,7 @@ class RepeatProducerAndWorkerTest extends KernelTestCase
 
     use TestUtils;
 
-    public function testRepeatProducerAndWorkerTogether()
+    public function testRepeatProducerAndWorkerTogether(): void
     {
         $producerDir = vfsStream::url('root/producer_dir');
         $workerFile = vfsStream::url('root/worker.data');
@@ -58,7 +58,7 @@ class RepeatProducerAndWorkerTest extends KernelTestCase
         $this->assertReadyJobsCountInTube(0, self::FLOW_CODE);
     }
 
-    public function testLongProduceRepeatProducerDoesNotOverlapProduceInvokations()
+    public function testLongProduceRepeatProducerDoesNotOverlapProduceInvokations(): void
     {
         $producerInterval = 50;
         $produceDelay = 200; // The producer is invoked every 50ms but it takes 200ms to produce every Job

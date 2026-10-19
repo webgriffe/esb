@@ -9,14 +9,9 @@ use Amp\Success;
 
 final class AlwaysFailingProducer implements RepeatProducerInterface
 {
-    /**
-     * @var int
-     */
-    private $interval;
-
-    public function __construct(int $interval)
-    {
-        $this->interval = $interval;
+    public function __construct(
+        private readonly int $interval,
+    ) {
     }
 
     /**
@@ -28,10 +23,9 @@ final class AlwaysFailingProducer implements RepeatProducerInterface
     }
 
     /**
-     * @param mixed $data
      * @return Iterator An Amp Iterator that must emit Jobs.
      */
-    public function produce($data = null): Iterator
+    public function produce(mixed $data = null): Iterator
     {
         throw new \RuntimeException('You cannot expect anything good from an always failing producer!');
     }

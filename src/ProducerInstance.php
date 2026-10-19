@@ -73,10 +73,9 @@ final class ProducerInstance implements ProducerInstanceInterface
     }
 
     /**
-     * @param mixed $data
      * @return Promise<int>
      */
-    public function produceAndQueueJobs($data = null): Promise
+    public function produceAndQueueJobs(mixed $data = null): Promise
     {
         return call(function () use ($data) {
             $batchManager = $this->batchManagerFactory->create($this->queueBackend);

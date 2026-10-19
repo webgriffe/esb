@@ -9,22 +9,14 @@ use Amp\Iterator;
 
 final class DummyRepeatProducer implements RepeatProducerInterface
 {
-    /**
-     * @var array
-     */
-    public static $jobs;
-    /**
-     * @var int
-     */
-    private $interval;
+    public static array $jobs;
 
     /**
      * DummyRepeatProducer constructor.
-     * @param int $interval
      */
-    public function __construct(int $interval = 1)
-    {
-        $this->interval = $interval;
+    public function __construct(
+        private readonly int $interval = 1,
+    ) {
     }
 
     /**
@@ -37,11 +29,9 @@ final class DummyRepeatProducer implements RepeatProducerInterface
     }
 
     /**
-     * @param mixed $data
-     * @return Iterator
      * @throws \TypeError
      */
-    public function produce($data = null): Iterator
+    public function produce(mixed $data = null): Iterator
     {
         $iterator = Iterator\fromIterable(self::$jobs);
         self::$jobs = [];

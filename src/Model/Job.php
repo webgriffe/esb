@@ -12,35 +12,11 @@ final class Job implements JobInterface
      * @var string
      */
     private $uuid;
-    /**
-     * @var array<string, mixed>
-     */
-    private $payloadData;
-    /**
-     * @var int
-     */
-    private $timeout;
-    /**
-     * @var int
-     */
-    private $delay;
-    /**
-     * @var int
-     */
-    private $priority;
-    /**
-     * @var JobEventInterface[]
-     */
-    private $events;
 
     /**
-     * Job constructor.
      * @param array<string, mixed> $payloadData
-     * @param int $timeout
-     * @param int $delay
-     * @param int $priority
      * @param array<JobEventInterface> $events
-     * @param string|null $uuid
+     *
      * @throws \Exception
      *
      * TODO:    $events and $uuid constructor argument shouldn't be set by ProducerInterface implementations.
@@ -49,22 +25,17 @@ final class Job implements JobInterface
      *          Maybe we need to change the design of this?
      */
     public function __construct(
-        array $payloadData,
-        int $timeout = 60,
-        int $delay = 0,
-        $priority = 0,
-        array $events = [],
+        private readonly array $payloadData,
+        private readonly int $timeout = 60,
+        private readonly int $delay = 0,
+        private readonly int $priority = 0,
+        private array $events = [],
         ?string $uuid = null
     ) {
         if ($uuid === null) {
             $uuid = Uuid::uuid1()->toString();
         }
         $this->uuid = $uuid;
-        $this->payloadData = $payloadData;
-        $this->timeout = $timeout;
-        $this->delay = $delay;
-        $this->priority = $priority;
-        $this->events = $events;
     }
 
     /**
