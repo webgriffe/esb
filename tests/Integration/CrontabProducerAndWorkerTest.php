@@ -23,7 +23,7 @@ class CrontabProducerAndWorkerTest extends KernelTestCase
     public function testCrontabProducerAndWorkerDoesNotProduceIfIsNotTheRightTime(): void
     {
         vfsStream::setup();
-        DummyCrontabProducer::$jobs = [new Job(['job1']), new Job(['job2'])];
+        DummyCrontabProducer::$jobs = [new Job(['job1']), new Job(['job2'])];   // @phpstan-ignore-line
         $workerFile = vfsStream::url('root/worker.data');
         self::createKernel([
             'services' => [
@@ -53,7 +53,7 @@ class CrontabProducerAndWorkerTest extends KernelTestCase
     public function testCrontabProducerAndWorkerProducesIfItsTheRightTime(): void
     {
         vfsStream::setup();
-        DummyCrontabProducer::$jobs = [new Job(['job1']), new Job(['job2'])];
+        DummyCrontabProducer::$jobs = [new Job(['job1']), new Job(['job2'])];   // @phpstan-ignore-line
         $workerFile = vfsStream::url('root/worker.data');
         self::createKernel([
             'services' => [

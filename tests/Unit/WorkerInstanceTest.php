@@ -15,6 +15,7 @@ use Webgriffe\Esb\Model\Job;
 use Webgriffe\Esb\Model\JobInterface;
 use Webgriffe\Esb\WorkerInstance;
 use Webgriffe\Esb\WorkerInterface;
+use Webmozart\Assert\Assert;
 
 class WorkerInstanceTest extends AsyncTestCase
 {
@@ -31,9 +32,10 @@ class WorkerInstanceTest extends AsyncTestCase
         Promise\rethrow($this->createWorkerInstance($worker, $queueBackend)->boot());
         yield $queueBackend->drained();
 
-        $this->assertSame([$firstJob, $secondJob], $worker->workedJobs);
+        $workedJobs = $this->getWorkedJobs($worker);
+        $this->assertSame([$firstJob, $secondJob], $workedJobs);
         $this->assertSame([], $queueBackend->requeuedJobs);
-        foreach ($worker->workedJobs as $job) {
+        foreach ($workedJobs as $job) {
             foreach ($job->getEvents() as $event) {
                 $this->assertNotInstanceOf(ErroredJobEvent::class, $event);
             }
@@ -52,7 +54,7 @@ class WorkerInstanceTest extends AsyncTestCase
         Promise\rethrow($this->createWorkerInstance($worker, $queueBackend)->boot());
         yield $queueBackend->drained();
 
-        $this->assertSame([$firstJob, $secondJob], $worker->workedJobs);
+        $this->assertSame([$firstJob, $secondJob], $this->getWorkedJobs($worker));
         $this->assertSame([$firstJob, $secondJob], $queueBackend->dequeuedJobs);
         $this->assertTrue($this->logHandler->hasErrorThatContains('Could not update a Job'));
     }
@@ -96,5 +98,18 @@ class WorkerInstanceTest extends AsyncTestCase
                 return new Success();
             }
         };
+    }
+
+    /**
+     * @return JobInterface[]
+     */
+    private function getWorkedJobs(WorkerInterface $worker): array
+    {
+        Assert::propertyExists($worker, 'workedJobs');
+        $workedJobs = $worker->workedJobs;  // @phpstan-ignore-line
+        Assert::isArray($workedJobs);
+        Assert::allIsInstanceOf($workedJobs, JobInterface::class);
+
+        return $workedJobs;
     }
 }

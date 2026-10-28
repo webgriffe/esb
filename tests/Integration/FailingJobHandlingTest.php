@@ -33,7 +33,7 @@ class FailingJobHandlingTest extends KernelTestCase
             ]
         ]);
 
-        DummyRepeatProducer::$jobs = [new Job(['test'])];
+        DummyRepeatProducer::$jobs = [new Job(['test'])];   // @phpstan-ignore-line
         $this->stopWhen(
             function () {
                 return $this->logHandler()->hasErrorThatPasses(

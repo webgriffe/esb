@@ -22,6 +22,7 @@ final class FakeQueueBackend implements QueueBackendInterface
     /** @var JobInterface[] */
     public array $dequeuedJobs = [];
 
+    /** @var Deferred<null> */
     private Deferred $drained;
 
     /**

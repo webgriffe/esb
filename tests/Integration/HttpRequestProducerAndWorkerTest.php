@@ -7,6 +7,7 @@ use Amp\Http\Client\Request;
 use Amp\Loop;
 use Amp\Promise;
 use Amp\Socket\ConnectException;
+use Amp\Socket\Socket;
 use Monolog\Logger;
 use org\bovigo\vfs\vfsStream;
 use Webgriffe\Esb\DummyFilesystemWorker;
@@ -14,6 +15,7 @@ use Webgriffe\Esb\DummyHttpRequestProducer;
 use Webgriffe\Esb\KernelTestCase;
 use Webgriffe\Esb\TestUtils;
 
+use Webmozart\Assert\Assert;
 use function Amp\call;
 use function Amp\File\exists;
 use function Amp\Socket\connect;
@@ -43,6 +45,7 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
             ]
         );
         $httpPort = self::$kernel->getContainer()->getParameter('http_server_port');
+        Assert::integerish($httpPort);
 
         Loop::delay(100, function () use ($httpPort){
             yield $this->waitForConnectionAvailable("tcp://127.0.0.1:{$httpPort}");
@@ -118,6 +121,7 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
             ]
         );
         $httpPort = self::$kernel->getContainer()->getParameter('http_server_port');
+        Assert::integerish($httpPort);
 
         Loop::delay(100, function () use ($httpPort){
             yield $this->waitForConnectionAvailable("tcp://127.0.0.1:{$httpPort}");
@@ -171,6 +175,7 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
             ]
         );
         $httpPort = self::$kernel->getContainer()->getParameter('http_server_port');
+        Assert::integerish($httpPort);
 
         Loop::delay(100, function () use ($httpPort) {
             yield $this->waitForConnectionAvailable("tcp://127.0.0.1:{$httpPort}");
@@ -210,6 +215,7 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
             ]
         );
         $httpPort = self::$kernel->getContainer()->getParameter('http_server_port');
+        Assert::integerish($httpPort);
 
         Loop::delay(100, function () use ($httpPort) {
             yield $this->waitForConnectionAvailable("tcp://127.0.0.1:{$httpPort}");
@@ -252,6 +258,9 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
         $this->assertReadyJobsCountInTube(0, self::FLOW_CODE);
     }
 
+    /**
+     * @return Promise<Socket>
+     */
     private function waitForConnectionAvailable(string $uri): Promise
     {
         return call(function () use ($uri) {

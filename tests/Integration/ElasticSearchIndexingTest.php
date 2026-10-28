@@ -18,6 +18,7 @@ use Webgriffe\Esb\Model\ProducedJobEvent;
 use Webgriffe\Esb\Model\ReservedJobEvent;
 use Webgriffe\Esb\Model\WorkedJobEvent;
 use Webgriffe\Esb\TestUtils;
+use Webmozart\Assert\Assert;
 
 class ElasticSearchIndexingTest extends KernelTestCase
 {
@@ -69,8 +70,7 @@ class ElasticSearchIndexingTest extends KernelTestCase
         });
         self::$kernel->boot();
 
-        Promise\wait($this->esClient->refresh());
-        $search = Promise\wait($this->esClient->uriSearchOneIndex(self::FLOW_CODE, ''));
+        $search = $this->urlSearchOneIndex();
         $this->assertCount(2, $search['hits']['hits']);
         $this->assertForEachJob(
             function (Job $job) {
@@ -138,8 +138,7 @@ class ElasticSearchIndexingTest extends KernelTestCase
 
         self::$kernel->boot();
 
-        Promise\wait($this->esClient->refresh());
-        $search = Promise\wait($this->esClient->uriSearchOneIndex(self::FLOW_CODE, ''));
+        $search = $this->urlSearchOneIndex();
         $this->assertCount(2, $search['hits']['hits']);
         $this->assertForEachJob(
             function (Job $job) {
@@ -212,8 +211,7 @@ class ElasticSearchIndexingTest extends KernelTestCase
         });
         self::$kernel->boot();
 
-        Promise\wait($this->esClient->refresh());
-        $search = Promise\wait($this->esClient->uriSearchOneIndex(self::FLOW_CODE, ''));
+        $search = $this->urlSearchOneIndex();
         $this->assertCount(1, $search['hits']['hits']);
         $this->assertTrue($this->logHandler()->hasErrorThatContains('Job could not be indexed in ElasticSearch'));
         $logRecords = $this->logHandler()->getRecords();
@@ -267,8 +265,7 @@ class ElasticSearchIndexingTest extends KernelTestCase
         });
         self::$kernel->boot();
 
-        Promise\wait($this->esClient->refresh());
-        $search = Promise\wait($this->esClient->uriSearchOneIndex(self::FLOW_CODE, ''));
+        $search = $this->urlSearchOneIndex();
         $this->assertCount(2, $search['hits']['hits']);
         $this->assertFalse($this->logHandler()->hasErrorThatContains('Job could not be indexed in ElasticSearch'));
         $logRecords = $this->logHandler()->getRecords();
@@ -281,6 +278,9 @@ class ElasticSearchIndexingTest extends KernelTestCase
         $this->assertCount(2, $successfullyIndexedLog);
     }
 
+    /**
+     * @param array<array-key, mixed> $jobsData
+     */
     private function assertForEachJob(callable $callable, array $jobsData): void
     {
         /** @var Serializer $serializer */
@@ -291,5 +291,16 @@ class ElasticSearchIndexingTest extends KernelTestCase
             $job = $serializer->denormalize($jobData, Job::class);
             $callable($job);
         }
+    }
+
+    /**
+     * @return array{hits: array{hits: Job[]}}
+     */
+    private function urlSearchOneIndex(): array
+    {
+        Promise\wait($this->esClient->refresh());   // @phpstan-ignore-line
+        $search = Promise\wait($this->esClient->uriSearchOneIndex(self::FLOW_CODE, ''));    // @phpstan-ignore-line
+
+        return $search;
     }
 }

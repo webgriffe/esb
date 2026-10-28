@@ -98,6 +98,9 @@ class RepeatProducerAndWorkerTest extends KernelTestCase
         $this->assertReadyJobsCountInTube(0, self::FLOW_CODE);
     }
 
+    /**
+     * @param string[] $array
+     */
     private function assertOneArrayEntryContains(string $expected, array $array): void
     {
         foreach ($array as $item) {

@@ -41,10 +41,10 @@ class KernelTestCase extends BeanstalkTestCase
     }
 
     /**
-     * @param array $localConfig
+     * @param array<array-key, mixed> $localConfig
      * @throws \Exception
      */
-    protected static function createKernel(array $localConfig)
+    protected static function createKernel(array $localConfig): void
     {
         $config = array_merge_recursive(
             ['services' => ['_defaults' => ['autowire' => true, 'autoconfigure' => true, 'public' => true]]],
@@ -66,7 +66,7 @@ class KernelTestCase extends BeanstalkTestCase
         return $logHandler;
     }
 
-    protected function dumpLog()
+    protected function dumpLog(): string
     {
         $records = $this->logHandler()->getRecords();
         return implode('', array_map(function ($entry) {
@@ -74,7 +74,7 @@ class KernelTestCase extends BeanstalkTestCase
         }, $records));
     }
 
-    protected function stopWhen(callable $stopCondition, int $timeoutInSeconds = 10)
+    protected function stopWhen(callable $stopCondition, int $timeoutInSeconds = 10): void
     {
         $start = Loop::now();
         //Setting the interval to a too-small value causes segmentation faults in some environments (such as Travis)
@@ -95,10 +95,10 @@ class KernelTestCase extends BeanstalkTestCase
     private function elasticSearchReset(): void
     {
         $this->waitForElasticSearch();
-        Promise\wait($this->esClient->deleteIndex('_all'));
-        Promise\wait($this->esClient->refresh());
+        Promise\wait($this->esClient->deleteIndex('_all')); // @phpstan-ignore-line
+        Promise\wait($this->esClient->refresh());   // @phpstan-ignore-line
         do {
-            $stats = Promise\wait($this->esClient->statsIndex('_all'));
+            $stats = Promise\wait($this->esClient->statsIndex('_all')); // @phpstan-ignore-line
         } while (count($stats['indices']));
     }
 
@@ -118,7 +118,7 @@ class KernelTestCase extends BeanstalkTestCase
             }
 
             try {
-                $response = Promise\wait($this->esClient->catHealth());
+                $response = Promise\wait($this->esClient->catHealth()); // @phpstan-ignore-line
                 $status = $response[0]['status'];
             } catch (SocketException $e) {
                 // We want to retry until timeout is reached

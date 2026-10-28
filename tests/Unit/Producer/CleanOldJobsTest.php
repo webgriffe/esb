@@ -49,6 +49,12 @@ class CleanOldJobsTest extends TestCase
         $this->assertEmpty($job->getPayloadData());
     }
 
+    /**
+     * @template T
+     * @param Iterator<T> $iterator
+     *
+     * @return Promise<T[]>
+     */
     private function runIterator(Iterator $iterator): Promise
     {
         return call(function () use ($iterator) {
