@@ -21,7 +21,7 @@ class CleanOldJobs implements CrontabProducerInterface
     /**
      * @inheritDoc
      */
-    public function produce($data = null): Iterator
+    public function produce(mixed $data = null): Iterator
     {
         return new Producer(
             function (callable $emit): \Generator {

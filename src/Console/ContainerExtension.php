@@ -33,9 +33,9 @@ final class ContainerExtension implements ExtensionInterface, PrependExtensionIn
     {
     }
 
-    public function getNamespace(): bool
+    public function getNamespace(): string
     {
-        return false;
+        return '';
     }
 
     /**

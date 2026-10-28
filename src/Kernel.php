@@ -144,7 +144,7 @@ class Kernel
     /**
      * Builds the log context of an exception. If this is an \Amp\MultiReasonException all reasons are included
      *
-     * @param \Throwable $exception
+     * @return array{code: int, message: string, file: string, line: int, trace: array<array-key, mixed>, reasons?: array<array-key, array<string, mixed>>}
      */
     private function getExceptionLogContext(\Throwable $exception): array
     {

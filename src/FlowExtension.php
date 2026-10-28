@@ -36,12 +36,9 @@ final class FlowExtension implements ExtensionInterface, CompilerPassInterface
         $this->flowsConfig = $processor->processConfiguration($configuration, $configs);
     }
 
-    /**
-     * @return false
-     */
-    public function getNamespace(): bool
+    public function getNamespace(): string
     {
-        return false;
+        return '';
     }
 
     /**
