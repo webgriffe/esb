@@ -19,12 +19,9 @@ use Webgriffe\Esb\NonUtf8Cleaner;
 final class BeanstalkElasticsearchQueueBackend implements QueueBackendInterface
 {
     /**
-     * @TODO This map is static because it must be shared between all QueueBackend instance.
-     *       It could be refactored extracting the mapping service to a dedicated class
-     *
-     * @var int[]
+     * @var array<string, int>
      */
-    private static array $uuidToBeanstalkIdMap = [];
+    private array $uuidToBeanstalkIdMap = [];
 
     public function __construct(
         private readonly FlowConfig $flowConfig,
@@ -119,7 +116,7 @@ final class BeanstalkElasticsearchQueueBackend implements QueueBackendInterface
                 throw new FatalQueueException($ex->getMessage(), $ex->getCode(), $ex);
             }
 
-            list($jobBeanstalkId, $jobUuid) = $rawJob;
+            [$jobBeanstalkId, $jobUuid] = $rawJob;
 
             try {
                 /** @var Job $job */
@@ -155,6 +152,7 @@ final class BeanstalkElasticsearchQueueBackend implements QueueBackendInterface
             //Leave the job in Elasticsearch. Only delete it from Beanstalk
             $jobBeanstalkId = $this->getJobBeanstalkId($job);
             yield $this->beanstalkClient->release($jobBeanstalkId, $delay);
+            $this->forgetJobBeanstalkId($job);
         });
     }
 
@@ -167,6 +165,7 @@ final class BeanstalkElasticsearchQueueBackend implements QueueBackendInterface
             //Leave the job in Elasticsearch. Only delete it from Beanstalk
             $jobBeanstalkId = $this->getJobBeanstalkId($job);
             yield $this->beanstalkClient->delete($jobBeanstalkId);
+            $this->forgetJobBeanstalkId($job);
         });
     }
 
@@ -263,14 +262,19 @@ final class BeanstalkElasticsearchQueueBackend implements QueueBackendInterface
 
     private function saveJobBeanstalkId(JobInterface $job, int $jobBeanstalkId): void
     {
-        self::$uuidToBeanstalkIdMap[$job->getUuid()] = $jobBeanstalkId;
+        $this->uuidToBeanstalkIdMap[$job->getUuid()] = $jobBeanstalkId;
+    }
+
+    private function forgetJobBeanstalkId(JobInterface $job): void
+    {
+        unset($this->uuidToBeanstalkIdMap[$job->getUuid()]);
     }
 
     private function getJobBeanstalkId(JobInterface $job): int
     {
         $uuid = $job->getUuid();
-        if (array_key_exists($uuid, self::$uuidToBeanstalkIdMap)) {
-            return self::$uuidToBeanstalkIdMap[$uuid];
+        if (array_key_exists($uuid, $this->uuidToBeanstalkIdMap)) {
+            return $this->uuidToBeanstalkIdMap[$uuid];
         }
 
         throw new \RuntimeException("Unknown Beanstalk id for job {$uuid}");

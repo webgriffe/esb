@@ -76,61 +76,38 @@ final class WorkerInstance implements WorkerInstanceInterface
                 yield $this->waitForDependencies($lastProcessTimestamp, $logContext);
 
                 $job->addEvent(new ReservedJobEvent(new \DateTime(), $workerFqcn));
-                yield $this->queueBackend->updateJob($job);
+                yield $this->updateJob($job, $logContext);
                 $payloadData = $job->getPayloadData();
                 $logContext['payload_data'] = NonUtf8Cleaner::clean($payloadData);
 
                 $this->logger->info('Worker reserved a Job', $logContext);
 
+                if (!array_key_exists($jobUuid, self::$workCounts)) {
+                    self::$workCounts[$jobUuid] = 0;
+                }
+                ++self::$workCounts[$jobUuid];
+
                 try {
-                    if (!array_key_exists($jobUuid, self::$workCounts)) {
-                        self::$workCounts[$jobUuid] = 0;
-                    }
-                    ++self::$workCounts[$jobUuid];
-
                     yield $this->worker->work($job);
-
-                    $job->addEvent(new WorkedJobEvent(new \DateTime(), $workerFqcn));
-                    yield $this->queueBackend->updateJob($job);
-                    $this->logger->info('Successfully worked a Job', $logContext);
-
-                    yield $this->queueBackend->dequeue($job);
-                    unset(self::$workCounts[$jobUuid]);
                 } catch (\Throwable $e) {
-                    $job->addEvent(new ErroredJobEvent(new \DateTime(), $workerFqcn, $e->getMessage()));
-                    yield $this->queueBackend->updateJob($job);
-                    $this->logger->notice(
-                        'An error occurred while working a Job.',
-                        array_merge(
-                            $logContext,
-                            [
-                                'work_count' => self::$workCounts[$jobUuid],
-                                'error' => $e->getMessage(),
-                                'stack_trace' => $e->getTraceAsString(),
-                            ]
-                        )
-                    );
+                    yield $this->handleWorkError($job, $e, $logContext);
 
-                    if (self::$workCounts[$jobUuid] >= $this->flowConfig->getWorkerMaxRetry()) {
-                        yield $this->queueBackend->dequeue($job);
-                        $this->logger->error(
-                            'A Job reached maximum work retry limit and has been removed from queue.',
-                            array_merge(
-                                $logContext,
-                                [
-                                    'last_error' => $e->getMessage(),
-                                    'max_retry' => $this->flowConfig->getWorkerMaxRetry()
-                                ]
-                            )
-                        );
-                        unset(self::$workCounts[$jobUuid]);
-                        continue;
-                    }
+                    continue;
+                }
 
-                    yield $this->queueBackend->requeue($job, $this->flowConfig->getWorkerErrorRetryDelay());
-                    $this->logger->info(
-                        'Worker released a Job',
-                        array_merge($logContext, ['error_retry_delay' => $this->flowConfig->getWorkerErrorRetryDelay()])
+                unset(self::$workCounts[$jobUuid]);
+                $job->addEvent(new WorkedJobEvent(new \DateTime(), $workerFqcn));
+
+                yield $this->updateJob($job, $logContext);
+
+                $this->logger->info('Successfully worked a Job', $logContext);
+
+                try {
+                    yield $this->queueBackend->dequeue($job);
+                } catch (\Throwable $e) {
+                    $this->logger->critical(
+                        'Could not remove a successfully worked Job from the queue, it may be worked again.',
+                        array_merge($logContext, ['error' => $e->getMessage()])
                     );
                 }
             }
@@ -212,6 +189,91 @@ final class WorkerInstance implements WorkerInstanceInterface
                         $logContext
                     );
                 }
+            }
+        });
+    }
+
+    /**
+     * @param array<string, mixed> $logContext
+     *
+     * @return Promise<void>
+     */
+    private function handleWorkError(
+        JobInterface $job,
+        \Throwable $error,
+        array $logContext
+    ): Promise {
+        return call(function () use ($job, $error, $logContext) {
+            $jobUuid = $job->getUuid();
+            $workerFqcn = \get_class($this->worker);
+            $job->addEvent(new ErroredJobEvent(new \DateTime(), $workerFqcn, $error->getMessage()));
+
+            yield $this->updateJob($job, $logContext);
+
+            $workCount = self::$workCounts[$jobUuid];
+
+            $this->logger->notice(
+                'An error occurred while working a Job.',
+                array_merge(
+                    $logContext,
+                    [
+                        'work_count' => $workCount,
+                        'error' => $error->getMessage(),
+                        'stack_trace' => $error->getTraceAsString(),
+                    ]
+                )
+            );
+
+            try {
+                if ($workCount >= $this->flowConfig->getWorkerMaxRetry()) {
+                    unset(self::$workCounts[$jobUuid]);
+
+                    yield $this->queueBackend->dequeue($job);
+
+                    $this->logger->error(
+                        'A Job reached maximum work retry limit and has been removed from queue.',
+                        array_merge(
+                            $logContext,
+                            [
+                                'last_error' => $error->getMessage(),
+                                'max_retry' => $this->flowConfig->getWorkerMaxRetry()
+                            ]
+                        )
+                    );
+                    return;
+                }
+
+                yield $this->queueBackend->requeue($job, $this->flowConfig->getWorkerErrorRetryDelay());
+                $this->logger->info(
+                    'Worker released a Job',
+                    array_merge($logContext, ['error_retry_delay' => $this->flowConfig->getWorkerErrorRetryDelay()])
+                );
+            } catch (\Throwable $e) {
+                $this->logger->critical(
+                    'Could not dequeue or release a failed Job.',
+                    array_merge($logContext, ['error' => $e->getMessage()])
+                );
+            }
+        });
+    }
+
+    /**
+     * Job updates only keep track of the job history, so a failure must not stop the worker loop
+     *
+     * @param array<string, mixed> $logContext
+     *
+     * @return Promise<void>
+     */
+    private function updateJob(JobInterface $job, array $logContext): Promise
+    {
+        return call(function () use ($job, $logContext) {
+            try {
+                yield $this->queueBackend->updateJob($job);
+            } catch (\Throwable $e) {
+                $this->logger->error(
+                    'Could not update a Job in the queue backend.',
+                    array_merge($logContext, ['error' => $e->getMessage()])
+                );
             }
         });
     }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Webgriffe\Esb;
 
 use Amp\Loop;
+use Amp\Promise;
 use Psr\Log\LoggerInterface;
 use Webgriffe\Esb\Model\FlowConfig;
 
@@ -34,7 +35,8 @@ class Flow
 
             yield $this->producerInstance->boot();
             foreach ($this->workerInstances as $workerInstance) {
-                yield $workerInstance->boot();
+                // A worker instance's boot() never resolves because it runs the worker loop
+                Promise\rethrow($workerInstance->boot());
             }
         });
     }
