@@ -31,7 +31,7 @@ class BeanstalkTestCase extends AsyncTestCase
         return new Pheanstalk($parsedUri['host'], (int)$parsedUri['port']);
     }
 
-    protected function purgeBeanstalk()
+    protected function purgeBeanstalk(): void
     {
         foreach ($this->pheanstalk->listTubes() as $tube) {
             try {
@@ -58,37 +58,37 @@ class BeanstalkTestCase extends AsyncTestCase
         }
     }
 
-    protected function assertReadyJobsCountInTube(int $expectedReadyJobsCount, string $tube)
+    protected function assertReadyJobsCountInTube(int $expectedReadyJobsCount, string $tube): void
     {
         $stats = $this->pheanstalk->statsTube($tube);
         $this->assertEquals($expectedReadyJobsCount, $stats['current-jobs-ready']);
     }
 
-    protected function assertBuriedJobsCountInTube(int $expectedBuriedJobsCount, string $tube)
+    protected function assertBuriedJobsCountInTube(int $expectedBuriedJobsCount, string $tube): void
     {
         $stats = $this->pheanstalk->statsTube($tube);
         $this->assertEquals($expectedBuriedJobsCount, $stats['current-jobs-buried']);
     }
 
-    protected function assertUrgentJobsCountInTube(int $expectedUrgentJobsCount, string $tube)
+    protected function assertUrgentJobsCountInTube(int $expectedUrgentJobsCount, string $tube): void
     {
         $stats = $this->pheanstalk->statsTube($tube);
         $this->assertEquals($expectedUrgentJobsCount, $stats['current-jobs-urgent']);
     }
 
-    protected function assertReservedJobsCountInTube(int $expectedReservedJobsCount, string $tube)
+    protected function assertReservedJobsCountInTube(int $expectedReservedJobsCount, string $tube): void
     {
         $stats = $this->pheanstalk->statsTube($tube);
         $this->assertEquals($expectedReservedJobsCount, $stats['current-jobs-reserved']);
     }
 
-    protected function assertDelayedJobsCountInTube(int $expectedDelayedJobsCount, string $tube)
+    protected function assertDelayedJobsCountInTube(int $expectedDelayedJobsCount, string $tube): void
     {
         $stats = $this->pheanstalk->statsTube($tube);
         $this->assertEquals($expectedDelayedJobsCount, $stats['current-jobs-delayed']);
     }
 
-    protected function assertDeletedJobsCountInTube(int $excpectedDeletedJobsCount, string $tube)
+    protected function assertDeletedJobsCountInTube(int $expectedDeletedJobsCount, string $tube): void
     {
         $stats = $this->pheanstalk->statsTube($tube);
         $deletedJobs = $stats['total-jobs'] -
@@ -97,6 +97,6 @@ class BeanstalkTestCase extends AsyncTestCase
             $stats['current-jobs-reserved'] +
             $stats['current-jobs-delayed'];
 
-        $this->assertEquals($excpectedDeletedJobsCount, $deletedJobs);
+        $this->assertEquals($expectedDeletedJobsCount, $deletedJobs);
     }
 }

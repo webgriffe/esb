@@ -36,7 +36,9 @@ class FlowController extends AbstractController
                 ['sort' => 'lastEvent.time:desc']
             );
             $pager = new AsyncPager($adapter, 10, $page);
+
             yield $pager->init();
+
             return new Response(
                 Status::OK,
                 [],

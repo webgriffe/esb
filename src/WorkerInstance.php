@@ -146,8 +146,8 @@ final class WorkerInstance implements WorkerInstanceInterface
     }
 
     /**
-     * @param float $lastProcessTimestamp
      * @param array<string, mixed> $logContext
+     *
      * @return Promise<void>
      */
     private function waitForDependencies(float $lastProcessTimestamp, array $logContext): Promise

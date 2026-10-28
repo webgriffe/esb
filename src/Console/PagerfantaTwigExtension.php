@@ -24,10 +24,7 @@ final class PagerfantaTwigExtension extends AbstractExtension
     }
 
     /**
-     * @param PagerfantaInterface $pagerfanta
-     * @param string $route
      * @param array<string, string|int> $options
-     * @return string
      */
     public function renderPagerfanta(
         PagerfantaInterface $pagerfanta,

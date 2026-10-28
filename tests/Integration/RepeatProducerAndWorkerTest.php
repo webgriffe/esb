@@ -101,10 +101,11 @@ class RepeatProducerAndWorkerTest extends KernelTestCase
     private function assertOneArrayEntryContains(string $expected, array $array): void
     {
         foreach ($array as $item) {
-            if (strpos($item, $expected) !== false) {
+            if (str_contains($item, $expected)) {
                 return;
             }
         }
+
         $this->fail(sprintf('Failed asserting that array has one entry that contains "%s".', $expected));
     }
 }

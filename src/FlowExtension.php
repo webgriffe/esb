@@ -28,7 +28,6 @@ final class FlowExtension implements ExtensionInterface, CompilerPassInterface
      * Loads a specific configuration.
      *
      * @param array<int, array> $configs
-     * @param ContainerBuilder $container
      */
     public function load(array $configs, ContainerBuilder $container): void
     {
@@ -38,9 +37,9 @@ final class FlowExtension implements ExtensionInterface, CompilerPassInterface
     }
 
     /**
-     * @return string|false
+     * @return false
      */
-    public function getNamespace()
+    public function getNamespace(): bool
     {
         return false;
     }
@@ -48,7 +47,7 @@ final class FlowExtension implements ExtensionInterface, CompilerPassInterface
     /**
      * {@inheritDoc}
      */
-    public function getXsdValidationBasePath()
+    public function getXsdValidationBasePath(): bool
     {
         return false;
     }

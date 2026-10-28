@@ -57,6 +57,7 @@ class Flow
     public function getWorkerClassName(): string
     {
         $workerInstance = $this->workerInstances[0];
+
         return get_class($workerInstance->getWorker());
     }
 }

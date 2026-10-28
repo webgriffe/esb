@@ -6,9 +6,6 @@ namespace Webgriffe\Esb\Model;
 
 interface JobInterface
 {
-    /**
-     * @return string
-     */
     public function getUuid(): string;
 
     /**
@@ -16,24 +13,12 @@ interface JobInterface
      */
     public function getPayloadData(): array;
 
-    /**
-     * @return int
-     */
     public function getTimeout(): int;
 
-    /**
-     * @return int
-     */
     public function getDelay(): int;
 
-    /**
-     * @return int
-     */
     public function getPriority(): int;
 
-    /**
-     * @param JobEventInterface $event
-     */
     public function addEvent(JobEventInterface $event): void;
 
     /**
@@ -41,8 +26,5 @@ interface JobInterface
      */
     public function getEvents(): array;
 
-    /**
-     * @return JobEventInterface|null
-     */
     public function getLastEvent(): ?JobEventInterface;
 }

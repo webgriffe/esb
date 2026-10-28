@@ -88,9 +88,10 @@ class FlowsDependencyTest extends KernelTestCase
             $successLog = array_filter(
                 $this->logHandler()->getRecords(),
                 function ($log) {
-                    return strpos($log['message'], 'Successfully worked a Job') !== false;
+                    return str_contains($log['message'], 'Successfully worked a Job');
                 }
             );
+
             return count($successLog) >= 2;
         });
 
@@ -194,7 +195,7 @@ class FlowsDependencyTest extends KernelTestCase
                 $successLog = array_filter(
                     $this->logHandler()->getRecords(),
                     function ($log) {
-                        return strpos($log['message'], 'Successfully worked a Job') !== false;
+                        return str_contains($log['message'], 'Successfully worked a Job');
                     }
                 );
                 return count($successLog) >= 3;

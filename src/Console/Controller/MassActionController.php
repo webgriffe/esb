@@ -58,7 +58,7 @@ class MassActionController extends AbstractController
 
     /**
      * @param array<string> $jobs
-     * @param string $flow
+     *
      * @return \Generator<Promise>
      */
     private function requeue(array $jobs, string $flow): \Generator

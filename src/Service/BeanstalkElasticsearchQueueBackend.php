@@ -24,7 +24,7 @@ final class BeanstalkElasticsearchQueueBackend implements QueueBackendInterface
      *
      * @var int[]
      */
-    private static $uuidToBeanstalkIdMap = [];
+    private static array $uuidToBeanstalkIdMap = [];
 
     public function __construct(
         private readonly FlowConfig $flowConfig,
@@ -182,8 +182,6 @@ final class BeanstalkElasticsearchQueueBackend implements QueueBackendInterface
     }
 
     /**
-     * @param string $jobUuid
-     *
      * @return Promise<bool>
      */
     public function jobExists(string $jobUuid): Promise
@@ -263,19 +261,11 @@ final class BeanstalkElasticsearchQueueBackend implements QueueBackendInterface
         });
     }
 
-    /**
-     * @param JobInterface $job
-     * @param int $jobBeanstalkId
-     */
     private function saveJobBeanstalkId(JobInterface $job, int $jobBeanstalkId): void
     {
         self::$uuidToBeanstalkIdMap[$job->getUuid()] = $jobBeanstalkId;
     }
 
-    /**
-     * @param JobInterface $job
-     * @return int
-     */
     private function getJobBeanstalkId(JobInterface $job): int
     {
         $uuid = $job->getUuid();

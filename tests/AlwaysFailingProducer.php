@@ -14,9 +14,6 @@ final class AlwaysFailingProducer implements RepeatProducerInterface
     ) {
     }
 
-    /**
-     * @return Promise
-     */
     public function init(): Promise
     {
         return new Success();

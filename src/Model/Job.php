@@ -20,8 +20,6 @@ final class Job implements JobInterface
      * @param array<string, mixed> $payloadData
      * @param array<JobEventInterface> $events
      *
-     * @throws \Exception
-     *
      * TODO:    $events and $uuid constructor argument shouldn't be set by ProducerInterface implementations.
      *          They are declared as constructor arguments because the Serializer should be able to set them when
      *          deserializing/denormalizing Jobs.
@@ -45,9 +43,6 @@ final class Job implements JobInterface
         $this->priority = $priority;
     }
 
-    /**
-     * @return string
-     */
     public function getUuid(): string
     {
         return $this->uuid;
@@ -61,33 +56,21 @@ final class Job implements JobInterface
         return $this->payloadData;
     }
 
-    /**
-     * @return int
-     */
     public function getTimeout(): int
     {
         return $this->timeout;
     }
 
-    /**
-     * @return int
-     */
     public function getDelay(): int
     {
         return $this->delay;
     }
 
-    /**
-     * @return int
-     */
     public function getPriority(): int
     {
         return $this->priority;
     }
 
-    /**
-     * @param JobEventInterface $event
-     */
     public function addEvent(JobEventInterface $event): void
     {
         if ($this->getLastEvent() !== null && $this->getLastEvent()->getTime() > $event->getTime()) {
@@ -100,6 +83,7 @@ final class Job implements JobInterface
                 )
             );
         }
+
         $this->events[] = $event;
     }
 
@@ -111,14 +95,12 @@ final class Job implements JobInterface
         return $this->events;
     }
 
-    /**
-     * @return JobEventInterface|null
-     */
     public function getLastEvent(): ?JobEventInterface
     {
         if (empty($this->events)) {
             return null;
         }
+
         return array_slice($this->events, -1)[0];
     }
 }

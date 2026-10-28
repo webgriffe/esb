@@ -62,7 +62,7 @@ class ElasticSearchIndexingTest extends KernelTestCase
             $successLog = array_filter(
                 $this->logHandler()->getRecords(),
                 function ($log) {
-                    return strpos($log['message'], 'Successfully worked a Job') !== false;
+                    return str_contains($log['message'], 'Successfully worked a Job');
                 }
             );
             return count($successLog) >= 2;
@@ -205,7 +205,7 @@ class ElasticSearchIndexingTest extends KernelTestCase
             $successLog = array_filter(
                 $this->logHandler()->getRecords(),
                 function ($log) {
-                    return strpos($log['message'], 'Successfully worked a Job') !== false;
+                    return str_contains($log['message'], 'Successfully worked a Job');
                 }
             );
             return count($successLog) >= 1;
@@ -220,7 +220,7 @@ class ElasticSearchIndexingTest extends KernelTestCase
         $successfullyIndexedLog = array_filter(
             $logRecords,
             function ($log) {
-                return strpos($log['message'], 'Successfully enqueued a new Job') !== false;
+                return str_contains($log['message'], 'Successfully enqueued a new Job');
             }
         );
         $this->assertCount(1, $successfullyIndexedLog);
@@ -260,7 +260,7 @@ class ElasticSearchIndexingTest extends KernelTestCase
             $successLog = array_filter(
                 $this->logHandler()->getRecords(),
                 function ($log) {
-                    return strpos($log['message'], 'Successfully worked a Job') !== false;
+                    return str_contains($log['message'], 'Successfully worked a Job');
                 }
             );
             return count($successLog) >= 2;
@@ -275,7 +275,7 @@ class ElasticSearchIndexingTest extends KernelTestCase
         $successfullyIndexedLog = array_filter(
             $logRecords,
             function ($log) {
-                return strpos($log['message'], 'Successfully enqueued a new Job') !== false;
+                return str_contains($log['message'], 'Successfully enqueued a new Job');
             }
         );
         $this->assertCount(2, $successfullyIndexedLog);

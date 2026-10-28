@@ -13,8 +13,10 @@ final class DateTimeBuilderStub implements DateTimeBuilderInterface
             if (null !== $time) {
                 $dateTime->modify($time);
             }
+
             return $dateTime;
         }
+
         return new \DateTime($time, $timezone);
     }
 }

@@ -104,11 +104,15 @@ class HttpProducersServer
                     'request' => sprintf('%s %s', strtoupper($request->getMethod()), $request->getUri())
                 ]
             );
+
             $jobsCount += yield $producerInstance->produceAndQueueJobs($request);
         }
 
-        $responseMessage = sprintf('Successfully scheduled %s job(s) to be queued.', $jobsCount);
-        return new Response(Status::OK, [], sprintf('"%s"', $responseMessage));
+        return new Response(
+            Status::OK,
+            [],
+            sprintf('"Successfully scheduled %s job(s) to be queued."', $jobsCount),
+        );
     }
 
     /**
@@ -128,6 +132,7 @@ class HttpProducersServer
                 $matchingInstances[] = $producerInstance;
             }
         }
+
         return $matchingInstances;
     }
 }

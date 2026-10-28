@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Webgriffe\Esb;
 
 use Amp\File\Driver\BlockingDriver;
+use Amp\Http\Client\SocketException;
 use Webgriffe\AmpElasticsearch\Client;
 use Amp\Loop;
 use Amp\Promise;
@@ -54,14 +55,14 @@ class KernelTestCase extends BeanstalkTestCase
     }
 
     /**
-     * @return TestHandler
      * @throws \Exception
      */
-    protected function logHandler()
+    protected function logHandler(): TestHandler
     {
         /** @noinspection OneTimeUseVariablesInspection */
         /** @var TestHandler $logHandler */
         $logHandler = self::$kernel->getContainer()->get(TestHandler::class);
+
         return $logHandler;
     }
 
@@ -115,8 +116,8 @@ class KernelTestCase extends BeanstalkTestCase
                     )
                 );
             }
+
             try {
-                /** @var Response $response */
                 $response = Promise\wait($this->esClient->catHealth());
                 $status = $response[0]['status'];
             } catch (SocketException $e) {

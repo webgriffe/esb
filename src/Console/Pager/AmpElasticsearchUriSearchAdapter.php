@@ -42,11 +42,13 @@ final class AmpElasticsearchUriSearchAdapter implements AsyncPagerAdapterInterfa
                     $this->query,
                     $this->options
                 );
+
                 return $response['hits']['total']['value'];
             } catch (AmpElasticsearchError $e) {
                 if ($this->isIndexNotFoundException($e)) {
                     return 0;
                 }
+
                 throw $e;
             }
         });
@@ -66,6 +68,7 @@ final class AmpElasticsearchUriSearchAdapter implements AsyncPagerAdapterInterfa
                     $this->totalHits = 0;
                     return [];
                 }
+
                 throw $e;
             }
 
@@ -74,6 +77,7 @@ final class AmpElasticsearchUriSearchAdapter implements AsyncPagerAdapterInterfa
             foreach ($response['hits']['hits'] as $rawJob) {
                 $jobs[] = $rawJob['_source'];
             }
+
             return $jobs;
         });
     }

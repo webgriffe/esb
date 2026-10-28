@@ -17,25 +17,16 @@ abstract class AbstractController
     ) {
     }
 
-    /**
-     * @return Environment
-     */
     public function getTwig(): Environment
     {
         return $this->twig;
     }
 
-    /**
-     * @return FlowManager
-     */
     public function getFlowManager(): FlowManager
     {
         return $this->flowManager;
     }
 
-    /**
-     * @return ElasticSearch
-     */
     public function getElasticsearch(): ElasticSearch
     {
         return $this->elasticSearch;

@@ -17,8 +17,9 @@ final class FlowConfiguration implements ConfigurationInterface
      */
     public function getConfigTreeBuilder(): TreeBuilder
     {
-        $treeBuilder = new TreeBuilder();
-        $rootNode = $treeBuilder->root('flows');
+        $treeBuilder = new TreeBuilder('flows');
+
+        $rootNode = $treeBuilder->getRootNode();
         $rootNode
             ->useAttributeAsKey('name')
             ->arrayPrototype()
@@ -54,6 +55,7 @@ final class FlowConfiguration implements ConfigurationInterface
                 ->end()
             ->end()
         ;
+
         return $treeBuilder;
     }
 }

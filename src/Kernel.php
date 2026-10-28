@@ -78,9 +78,6 @@ class Kernel
         throw $exception;
     }
 
-    /**
-     * @return string|null
-     */
     public function getEnvironment(): ?string
     {
         return $this->environment;
@@ -103,7 +100,6 @@ class Kernel
     }
 
     /**
-     * @param YamlFileLoader $loader
      * @throws \Exception
      */
     private function loadSystemConfiguration(YamlFileLoader $loader): void
@@ -121,7 +117,6 @@ class Kernel
     }
 
     /**
-     * @param YamlFileLoader $loader
      * @throws \Exception
      */
     private function loadLocalConfiguration(YamlFileLoader $loader): void
@@ -148,8 +143,8 @@ class Kernel
 
     /**
      * Builds the log context of an exception. If this is an \Amp\MultiReasonException all reasons are included
+     *
      * @param \Throwable $exception
-     * @return mixed[]
      */
     private function getExceptionLogContext(\Throwable $exception): array
     {

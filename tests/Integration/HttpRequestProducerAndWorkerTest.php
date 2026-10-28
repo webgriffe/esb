@@ -262,6 +262,7 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
                     $connection = null;
                 }
             } while ($connection === null);
+
             $connection->close();
         });
     }

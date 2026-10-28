@@ -94,17 +94,14 @@ class AsyncPager implements PagerfantaInterface
 
     /**
      * Returns whether or not normalize out of range pages.
-     *
-     * @return boolean
      */
-    public function getNormalizeOutOfRangePages()
+    public function getNormalizeOutOfRangePages(): bool
     {
         return $this->normalizeOutOfRangePages;
     }
 
     /**
      * @param mixed $value
-     * @return bool
      */
     private function filterBoolean($value): bool
     {
@@ -133,7 +130,6 @@ class AsyncPager implements PagerfantaInterface
 
     /**
      * @param mixed $maxPerPage
-     * @return int
      */
     private function filterMaxPerPage($maxPerPage): int
     {
@@ -197,6 +193,7 @@ class AsyncPager implements PagerfantaInterface
     {
         $currentPage = $this->toInteger($currentPage);
         $this->checkCurrentPage($currentPage);
+
         return $this->filterOutOfRangeCurrentPage($currentPage);
     }
 
@@ -235,8 +232,6 @@ class AsyncPager implements PagerfantaInterface
     }
 
     /**
-     * @return int
-     *
      * @throws OutOfRangeCurrentPageException If the page should not be normalized
      */
     private function normalizeOutOfRangeCurrentPage(int $currentPage): int
@@ -329,10 +324,8 @@ class AsyncPager implements PagerfantaInterface
 
     /**
      * Returns the number of pages.
-     *
-     * @return integer
      */
-    public function getNbPages()
+    public function getNbPages(): int
     {
         $nbPages = $this->calculateNbPages();
 
@@ -372,11 +365,9 @@ class AsyncPager implements PagerfantaInterface
     /**
      * Returns the previous page.
      *
-     * @return integer
-     *
      * @throws \LogicException If there is no previous page.
      */
-    public function getPreviousPage()
+    public function getPreviousPage(): int
     {
         if (!$this->hasPreviousPage()) {
             throw new \LogicException('There is no previous page.');
@@ -387,10 +378,8 @@ class AsyncPager implements PagerfantaInterface
 
     /**
      * Returns whether there is next page or not.
-     *
-     * @return boolean
      */
-    public function hasNextPage()
+    public function hasNextPage(): bool
     {
         return $this->currentPage < $this->getNbPages();
     }
@@ -398,11 +387,9 @@ class AsyncPager implements PagerfantaInterface
     /**
      * Returns the next page.
      *
-     * @return integer
-     *
      * @throws \LogicException If there is no next page.
      */
-    public function getNextPage()
+    public function getNextPage(): int
     {
         if (!$this->hasNextPage()) {
             throw new \LogicException('There is no next page.');
@@ -478,7 +465,6 @@ class AsyncPager implements PagerfantaInterface
 
     /**
      * @param mixed $value
-     * @return bool
      */
     private function needsToIntegerConversion($value): bool
     {
@@ -489,10 +475,8 @@ class AsyncPager implements PagerfantaInterface
      * Get page number of the item at specified position (1-based index)
      *
      * @param integer $position
-     *
-     * @return integer
      */
-    public function getPageNumberForItemAtPosition($position)
+    public function getPageNumberForItemAtPosition($position): int
     {
         Assert::integer($position);
 

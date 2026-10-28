@@ -18,8 +18,5 @@ interface ProducerInstanceInterface
      */
     public function produceAndQueueJobs(mixed $data = null): Promise;
 
-    /**
-     * @return ProducerInterface
-     */
     public function getProducer(): ProducerInterface;
 }
