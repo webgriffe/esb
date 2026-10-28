@@ -10,9 +10,7 @@ final class DateTimeBuilderStub implements DateTimeBuilderInterface
     {
         if (self::$forcedNow) {
             $dateTime = new \DateTime(self::$forcedNow, $timezone);
-            if (null !== $time) {
-                $dateTime->modify($time);
-            }
+            $dateTime->modify($time);
 
             return $dateTime;
         }

@@ -83,11 +83,12 @@ class HttpProducersServer
         $this->producerInstances[] = $producerInstance;
     }
 
-    /** @noinspection PhpUnusedPrivateMethodInspection */
     /**
-     * @return \Generator<Promise>
+     * @return \Generator<Promise<int>>
+     *
+     * @phpstan-ignore method.unused
      */
-    private function requestHandler(Request $request)
+    private function requestHandler(Request $request): \Generator
     {
         $producerInstances = $this->matchProducerInstance($request);
 

@@ -443,10 +443,6 @@ class AsyncPager implements PagerfantaInterface
             return [];
         }
 
-        if (!is_array($results)) {
-            throw new \RuntimeException('Invalid current page results.');
-        }
-
         return $results;
     }
 
@@ -473,13 +469,9 @@ class AsyncPager implements PagerfantaInterface
 
     /**
      * Get page number of the item at specified position (1-based index)
-     *
-     * @param integer $position
      */
-    public function getPageNumberForItemAtPosition($position): int
+    public function getPageNumberForItemAtPosition(int $position): int
     {
-        Assert::integer($position);
-
         if ($this->getNbResults() < $position) {
             throw new \OutOfBoundsException(sprintf(
                 'Item requested at position %d, but there are only %d items.',

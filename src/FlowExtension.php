@@ -19,15 +19,13 @@ use Webgriffe\Esb\Service\BeanstalkElasticsearchQueueBackend;
 
 final class FlowExtension implements ExtensionInterface, CompilerPassInterface
 {
-    /**
-     * @var array<string, array>
-     */
+    /** @var array<string, mixed> */
     private array $flowsConfig = [];
 
     /**
      * Loads a specific configuration.
      *
-     * @param array<int, array> $configs
+     * @param array<int, mixed> $configs
      */
     public function load(array $configs, ContainerBuilder $container): void
     {

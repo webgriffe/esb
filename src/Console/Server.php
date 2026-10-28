@@ -66,9 +66,11 @@ class Server implements ContainerAwareInterface
         $this->container = $container;
     }
 
-    /** @noinspection PhpUnusedPrivateMethodInspection */
+
     /**
-     * @return \Generator<Promise>
+     * @return \Generator<Promise<bool|string>>
+     *
+     * @phpstan-ignore method.unused
      */
     private function requestHandler(Request $request): \Generator
     {
@@ -109,6 +111,7 @@ class Server implements ContainerAwareInterface
                 $response = new Response(Status::NOT_FOUND, [], 'Not Found');
                 break;
         }
+
         return $response;
     }
 

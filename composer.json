@@ -58,7 +58,7 @@
         "pda/pheanstalk": "^3.1",
         "mikey179/vfsstream": "^1.6",
         "amphp/http-client": "^4.6",
-        "phpstan/phpstan": "^0.12",
+        "phpstan/phpstan": "^2.3",
         "symplify/easy-coding-standard": "^11.1"
     },
     "scripts": {

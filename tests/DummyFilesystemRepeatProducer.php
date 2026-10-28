@@ -38,7 +38,7 @@ final class DummyFilesystemRepeatProducer implements RepeatProducerInterface
     {
         return new Producer(function (callable $emit) {
             if (!(yield File\isDirectory($this->directory))) {
-                if (!(yield File\createDirectory($this->directory)) && !(yield File\createDirectory($this->directory))) {
+                if (!(yield File\createDirectory($this->directory)) && !(yield File\isDirectory($this->directory))) {   // @phpstan-ignore-line
                     throw new \RuntimeException(sprintf('Directory "%s" was not created', $this->directory));
                 }
             }
@@ -66,6 +66,8 @@ final class DummyFilesystemRepeatProducer implements RepeatProducerInterface
     }
 
     /**
+     * @return Promise<mixed>
+     *
      * @throws \Error
      */
     private function longRunningOperation(): Promise
@@ -77,6 +79,7 @@ final class DummyFilesystemRepeatProducer implements RepeatProducerInterface
         Loop::delay($this->produceDelay, function () use ($deferred) {
             $deferred->resolve(true);
         });
+
         return $deferred->promise();
     }
 }

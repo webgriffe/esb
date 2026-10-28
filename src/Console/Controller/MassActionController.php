@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Webgriffe\Esb\Console\Controller;
 
 use Amp\Beanstalk\BeanstalkClient;
+use Webgriffe\Esb\Model\JobInterface;
 use function Amp\call;
 use Amp\Http\Server\FormParser\Form;
 use function Amp\Http\Server\FormParser\parseForm;
@@ -59,7 +60,7 @@ class MassActionController extends AbstractController
     /**
      * @param array<string> $jobs
      *
-     * @return \Generator<Promise>
+     * @return \Generator<Promise<JobInterface|null>>
      */
     private function requeue(array $jobs, string $flow): \Generator
     {

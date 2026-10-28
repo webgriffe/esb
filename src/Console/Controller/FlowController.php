@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Webgriffe\Esb\Console\Controller;
 
+use Webmozart\Assert\Assert;
 use function Amp\call;
 use Amp\Http\Server\Request;
 use Amp\Http\Server\Response;
@@ -25,7 +26,10 @@ class FlowController extends AbstractController
         return call(function () use ($request, $flowCode) {
             $queryParams = [];
             parse_str($request->getUri()->getQuery(), $queryParams);
+
             $query = $queryParams['query'] ?? '';
+            Assert::string($query);
+
             $page = (int)($queryParams['page'] ?? '1');
             $massActionSuccess = $queryParams['massActionSuccess'] ?? false;
             $massActionCount = $queryParams['massActionCount'] ?? 0;

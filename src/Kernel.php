@@ -14,6 +14,7 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use Webgriffe\Esb\Console\ContainerExtension as ConsoleContainerExtension;
 use Webgriffe\Esb\Console\Server;
+use Webmozart\Assert\Assert;
 
 /**
  * @internal
@@ -127,9 +128,11 @@ class Kernel
         }
 
         $localConfigPathinfo = pathinfo($this->localConfigFilePath);
+        Assert::keyExists($localConfigPathinfo, 'dirname');
+
         $environmentLocalConfigFile = sprintf(
             '%s/%s_%s.yml',
-            $localConfigPathinfo['dirname'],
+            $localConfigPathinfo['dirname'],    // @phpstan-ignore-line
             $localConfigPathinfo['filename'],
             $this->environment
         );

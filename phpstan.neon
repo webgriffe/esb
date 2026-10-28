@@ -1,5 +1,7 @@
 parameters:
-    checkGenericClassInNonGenericObjectType: false
-
+    level: 7
+    paths:
+        - %currentWorkingDirectory%/src/
+        - %currentWorkingDirectory%/tests/
     ignoreErrors:
         - '/Call to an undefined method Symfony\\Component\\Config\\Definition\\Builder\\NodeDefinition::useAttributeAsKey\(\)\./'

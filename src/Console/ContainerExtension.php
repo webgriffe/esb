@@ -27,7 +27,7 @@ final class ContainerExtension implements ExtensionInterface, PrependExtensionIn
     }
 
     /**
-     * @param array<int, array> $configs
+     * @param array<int, mixed> $configs
      */
     public function load(array $configs, ContainerBuilder $container): void
     {

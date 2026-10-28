@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Webgriffe\Esb\Service;
 
 use Amp;
+use Amp\Http\Client\Response;
+use Amp\Promise;
 use Generator;
 use Symfony\Component\Serializer\Exception\ExceptionInterface;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
@@ -27,13 +29,13 @@ class ElasticSearch
         private readonly Client $client,
         private readonly NormalizerInterface $normalizer,
     ) {
-        Assert::isInstanceOf($normalizer, DenormalizerInterface::class);
+        Assert::isInstanceOf($normalizer, DenormalizerInterface::class);    // @phpstan-ignore-line
     }
 
     /**
-     * @return Amp\Promise<null>
+     * @return Promise<null>
      */
-    public function indexJob(JobInterface $job, string $indexName): Amp\Promise
+    public function indexJob(JobInterface $job, string $indexName): Promise
     {
         return Amp\call(function () use ($job, $indexName) {
             yield from $this->doIndexJob($job, $indexName);
@@ -43,9 +45,9 @@ class ElasticSearch
     /**
      * @param JobInterface[] $jobs
      *
-     * @return Amp\Promise<null>
+     * @return Promise<null>
      */
-    public function bulkIndexJobs(array $jobs, string $indexName): Amp\Promise
+    public function bulkIndexJobs(array $jobs, string $indexName): Promise
     {
         return Amp\call(function () use ($jobs, $indexName) {
             return yield from $this->doBulkIndexJobs($jobs, $indexName);
@@ -53,9 +55,9 @@ class ElasticSearch
     }
 
     /**
-     * @return Amp\Promise<JobInterface>
+     * @return Promise<JobInterface>
      */
-    public function fetchJob(string $uuid, string $indexName): Amp\Promise
+    public function fetchJob(string $uuid, string $indexName): Promise
     {
         return Amp\call(function () use ($uuid, $indexName) {
             try {
@@ -78,9 +80,9 @@ class ElasticSearch
     }
 
     /**
-     * @return Amp\Promise<bool>
+     * @return Promise<bool>
      */
-    public function indexExists(string $indexName): Amp\Promise
+    public function indexExists(string $indexName): Promise
     {
         return Amp\call(function () use ($indexName) {
             try {
@@ -95,37 +97,46 @@ class ElasticSearch
         });
     }
 
-    public function setElasticSearchIndex(string $indexName): Amp\Promise
+    /**
+     * @return Promise<Response>
+     */
+    public function setElasticSearchIndex(string $indexName): Promise
     {
         return $this->client->createIndex($indexName);
     }
 
     /**
      * @param array<string, mixed> $updateSettingsBody
+     *
+     * @return Promise<Response>
      */
-    public function setElasticSearchIndexSettings(string $indexName, ?array $updateSettingsBody = null): Amp\Promise
+    public function setElasticSearchIndexSettings(string $indexName, ?array $updateSettingsBody = null): Promise
     {
         return $this->client->updateIndexSettings($indexName, $updateSettingsBody);
     }
 
     /**
      * @param array<string, mixed> $updateMappingBody
+     *
+     * @return Promise<Response>
      */
-    public function setElasticSearchIndexMapping(string $indexName, ?array $updateMappingBody = null): Amp\Promise
+    public function setElasticSearchIndexMapping(string $indexName, ?array $updateMappingBody = null): Promise
     {
         return $this->client->updateMappings($indexName, $updateMappingBody);
     }
 
     /**
      * @param array<string, mixed> $aliasBody
+     *
+     * @return Promise<Response>
      */
-    public function setElasticSearchIndexAlias(string $indexName, string $aliasName, ?array $aliasBody = null): Amp\Promise
+    public function setElasticSearchIndexAlias(string $indexName, string $aliasName, ?array $aliasBody = null): Promise
     {
         return $this->client->createOrUpdateAlias($indexName, $aliasName, $aliasBody);
     }
 
     /**
-     * @return Generator<Amp\Promise>
+     * @return Generator<Promise<Response|null>>
      * @throws ExceptionInterface
      */
     private function doIndexJob(JobInterface $job, string $indexName): Generator
@@ -158,7 +169,7 @@ class ElasticSearch
     /**
      * @param JobInterface[] $jobs
      *
-     * @return Generator<Amp\Promise>
+     * @return Generator<Promise<Response>>
      * @throws ExceptionInterface
      */
     private function doBulkIndexJobs(array $jobs, string $indexName): Generator
@@ -173,7 +184,7 @@ class ElasticSearch
     }
 
     /**
-     * @return Generator<Amp\Promise>
+     * @return Generator<Promise<null>>
      */
     private function doFetchJob(string $uuid, string $indexName): Generator
     {
