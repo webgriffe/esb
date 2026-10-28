@@ -27,33 +27,16 @@ class Server implements ContainerAwareInterface
 {
     use CallableMaker;
 
-    /**
-     * @var string
-     */
-    private $publicDir;
-    /**
-     * @var array<string, string>
-     */
-    private $config;
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
-    /**
-     * @var ContainerInterface|null
-     */
-    private $container;
+    private ?ContainerInterface $container = null;
 
     /**
-     * @param string $publicDir
      * @param array<string, string> $config
-     * @param LoggerInterface $logger
      */
-    public function __construct(string $publicDir, array $config, LoggerInterface $logger)
-    {
-        $this->publicDir = $publicDir;
-        $this->config = $config;
-        $this->logger = $logger;
+    public function __construct(
+        private readonly string $publicDir,
+        private readonly array $config,
+        private readonly LoggerInterface $logger,
+    ) {
     }
 
     public function boot(): void
@@ -83,10 +66,11 @@ class Server implements ContainerAwareInterface
         $this->container = $container;
     }
 
-    /** @noinspection PhpUnusedPrivateMethodInspection */
+
     /**
-     * @param Request $request
-     * @return \Generator<Promise>
+     * @return \Generator<Promise<bool|string>>
+     *
+     * @phpstan-ignore method.unused
      */
     private function requestHandler(Request $request): \Generator
     {
@@ -127,13 +111,10 @@ class Server implements ContainerAwareInterface
                 $response = new Response(Status::NOT_FOUND, [], 'Not Found');
                 break;
         }
+
         return $response;
     }
 
-    /**
-     * @param Request $request
-     * @return Dispatcher
-     */
     private function getDispatcher(Request $request): Dispatcher
     {
         return \FastRoute\simpleDispatcher(
@@ -155,10 +136,6 @@ class Server implements ContainerAwareInterface
         );
     }
 
-    /**
-     * @param Request $request
-     * @return bool
-     */
     private function isAuthorized(Request $request): bool
     {
         $authorization = $request->getHeader('Authorization');

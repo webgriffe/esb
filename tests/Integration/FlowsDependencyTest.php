@@ -27,7 +27,7 @@ class FlowsDependencyTest extends KernelTestCase
      *
      * @throws Exception
      */
-    public function testTwoFlowsWithDependencies()
+    public function testTwoFlowsWithDependencies(): void
     {
         $producerDir1 = vfsStream::url('root/producer_dir_1');
         $workerFile1 = vfsStream::url('root/worker_1.data');
@@ -88,9 +88,10 @@ class FlowsDependencyTest extends KernelTestCase
             $successLog = array_filter(
                 $this->logHandler()->getRecords(),
                 function ($log) {
-                    return strpos($log['message'], 'Successfully worked a Job') !== false;
+                    return str_contains($log['message'], 'Successfully worked a Job');
                 }
             );
+
             return count($successLog) >= 2;
         });
 
@@ -130,7 +131,7 @@ class FlowsDependencyTest extends KernelTestCase
      *
      * @throws Exception
      */
-    public function testDependencyQueue()
+    public function testDependencyQueue(): void
     {
         $producerDir1 = vfsStream::url('root/producer_dir_1');
         $workerFile1 = vfsStream::url('root/worker_1.data');
@@ -194,7 +195,7 @@ class FlowsDependencyTest extends KernelTestCase
                 $successLog = array_filter(
                     $this->logHandler()->getRecords(),
                     function ($log) {
-                        return strpos($log['message'], 'Successfully worked a Job') !== false;
+                        return str_contains($log['message'], 'Successfully worked a Job');
                     }
                 );
                 return count($successLog) >= 3;
@@ -242,10 +243,6 @@ class FlowsDependencyTest extends KernelTestCase
         );
     }
 
-    /**
-     * @param string $worker1Line
-     * @return float
-     */
     private function getLogLineTimestamp(string $worker1Line): float
     {
         $matches = [];

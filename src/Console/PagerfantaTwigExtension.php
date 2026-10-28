@@ -11,14 +11,9 @@ use Twig\TwigFunction;
 
 final class PagerfantaTwigExtension extends AbstractExtension
 {
-    /**
-     * @var ViewInterface
-     */
-    private $view;
-
-    public function __construct(ViewInterface $view)
-    {
-        $this->view = $view;
+    public function __construct(
+        private readonly ViewInterface $view,
+    ) {
     }
 
     public function getFunctions()
@@ -29,10 +24,7 @@ final class PagerfantaTwigExtension extends AbstractExtension
     }
 
     /**
-     * @param PagerfantaInterface $pagerfanta
-     * @param string $route
      * @param array<string, string|int> $options
-     * @return string
      */
     public function renderPagerfanta(
         PagerfantaInterface $pagerfanta,

@@ -11,6 +11,7 @@ use Amp\Http\Status;
 use Amp\Promise;
 use Webgriffe\Esb\Console\Pager\AmpElasticsearchUriSearchAdapter;
 use Webgriffe\Esb\Console\Pager\AsyncPager;
+use Webmozart\Assert\Assert;
 
 /**
  * @internal
@@ -25,7 +26,10 @@ class FlowController extends AbstractController
         return call(function () use ($request, $flowCode) {
             $queryParams = [];
             parse_str($request->getUri()->getQuery(), $queryParams);
+
             $query = $queryParams['query'] ?? '';
+            Assert::string($query);
+
             $page = (int)($queryParams['page'] ?? '1');
             $massActionSuccess = $queryParams['massActionSuccess'] ?? false;
             $massActionCount = $queryParams['massActionCount'] ?? 0;
@@ -36,7 +40,9 @@ class FlowController extends AbstractController
                 ['sort' => 'lastEvent.time:desc']
             );
             $pager = new AsyncPager($adapter, 10, $page);
+
             yield $pager->init();
+
             return new Response(
                 Status::OK,
                 [],

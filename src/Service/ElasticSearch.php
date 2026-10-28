@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Webgriffe\Esb\Service;
 
 use Amp;
+use Amp\Http\Client\Response;
+use Amp\Promise;
 use Generator;
 use Symfony\Component\Serializer\Exception\ExceptionInterface;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
@@ -21,44 +23,31 @@ class ElasticSearch
     private const NO_SHARD_AVAILABLE_INDEX_MAX_RETRY = 10;
 
     /**
-     * @var Client
-     */
-    private $client;
-    /**
-     * @var NormalizerInterface&DenormalizerInterface
-     */
-    private $normalizer;
-
-    /**
-     * @param Client $client
      * @param NormalizerInterface&DenormalizerInterface $normalizer
      */
-    public function __construct(Client $client, $normalizer)
-    {
-        $this->client = $client;
-        Assert::isInstanceOf($normalizer, NormalizerInterface::class);
-        Assert::isInstanceOf($normalizer, DenormalizerInterface::class);
-        $this->normalizer = $normalizer;
+    public function __construct(
+        private readonly Client $client,
+        private readonly NormalizerInterface $normalizer,
+    ) {
+        Assert::isInstanceOf($normalizer, DenormalizerInterface::class);    // @phpstan-ignore-line
     }
 
     /**
-     * @param JobInterface $job
-     * @param string $indexName
-     * @return Amp\Promise<null>
+     * @return Promise<null>
      */
-    public function indexJob(JobInterface $job, string $indexName): Amp\Promise
+    public function indexJob(JobInterface $job, string $indexName): Promise
     {
         return Amp\call(function () use ($job, $indexName) {
-            yield from $this->doIndexJob($job, $indexName, 0);
+            yield from $this->doIndexJob($job, $indexName);
         });
     }
 
     /**
      * @param JobInterface[] $jobs
-     * @param string $indexName
-     * @return Amp\Promise<null>
+     *
+     * @return Promise<null>
      */
-    public function bulkIndexJobs(array $jobs, string $indexName): Amp\Promise
+    public function bulkIndexJobs(array $jobs, string $indexName): Promise
     {
         return Amp\call(function () use ($jobs, $indexName) {
             return yield from $this->doBulkIndexJobs($jobs, $indexName);
@@ -66,21 +55,20 @@ class ElasticSearch
     }
 
     /**
-     * @param string $uuid
-     * @param string $indexName
-     * @return Amp\Promise<JobInterface>
+     * @return Promise<JobInterface>
      */
-    public function fetchJob(string $uuid, string $indexName): Amp\Promise
+    public function fetchJob(string $uuid, string $indexName): Promise
     {
         return Amp\call(function () use ($uuid, $indexName) {
             try {
-                $response = yield from $this->doFetchJob($uuid, $indexName, 0);
+                $response = yield from $this->doFetchJob($uuid, $indexName);
             } catch (Error $error) {
                 if ($error->getCode() === 404) {
                     throw new JobNotFoundException($uuid);
                 }
                 throw $error;
             }
+
             Assert::keyExists($response, '_source');
             return $this->normalizer->denormalize($response['_source'], Job::class, 'json');
         });
@@ -92,9 +80,9 @@ class ElasticSearch
     }
 
     /**
-     * @return Amp\Promise<bool>
+     * @return Promise<bool>
      */
-    public function indexExists(string $indexName): Amp\Promise
+    public function indexExists(string $indexName): Promise
     {
         return Amp\call(function () use ($indexName) {
             try {
@@ -109,74 +97,79 @@ class ElasticSearch
         });
     }
 
-    public function setElasticSearchIndex(string $indexName): Amp\Promise
+    /**
+     * @return Promise<Response>
+     */
+    public function setElasticSearchIndex(string $indexName): Promise
     {
         return $this->client->createIndex($indexName);
     }
 
     /**
-     * @param string $indexName
      * @param array<string, mixed> $updateSettingsBody
+     *
+     * @return Promise<Response>
      */
-    public function setElasticSearchIndexSettings(string $indexName, ?array $updateSettingsBody = null): Amp\Promise
+    public function setElasticSearchIndexSettings(string $indexName, ?array $updateSettingsBody = null): Promise
     {
         return $this->client->updateIndexSettings($indexName, $updateSettingsBody);
     }
 
     /**
-     * @param string $indexName
      * @param array<string, mixed> $updateMappingBody
+     *
+     * @return Promise<Response>
      */
-    public function setElasticSearchIndexMapping(string $indexName, ?array $updateMappingBody = null): Amp\Promise
+    public function setElasticSearchIndexMapping(string $indexName, ?array $updateMappingBody = null): Promise
     {
         return $this->client->updateMappings($indexName, $updateMappingBody);
     }
 
     /**
-     * @param string $indexName
      * @param array<string, mixed> $aliasBody
+     *
+     * @return Promise<Response>
      */
-    public function setElasticSearchIndexAlias(string $indexName, string $aliasName, ?array $aliasBody = null): Amp\Promise
+    public function setElasticSearchIndexAlias(string $indexName, string $aliasName, ?array $aliasBody = null): Promise
     {
         return $this->client->createOrUpdateAlias($indexName, $aliasName, $aliasBody);
     }
 
     /**
-     * @param JobInterface $job
-     * @param string $indexName
-     * @param int $retry
-     * @return Generator<Amp\Promise>
+     * @return Generator<Promise<Response|null>>
      * @throws ExceptionInterface
      */
-    private function doIndexJob(JobInterface $job, string $indexName, int $retry): Generator
+    private function doIndexJob(JobInterface $job, string $indexName): Generator
     {
-        try {
-            yield $this->client->indexDocument(
-                $indexName,
-                $job->getUuid(),
-                (array)$this->normalizer->normalize($job, 'json')
-            );
-        } catch (Error $error) {
-            $errorData = $error->getData();
-            if (null === $errorData) {
+        $normalizedJob = (array)$this->normalizer->normalize($job, 'json');
+
+        $retry = 0;
+        while (true) {
+            try {
+                return yield $this->client->indexDocument($indexName, $job->getUuid(), $normalizedJob);
+            } catch (Error $error) {
+                $errorData = $error->getData();
+                if (null === $errorData) {
+                    throw $error;
+                }
+                $errorType = $errorData['error']['type'] ?? null;
+                if ($errorType === 'no_shard_available_action_exception' &&
+                    ++$retry <= self::NO_SHARD_AVAILABLE_INDEX_MAX_RETRY) {
+                    // TODO Log no shard available and number of retrials
+                    yield Amp\delay(1000);
+
+                    continue;
+                }
+
                 throw $error;
             }
-            $errorType = $errorData['error']['type'] ?? null;
-            if ($errorType === 'no_shard_available_action_exception' &&
-                $retry < self::NO_SHARD_AVAILABLE_INDEX_MAX_RETRY) {
-                // TODO Log no shard available retrials and refactor
-                yield Amp\delay(1000);
-                yield from $this->doIndexJob($job, $indexName, ++$retry);
-                return;
-            }
-            throw $error;
         }
     }
 
     /**
      * @param JobInterface[] $jobs
-     * @param string $indexName
-     * @return Generator<Amp\Promise>
+     *
+     * @return Generator<Promise<Response>>
      * @throws ExceptionInterface
      */
     private function doBulkIndexJobs(array $jobs, string $indexName): Generator
@@ -186,35 +179,35 @@ class ElasticSearch
             $body[] = ['index' => ['_id' => $job->getUuid()]];
             $body[] = (array)$this->normalizer->normalize($job, 'json');
         }
+
         return yield $this->client->bulk($body, $indexName);
     }
 
     /**
-     * @param string $uuid
-     * @param string $indexName
-     * @param int $retry
-     * @return Generator<Amp\Promise>
+     * @return Generator<Promise<null>>
      */
-    private function doFetchJob(string $uuid, string $indexName, int $retry): Generator
+    private function doFetchJob(string $uuid, string $indexName): Generator
     {
-        try {
-            return yield $this->client->getDocument(
-                $indexName,
-                $uuid
-            );
-        } catch (Error $error) {
-            $errorData = $error->getData();
-            if (null === $errorData) {
+        $retry = 0;
+        while (true) {
+            try {
+                return yield $this->client->getDocument($indexName, $uuid);
+            } catch (Error $error) {
+                $errorData = $error->getData();
+                if (null === $errorData) {
+                    throw $error;
+                }
+                $errorType = $errorData['error']['type'] ?? null;
+                if ($errorType === 'no_shard_available_action_exception' &&
+                    ++$retry < self::NO_SHARD_AVAILABLE_INDEX_MAX_RETRY) {
+                    // TODO Log no shard available retrials
+                    yield Amp\delay(1000);
+
+                    continue;
+                }
+
                 throw $error;
             }
-            $errorType = $errorData['error']['type'] ?? null;
-            if ($errorType === 'no_shard_available_action_exception' &&
-                $retry < self::NO_SHARD_AVAILABLE_INDEX_MAX_RETRY) {
-                // TODO Log no shard available retrials and refactor
-                yield Amp\delay(1000);
-                return yield from $this->doFetchJob($uuid, $indexName, ++$retry);
-            }
-            throw $error;
         }
     }
 }

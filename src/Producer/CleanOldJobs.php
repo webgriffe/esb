@@ -13,24 +13,15 @@ use Webgriffe\Esb\Model\Job;
 
 class CleanOldJobs implements CrontabProducerInterface
 {
-    /**
-     * @var string
-     */
-    private $cronExpression;
-
-    /**
-     * CleanOldElasticsearchDocuments constructor.
-     * @param string $cronExpression
-     */
-    public function __construct(string $cronExpression)
-    {
-        $this->cronExpression = $cronExpression;
+    public function __construct(
+        private readonly string $cronExpression,
+    ) {
     }
 
     /**
      * @inheritDoc
      */
-    public function produce($data = null): Iterator
+    public function produce(mixed $data = null): Iterator
     {
         return new Producer(
             function (callable $emit): \Generator {

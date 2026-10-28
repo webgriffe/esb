@@ -22,8 +22,7 @@ final class DummyHttpRequestProducer implements HttpRequestProducerInterface
     }
 
     /**
-     * @return Promise
-     * @throws \Error
+     * @return Success<null>
      */
     public function init(): Promise
     {
@@ -32,11 +31,8 @@ final class DummyHttpRequestProducer implements HttpRequestProducerInterface
 
     /**
      * @param Request $data
-     * @return Iterator
-     * @throws \InvalidArgumentException
-     * @throws \Error
      */
-    public function produce($data = null): Iterator
+    public function produce(mixed $data = null): Iterator
     {
         return new Producer(function (callable $emit) use ($data) {
             if (!$data instanceof Request) {
@@ -47,7 +43,7 @@ final class DummyHttpRequestProducer implements HttpRequestProducerInterface
             $body = json_decode(yield $data->getBody()->buffer(), true);
             $jobsData = $body['jobs'];
             foreach ($jobsData as $jobData) {
-                yield $emit(new Job([$jobData]));
+                yield $emit(new Job([$jobData]));   // @phpstan-ignore-line
             }
         });
     }

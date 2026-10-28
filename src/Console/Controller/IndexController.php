@@ -36,6 +36,7 @@ class IndexController extends AbstractController
                     'totalJobs' => yield $this->getTotalJobs($flowCode),
                 ];
             }
+
             return new Response(Status::OK, [], $this->getTwig()->render('index.html.twig', ['flows' => $flowView]));
         });
     }
@@ -48,11 +49,13 @@ class IndexController extends AbstractController
         return call(function () use ($flowCode) {
             try {
                 $response = yield $this->getElasticsearch()->getClient()->count($flowCode);
+
                 return $response['count'];
             } catch (AmpElasticsearchError $e) {
                 if ($this->isIndexNotFoundException($e)) {
                     return 0;
                 }
+
                 throw $e;
             }
         });
@@ -70,11 +73,13 @@ class IndexController extends AbstractController
                     [],
                     ['term' => ['lastEvent.type.keyword' => 'errored']]
                 );
+
                 return $response['count'];
             } catch (AmpElasticsearchError $e) {
                 if ($this->isIndexNotFoundException($e)) {
                     return 0;
                 }
+
                 throw $e;
             }
         });
@@ -92,11 +97,13 @@ class IndexController extends AbstractController
                     [],
                     ['term' => ['lastEvent.type.keyword' => 'worked']]
                 );
+
                 return $response['count'];
             } catch (AmpElasticsearchError $e) {
                 if ($this->isIndexNotFoundException($e)) {
                     return 0;
                 }
+
                 throw $e;
             }
         });

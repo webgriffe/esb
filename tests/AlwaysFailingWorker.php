@@ -10,9 +10,6 @@ use function Amp\call;
 
 final class AlwaysFailingWorker implements WorkerInterface
 {
-    /**
-     * @return Promise
-     */
     public function init(): Promise
     {
         return new Success(null);

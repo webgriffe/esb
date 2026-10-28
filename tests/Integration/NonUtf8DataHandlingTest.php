@@ -19,7 +19,7 @@ class NonUtf8DataHandlingTest extends KernelTestCase
     /**
      * @throws \Exception
      */
-    public function testHandlesNonUtf8Data()
+    public function testHandlesNonUtf8Data(): void
     {
         $producerDir = vfsStream::url('root/producer_dir');
         self::createKernel([

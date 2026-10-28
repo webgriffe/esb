@@ -6,29 +6,23 @@ namespace Webgriffe\Esb;
 use Amp\Promise;
 use Amp\Success;
 use Amp\Iterator;
+use Webgriffe\Esb\Model\JobInterface;
 
 final class DummyRepeatProducer implements RepeatProducerInterface
 {
-    /**
-     * @var array
-     */
-    public static $jobs;
-    /**
-     * @var int
-     */
-    private $interval;
+    /** @var JobInterface[] */
+    public static array $jobs;
 
     /**
      * DummyRepeatProducer constructor.
-     * @param int $interval
      */
-    public function __construct(int $interval = 1)
-    {
-        $this->interval = $interval;
+    public function __construct(
+        private readonly int $interval = 1,
+    ) {
     }
 
     /**
-     * @return Promise
+     * @return Success<null>
      * @throws \Error
      */
     public function init(): Promise
@@ -37,20 +31,17 @@ final class DummyRepeatProducer implements RepeatProducerInterface
     }
 
     /**
-     * @param mixed $data
-     * @return Iterator
+     * @return Iterator<JobInterface>
+     *
      * @throws \TypeError
      */
-    public function produce($data = null): Iterator
+    public function produce(mixed $data = null): Iterator
     {
         $iterator = Iterator\fromIterable(self::$jobs);
         self::$jobs = [];
         return $iterator;
     }
 
-    /**
-     * @return int
-     */
     public function getInterval(): int
     {
         return $this->interval;

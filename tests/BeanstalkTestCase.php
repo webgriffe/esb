@@ -4,24 +4,21 @@ namespace Webgriffe\Esb;
 
 use Amp\PHPUnit\AsyncTestCase;
 use Pheanstalk\Pheanstalk;
+use Pheanstalk\Response;
+use Webmozart\Assert\Assert;
 
 class BeanstalkTestCase extends AsyncTestCase
 {
-    /**
-     * @var Pheanstalk
-     */
-    protected $pheanstalk;
+    protected ?Pheanstalk $pheanstalk = null;
 
     protected function setUp(): void
     {
         parent::setUp();
+
         $this->pheanstalk = $this->getPheanstalk();
         $this->purgeBeanstalk();
     }
 
-    /**
-     * @return string
-     */
     protected static function getBeanstalkdConnectionUri(): string
     {
         return getenv('ESB_BEANSTALKD_URL') ?: 'tcp://127.0.0.1:11300';
@@ -34,28 +31,29 @@ class BeanstalkTestCase extends AsyncTestCase
     {
         $uri = self::getBeanstalkdConnectionUri();
         $parsedUri = parse_url($uri);
-        return new Pheanstalk($parsedUri['host'], (int)$parsedUri['port']);
+
+        return new Pheanstalk($parsedUri['host'], (int)$parsedUri['port']); // @phpstan-ignore-line
     }
 
-    protected function purgeBeanstalk()
+    protected function purgeBeanstalk(): void
     {
         foreach ($this->pheanstalk->listTubes() as $tube) {
             try {
-                while ($job = $this->pheanstalk->peekReady($tube)) {
+                while ($job = $this->pheanstalk->peekReady($tube)) {    // @phpstan-ignore while.alwaysTrue
                     $this->pheanstalk->delete($job);
                 }
             } catch (\Throwable $e) {
                 // Continue
             }
             try {
-                while ($job = $this->pheanstalk->peekDelayed($tube)) {
+                while ($job = $this->pheanstalk->peekDelayed($tube)) {  // @phpstan-ignore while.alwaysTrue
                     $this->pheanstalk->delete($job);
                 }
             } catch (\Throwable $e) {
                 // Continue
             }
             try {
-                while ($job = $this->pheanstalk->peekBuried($tube)) {
+                while ($job = $this->pheanstalk->peekBuried($tube)) {   // @phpstan-ignore while.alwaysTrue
                     $this->pheanstalk->delete($job);
                 }
             } catch (\Throwable $e) {
@@ -64,64 +62,78 @@ class BeanstalkTestCase extends AsyncTestCase
         }
     }
 
-    /**
-     * @param int $expectedReadyJobsCount
-     * @param string $tube
-     */
-    protected function assertReadyJobsCountInTube(int $expectedReadyJobsCount, string $tube)
+    protected function assertReadyJobsCountInTube(int $expectedReadyJobsCount, string $tube): void
     {
-        $stats = $this->pheanstalk->statsTube($tube);
-        $this->assertEquals($expectedReadyJobsCount, $stats['current-jobs-ready']);
+        $this->assertEquals($expectedReadyJobsCount, $this->getCurrentJobsReady($this->getStats($tube)));
     }
 
-    /**
-     * @param int $expectedBuriedJobsCount
-     * @param string $tube
-     */
-    protected function assertBuriedJobsCountInTube(int $expectedBuriedJobsCount, string $tube)
+    protected function assertBuriedJobsCountInTube(int $expectedBuriedJobsCount, string $tube): void
     {
-        $stats = $this->pheanstalk->statsTube($tube);
-        $this->assertEquals($expectedBuriedJobsCount, $stats['current-jobs-buried']);
+        $this->assertEquals($expectedBuriedJobsCount, $this->getCurrentJobsBuried($this->getStats($tube)));
     }
 
-    /**
-     * @param int $expectedUrgentJobsCount
-     * @param string $tube
-     */
-    protected function assertUrgentJobsCountInTube(int $expectedUrgentJobsCount, string $tube)
+    protected function assertUrgentJobsCountInTube(int $expectedUrgentJobsCount, string $tube): void
     {
-        $stats = $this->pheanstalk->statsTube($tube);
-        $this->assertEquals($expectedUrgentJobsCount, $stats['current-jobs-urgent']);
+        $this->assertEquals($expectedUrgentJobsCount, $this->getCurrentJobsUrgent($this->getStats($tube)));
     }
 
-    /**
-     * @param int $expectedReservedJobsCount
-     * @param string $tube
-     */
-    protected function assertReservedJobsCountInTube(int $expectedReservedJobsCount, string $tube)
+    protected function assertReservedJobsCountInTube(int $expectedReservedJobsCount, string $tube): void
     {
-        $stats = $this->pheanstalk->statsTube($tube);
-        $this->assertEquals($expectedReservedJobsCount, $stats['current-jobs-reserved']);
+        $this->assertEquals($expectedReservedJobsCount, $this->getCurrentJobsReserved($this->getStats($tube)));
     }
 
-    /**
-     * @param int $expectedDelayedJobsCount
-     * @param string $tube
-     */
-    protected function assertDelayedJobsCountInTube(int $expectedDelayedJobsCount, string $tube)
+    protected function assertDelayedJobsCountInTube(int $expectedDelayedJobsCount, string $tube): void
     {
-        $stats = $this->pheanstalk->statsTube($tube);
-        $this->assertEquals($expectedDelayedJobsCount, $stats['current-jobs-delayed']);
+        $this->assertEquals($expectedDelayedJobsCount, $this->getCurrentJobsDelayed($this->getStats($tube)));
     }
 
-    protected function assertDeletedJobsCountInTube(int $excpectedDeletedJobsCount, string $tube)
+    protected function assertDeletedJobsCountInTube(int $expectedDeletedJobsCount, string $tube): void
     {
-        $stats = $this->pheanstalk->statsTube($tube);
-        $deletedJobs = $stats['total-jobs'] -
-            $stats['current-jobs-buried'] +
-            $stats['current-jobs-urgent'] +
-            $stats['current-jobs-reserved'] +
-            $stats['current-jobs-delayed'];
-        $this->assertEquals($excpectedDeletedJobsCount, $deletedJobs);
+        $stats = $this->getStats($tube);
+        $deletedJobs = $this->getTotalJobs($stats) -
+            $this->getCurrentJobsBuried($stats) +
+            $this->getCurrentJobsUrgent($stats) +
+            $this->getCurrentJobsReserved($stats) +
+            $this->getCurrentJobsDelayed($stats);
+
+        $this->assertEquals($expectedDeletedJobsCount, $deletedJobs);
+    }
+
+    protected function getStats(string $tube): Response
+    {
+        $response = $this->pheanstalk->statsTube($tube);
+        Assert::isInstanceOf($response, Response::class);
+
+        return $response;
+    }
+
+    protected function getTotalJobs(Response $stats): int
+    {
+        return $stats['total-jobs'];    // @phpstan-ignore-line
+    }
+
+    protected function getCurrentJobsReady(Response $stats): int
+    {
+        return $stats['current-jobs-ready'];    // @phpstan-ignore-line
+    }
+
+    protected function getCurrentJobsBuried(Response $stats): int
+    {
+        return $stats['current-jobs-buried'];    // @phpstan-ignore-line
+    }
+
+    protected function getCurrentJobsUrgent(Response $stats): int
+    {
+        return $stats['current-jobs-urgent'];    // @phpstan-ignore-line
+    }
+
+    protected function getCurrentJobsReserved(Response $stats): int
+    {
+        return $stats['current-jobs-reserved'];    // @phpstan-ignore-line
+    }
+
+    protected function getCurrentJobsDelayed(Response $stats): int
+    {
+        return $stats['current-jobs-delayed'];    // @phpstan-ignore-line
     }
 }

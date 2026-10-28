@@ -18,7 +18,7 @@ class TwoFlowsTest extends KernelTestCase
 
     use TestUtils;
 
-    public function testTwoFlows()
+    public function testTwoFlows(): void
     {
         $producerDir1 = vfsStream::url('root/producer_dir_1');
         $workerFile1 = vfsStream::url('root/worker_1.data');
@@ -65,7 +65,7 @@ class TwoFlowsTest extends KernelTestCase
             $successLog = array_filter(
                 $this->logHandler()->getRecords(),
                 function ($log) {
-                    return strpos($log['message'], 'Successfully worked a Job') !== false;
+                    return str_contains($log['message'], 'Successfully worked a Job');
                 }
             );
             return count($successLog) >= 4;
@@ -83,13 +83,17 @@ class TwoFlowsTest extends KernelTestCase
         $this->assertReadyJobsCountInTube(0, self::FLOW1_CODE);
     }
 
+    /**
+     * @param string[] $array
+     */
     private function assertOneArrayEntryContains(string $expected, array $array): void
     {
         foreach ($array as $item) {
-            if (strpos($item, $expected) !== false) {
+            if (str_contains($item, $expected)) {
                 return;
             }
         }
+
         $this->fail(sprintf('Failed asserting that array has one entry that contains "%s".', $expected));
     }
 }

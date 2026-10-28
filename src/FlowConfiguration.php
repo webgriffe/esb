@@ -17,8 +17,9 @@ final class FlowConfiguration implements ConfigurationInterface
      */
     public function getConfigTreeBuilder(): TreeBuilder
     {
-        $treeBuilder = new TreeBuilder();
-        $rootNode = $treeBuilder->root('flows');
+        $treeBuilder = new TreeBuilder('flows');
+
+        $rootNode = $treeBuilder->getRootNode();
         $rootNode
             ->useAttributeAsKey('name')
             ->arrayPrototype()
@@ -38,7 +39,6 @@ final class FlowConfiguration implements ConfigurationInterface
                             ->scalarNode('service')->isRequired()->end()
                             ->integerNode('instances')->min(1)->defaultValue(1)->end()
                             ->integerNode('error_retry_delay')->min(0)->defaultValue(0)->end()
-                            ->integerNode('release_delay')->min(0)->defaultValue(0)->setDeprecated('Use "error_retry_delay" instead')->end()
                             ->integerNode('max_retry')->min(1)->defaultValue(5)->end()
                         ->end()
                     ->end()
@@ -55,6 +55,7 @@ final class FlowConfiguration implements ConfigurationInterface
                 ->end()
             ->end()
         ;
+
         return $treeBuilder;
     }
 }

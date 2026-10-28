@@ -14,36 +14,27 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use Webgriffe\Esb\Console\ContainerExtension as ConsoleContainerExtension;
 use Webgriffe\Esb\Console\Server;
+use Webmozart\Assert\Assert;
 
 /**
  * @internal
  */
 class Kernel
 {
-    /**
-     * @var ContainerBuilder
-     */
-    private $container;
-    /**
-     * @var string|null
-     */
-    private $environment;
-    /**
-     * @var string
-     */
-    private $localConfigFilePath;
+    private readonly ?string $environment;
+
+    private readonly ContainerBuilder $container;
 
     /**
-     * Kernel constructor.
-     * @param string $localConfigFilePath Local configuration absolute file path
-     * @param string $environment
      * @throws \Exception
      */
-    public function __construct(string $localConfigFilePath, ?string $environment = null)
-    {
-        AnnotationRegistry::registerUniqueLoader('class_exists');
-        $this->localConfigFilePath = $localConfigFilePath;
+    public function __construct(
+        private readonly string $localConfigFilePath,
+        ?string $environment = null,
+    ) {
         $this->environment = $environment;
+
+        AnnotationRegistry::registerUniqueLoader('class_exists');
         $this->container = new ContainerBuilder();
         $loader = new YamlFileLoader($this->container, new FileLocator(dirname(__DIR__)));
         $this->loadSystemConfiguration($loader);
@@ -69,16 +60,12 @@ class Kernel
         Loop::run();
     }
 
-    /**
-     * @return ContainerBuilder
-     */
     public function getContainer(): ContainerBuilder
     {
         return $this->container;
     }
 
     /**
-     * @param \Throwable $exception
      * @throws \Throwable
      */
     public function errorHandler(\Throwable $exception): void
@@ -92,9 +79,6 @@ class Kernel
         throw $exception;
     }
 
-    /**
-     * @return string|null
-     */
     public function getEnvironment(): ?string
     {
         return $this->environment;
@@ -117,7 +101,6 @@ class Kernel
     }
 
     /**
-     * @param YamlFileLoader $loader
      * @throws \Exception
      */
     private function loadSystemConfiguration(YamlFileLoader $loader): void
@@ -135,7 +118,6 @@ class Kernel
     }
 
     /**
-     * @param YamlFileLoader $loader
      * @throws \Exception
      */
     private function loadLocalConfiguration(YamlFileLoader $loader): void
@@ -146,9 +128,11 @@ class Kernel
         }
 
         $localConfigPathinfo = pathinfo($this->localConfigFilePath);
+        Assert::keyExists($localConfigPathinfo, 'dirname');
+
         $environmentLocalConfigFile = sprintf(
             '%s/%s_%s.yml',
-            $localConfigPathinfo['dirname'],
+            $localConfigPathinfo['dirname'],    // @phpstan-ignore-line
             $localConfigPathinfo['filename'],
             $this->environment
         );
@@ -162,8 +146,8 @@ class Kernel
 
     /**
      * Builds the log context of an exception. If this is an \Amp\MultiReasonException all reasons are included
-     * @param \Throwable $exception
-     * @return mixed[]
+     *
+     * @return array{code: int, message: string, file: string, line: int, trace: array<array-key, mixed>, reasons?: array<array-key, array<string, mixed>>}
      */
     private function getExceptionLogContext(\Throwable $exception): array
     {

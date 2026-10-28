@@ -26,33 +26,16 @@ class HttpProducersServer
 {
     use CallableMaker;
 
-    /**
-     * @var int
-     */
-    private $port;
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
-    /**
-     * @var ProducerInstance[]
-     */
-    private $producerInstances = [];
-    /**
-     * @var HttpServer|null
-     */
-    private $httpServer;
+    /** @var ProducerInstance[] */
+    private array $producerInstances = [];
 
-    /**
-     * @var int|null
-     */
-    private $maxBodySize;
+    private ?HttpServer $httpServer = null;
 
-    public function __construct(int $port, LoggerInterface $logger, ?int $maxBodySize)
-    {
-        $this->port = $port;
-        $this->logger = $logger;
-        $this->maxBodySize = $maxBodySize;
+    public function __construct(
+        private readonly int $port,
+        private readonly LoggerInterface $logger,
+        private readonly ?int $maxBodySize,
+    ) {
     }
 
     /**
@@ -100,12 +83,12 @@ class HttpProducersServer
         $this->producerInstances[] = $producerInstance;
     }
 
-    /** @noinspection PhpUnusedPrivateMethodInspection */
     /**
-     * @param Request $request
-     * @return \Generator<Promise>
+     * @return \Generator<Promise<int>>
+     *
+     * @phpstan-ignore method.unused
      */
-    private function requestHandler(Request $request)
+    private function requestHandler(Request $request): \Generator
     {
         $producerInstances = $this->matchProducerInstance($request);
 
@@ -122,15 +105,18 @@ class HttpProducersServer
                     'request' => sprintf('%s %s', strtoupper($request->getMethod()), $request->getUri())
                 ]
             );
+
             $jobsCount += yield $producerInstance->produceAndQueueJobs($request);
         }
 
-        $responseMessage = sprintf('Successfully scheduled %s job(s) to be queued.', $jobsCount);
-        return new Response(Status::OK, [], sprintf('"%s"', $responseMessage));
+        return new Response(
+            Status::OK,
+            [],
+            sprintf('"Successfully scheduled %s job(s) to be queued."', $jobsCount),
+        );
     }
 
     /**
-     * @param Request $request
      * @return ProducerInstance[]
      */
     private function matchProducerInstance(Request $request)
@@ -147,6 +133,7 @@ class HttpProducersServer
                 $matchingInstances[] = $producerInstance;
             }
         }
+
         return $matchingInstances;
     }
 }
