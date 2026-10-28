@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Webgriffe\Esb\Console\Controller;
 
 use Amp\Beanstalk\BeanstalkClient;
-use Webgriffe\Esb\Model\JobInterface;
 use function Amp\call;
 use Amp\Http\Server\FormParser\Form;
 use function Amp\Http\Server\FormParser\parseForm;
@@ -15,6 +14,7 @@ use Amp\Promise;
 use Psr\Log\LoggerInterface;
 use Twig\Environment;
 use Webgriffe\Esb\FlowManager;
+use Webgriffe\Esb\Model\JobInterface;
 use Webgriffe\Esb\Model\RequeuedJobEvent;
 use Webgriffe\Esb\NonUtf8Cleaner;
 use Webgriffe\Esb\Service\ElasticSearch;
