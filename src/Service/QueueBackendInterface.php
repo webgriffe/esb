@@ -7,10 +7,10 @@ namespace Webgriffe\Esb\Service;
 use Amp\Promise;
 use Webgriffe\Esb\Model\JobInterface;
 
-interface WorkerQueueManagerInterface
+interface QueueBackendInterface
 {
     /**
-     * Initializes this queue manager. Must be called before this can be used
+     * Initializes this queue backend. Must be called before this can be used
      *
      * @return Promise<null>
      */
@@ -27,7 +27,6 @@ interface WorkerQueueManagerInterface
     /**
      * Updates the data of the specified job in the queue
      *
-     * @param JobInterface $job
      * @return Promise<null>
      */
     public function updateJob(JobInterface $job): Promise;
@@ -36,8 +35,6 @@ interface WorkerQueueManagerInterface
      * Puts the specified job back in the queue from where it was extracted. If a delay greater than 0 is specified,
      * then the job will not become available for reprocessing until that delay has elapsed.
      *
-     * @param JobInterface $job
-     * @param int $delay
      * @return Promise<null>
      */
     public function requeue(JobInterface $job, int $delay = 0): Promise;
@@ -45,7 +42,6 @@ interface WorkerQueueManagerInterface
     /**
      * Removes a job from the queue
      *
-     * @param JobInterface $job
      * @return Promise<null>
      */
     public function dequeue(JobInterface $job): Promise;
@@ -54,8 +50,19 @@ interface WorkerQueueManagerInterface
      * Checks whether a given queue is empty. It can be any queue, not just the one that this queue manager works with.
      * Returns a promise that resolves to a boolean value
      *
-     * @param string $queueName
      * @return Promise<bool>
      */
     public function isEmpty(string $queueName): Promise;
+
+    /**
+     * @return Promise<bool>
+     */
+    public function jobExists(string $jobUuid): Promise;
+
+    /**
+     * @param JobInterface[] $jobs
+     *
+     * @return Promise<int>
+     */
+    public function enqueueJobs(array $jobs): Promise;
 }

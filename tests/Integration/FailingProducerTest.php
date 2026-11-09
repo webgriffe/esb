@@ -16,7 +16,7 @@ class FailingProducerTest extends KernelTestCase
 
     private const FLOW_CODE = 'failing_producer_flow';
 
-    public function testFailingProducerShouldBeCaughtAndLogged()
+    public function testFailingProducerShouldBeCaughtAndLogged(): void
     {
         $workerFile = vfsStream::url('root/worker.data');
         self::createKernel([
@@ -36,7 +36,7 @@ class FailingProducerTest extends KernelTestCase
             return $this->logHandler()->hasErrorRecords();
         });
 
-        self::$kernel->boot();
+        self::kernel()->boot();
 
         $this->assertTrue($this->logHandler()->hasErrorThatContains('An error occurred producing/queueing jobs'));
     }

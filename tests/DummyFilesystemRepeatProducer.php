@@ -10,34 +10,21 @@ use Amp\Success;
 use Amp\Deferred;
 use Amp\Iterator;
 use Webgriffe\Esb\Model\Job;
+use Webmozart\Assert\Assert;
 
 /**
  * Sample repeat producer which produces a job for every file found in a given directory.
  */
 final class DummyFilesystemRepeatProducer implements RepeatProducerInterface
 {
-    /**
-     * @var string
-     */
-    private $directory;
-    /**
-     * @var int
-     */
-    private $interval;
-    /**
-     * @var int
-     */
-    private $produceDelay;
-
-    public function __construct(string $directory, int $interval = 1, int $produceDelay = null)
-    {
-        $this->directory = $directory;
-        $this->interval = $interval;
-        $this->produceDelay = $produceDelay;
+    public function __construct(
+        private readonly string $directory,
+        private readonly int $interval = 1,
+        private readonly ?int $produceDelay = null,
+    ) {
     }
 
     /**
-     * @return Promise
      * @throws \Error
      */
     public function init(): Promise
@@ -46,19 +33,19 @@ final class DummyFilesystemRepeatProducer implements RepeatProducerInterface
     }
 
     /**
-     * @param mixed $data
-     * @return Iterator
      * @throws \Error
      */
-    public function produce($data = null): Iterator
+    public function produce(mixed $data = null): Iterator
     {
         return new Producer(function (callable $emit) {
             if (!(yield File\isDirectory($this->directory))) {
-                if (!(yield File\createDirectory($this->directory)) && !(yield File\createDirectory($this->directory))) {
+                if (!(yield File\createDirectory($this->directory)) && !(yield File\isDirectory($this->directory))) {   // @phpstan-ignore-line
                     throw new \RuntimeException(sprintf('Directory "%s" was not created', $this->directory));
                 }
             }
             $files = yield File\listFiles($this->directory);
+            Assert::isArray($files);
+            Assert::allString($files);
             foreach ($files as $file) {
                 $file = $this->directory . DIRECTORY_SEPARATOR . $file;
                 if (yield File\isDirectory($file)) {
@@ -66,7 +53,9 @@ final class DummyFilesystemRepeatProducer implements RepeatProducerInterface
                 }
                 yield $this->longRunningOperation();
                 $fileContent = yield File\read($file);
+                Assert::string($fileContent);
                 $fileContentAsArray = json_decode($fileContent, true);
+                /** @var array<string, mixed> $payloadData */
                 $payloadData = is_array($fileContentAsArray) ?
                     $fileContentAsArray :
                     ['file' => $file, 'data' => $fileContent];
@@ -76,16 +65,14 @@ final class DummyFilesystemRepeatProducer implements RepeatProducerInterface
         });
     }
 
-    /**
-     * @return int
-     */
     public function getInterval(): int
     {
         return $this->interval;
     }
 
     /**
-     * @return Promise
+     * @return Promise<mixed>
+     *
      * @throws \Error
      */
     private function longRunningOperation(): Promise
@@ -97,6 +84,7 @@ final class DummyFilesystemRepeatProducer implements RepeatProducerInterface
         Loop::delay($this->produceDelay, function () use ($deferred) {
             $deferred->resolve(true);
         });
+
         return $deferred->promise();
     }
 }

@@ -6,15 +6,13 @@ namespace Webgriffe\Esb\Model;
 
 use Symfony\Component\Serializer\Annotation\DiscriminatorMap;
 
-/**
- * @DiscriminatorMap(typeProperty="type", mapping={
- *    "produced"="Webgriffe\Esb\Model\ProducedJobEvent",
- *    "reserved"="Webgriffe\Esb\Model\ReservedJobEvent",
- *    "worked"="Webgriffe\Esb\Model\WorkedJobEvent",
- *    "errored"="Webgriffe\Esb\Model\ErroredJobEvent",
- *    "requeued"="Webgriffe\Esb\Model\RequeuedJobEvent"
- * })
- */
+#[DiscriminatorMap(typeProperty: 'type', mapping: [
+    'produced' => ProducedJobEvent::class,
+    'reserved' => ReservedJobEvent::class,
+    'worked' => WorkedJobEvent::class,
+    'errored' => ErroredJobEvent::class,
+    'requeued' => RequeuedJobEvent::class,
+])]
 interface JobEventInterface
 {
     public function getTime(): \DateTime;

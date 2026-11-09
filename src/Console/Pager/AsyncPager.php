@@ -4,63 +4,56 @@ declare(strict_types=1);
 
 namespace Webgriffe\Esb\Console\Pager;
 
-use function Amp\call;
 use Amp\Promise;
+use Pagerfanta\Adapter\AdapterInterface;
+use Pagerfanta\Adapter\FixedAdapter;
 use Pagerfanta\Exception\LessThan1CurrentPageException;
+use Pagerfanta\Exception\LessThan1MaxPagesException;
 use Pagerfanta\Exception\LessThan1MaxPerPageException;
-use Pagerfanta\Exception\NotValidCurrentPageException;
-use Pagerfanta\Exception\NotValidMaxPerPageException;
 use Pagerfanta\Exception\OutOfRangeCurrentPageException;
 use Pagerfanta\PagerfantaInterface;
 use Webmozart\Assert\Assert;
+use function Amp\call;
 
 /**
  * @internal
+ * @implements PagerfantaInterface<mixed>
  */
 class AsyncPager implements PagerfantaInterface
 {
-    /**
-     * @var AsyncPagerAdapterInterface
-     */
-    private $adapter;
-    /**
-     * @var int|null
-     */
-    private $nbResults;
-    /**
-     * @var iterable<mixed>|null
-     */
+    /** @var int<0, max>|null */
+    private ?int $nbResults = null;
+
+    /** @var positive-int */
+    private int $maxPerPage;
+
+    /** @var positive-int */
+    private int $currentPage;
+
+    /** @var iterable<array-key, mixed>|null */
     private $slice;
-    /**
-     * @var bool
-     */
-    private $allowOutOfRangePages;
-    /**
-     * @var bool
-     */
-    private $normalizeOutOfRangePages;
-    /**
-     * @var int
-     */
-    private $maxPerPage;
-    /**
-     * @var int
-     */
-    private $currentPage;
-    /**
-     * @var iterable<mixed>|null
-     */
+
+    /** @var positive-int|null */
+    private ?int $maxNbPages = null;
+
+    private bool $allowOutOfRangePages = false;
+
+    private bool $normalizeOutOfRangePages = false;
+
+    /** @var iterable<array-key, mixed>|null */
     private $currentPageResults;
 
     /**
      * @noinspection MagicMethodsValidityInspection
      * @noinspection PhpMissingParentConstructorInspection
      */
-    public function __construct(AsyncPagerAdapterInterface $adapter, int $maxPerPage = 10, int $currentPage = 1)
-    {
-        $this->adapter = $adapter;
-        $this->allowOutOfRangePages = false;
-        $this->normalizeOutOfRangePages = false;
+    public function __construct(
+        private readonly AsyncPagerAdapterInterface $adapter,
+        int $maxPerPage = 10,
+        int $currentPage = 1,
+    ) {
+        $this->checkMaxPerPage($maxPerPage);
+        $this->checkCurrentPage($currentPage);
         $this->maxPerPage = $maxPerPage;
         $this->currentPage = $currentPage;
     }
@@ -71,41 +64,37 @@ class AsyncPager implements PagerfantaInterface
     public function init(): Promise
     {
         return call(function () {
-            $this->nbResults = yield $this->adapter->getNbResults();
+            $nbResults = yield $this->adapter->getNbResults();
+            Assert::natural($nbResults);
+            $this->nbResults = $nbResults;
             $offset = $this->calculateOffsetForCurrentPageResults();
             $length = $this->getMaxPerPage();
-            $this->slice = yield $this->adapter->getSlice($offset, $length);
+            $slice = yield $this->adapter->getSlice($offset, $length);
+            Assert::isIterable($slice);
+            $this->slice = $slice;
         });
     }
 
     /**
-     * Returns the adapter.
-     *
-     * @return AsyncPagerAdapterInterface The adapter.
+     * @return AdapterInterface<mixed>
      */
-    public function getAdapter()
+    public function getAdapter(): AdapterInterface
     {
-        return $this->adapter;
+        return new FixedAdapter($this->getNbResults(), $this->getCurrentPageResults());
     }
 
     /**
      * Sets whether or not allow out of range pages.
-     *
-     * @param boolean $value
-     *
-     * @return self
      */
-    public function setAllowOutOfRangePages($value)
+    public function setAllowOutOfRangePages(bool $allowOutOfRangePages): static
     {
-        $this->allowOutOfRangePages = $this->filterBoolean($value);
+        $this->allowOutOfRangePages = $this->filterBoolean($allowOutOfRangePages);
 
         return $this;
     }
 
     /**
      * Returns whether or not allow out of range pages.
-     *
-     * @return boolean
      */
     public function getAllowOutOfRangePages(): bool
     {
@@ -114,31 +103,24 @@ class AsyncPager implements PagerfantaInterface
 
     /**
      * Sets whether or not normalize out of range pages.
-     *
-     * @param boolean $value
-     *
-     * @return self
      */
-    public function setNormalizeOutOfRangePages($value)
+    public function setNormalizeOutOfRangePages(bool $normalizeOutOfRangePages): static
     {
-        $this->normalizeOutOfRangePages = $this->filterBoolean($value);
+        $this->normalizeOutOfRangePages = $this->filterBoolean($normalizeOutOfRangePages);
 
         return $this;
     }
 
     /**
      * Returns whether or not normalize out of range pages.
-     *
-     * @return boolean
      */
-    public function getNormalizeOutOfRangePages()
+    public function getNormalizeOutOfRangePages(): bool
     {
         return $this->normalizeOutOfRangePages;
     }
 
     /**
      * @param mixed $value
-     * @return bool
      */
     private function filterBoolean($value): bool
     {
@@ -150,16 +132,9 @@ class AsyncPager implements PagerfantaInterface
     /**
      * Sets the max per page.
      *
-     * Tries to convert from string and float.
-     *
-     * @param integer $maxPerPage
-     *
-     * @return self
-     *
-     * @throws NotValidMaxPerPageException If the max per page is not an integer even converting.
      * @throws LessThan1MaxPerPageException  If the max per page is less than 1.
      */
-    public function setMaxPerPage($maxPerPage)
+    public function setMaxPerPage(int $maxPerPage): static
     {
         $this->maxPerPage = $this->filterMaxPerPage($maxPerPage);
         $this->resetForMaxPerPageChange();
@@ -168,26 +143,20 @@ class AsyncPager implements PagerfantaInterface
     }
 
     /**
-     * @param mixed $maxPerPage
-     * @return int
+     * @return positive-int
      */
-    private function filterMaxPerPage($maxPerPage): int
+    private function filterMaxPerPage(int $maxPerPage): int
     {
-        $maxPerPage = $this->toInteger($maxPerPage);
         $this->checkMaxPerPage($maxPerPage);
 
         return $maxPerPage;
     }
 
     /**
-     * @param mixed $maxPerPage
+     * @phpstan-assert positive-int $maxPerPage
      */
-    private function checkMaxPerPage($maxPerPage): void
+    private function checkMaxPerPage(int $maxPerPage): void
     {
-        if (!is_int($maxPerPage)) {
-            throw new NotValidMaxPerPageException();
-        }
-
         if ($maxPerPage < 1) {
             throw new LessThan1MaxPerPageException();
         }
@@ -201,10 +170,8 @@ class AsyncPager implements PagerfantaInterface
 
     /**
      * Returns the max per page.
-     *
-     * @return integer
      */
-    public function getMaxPerPage()
+    public function getMaxPerPage(): int
     {
         return $this->maxPerPage;
     }
@@ -212,20 +179,11 @@ class AsyncPager implements PagerfantaInterface
     /**
      * Sets the current page.
      *
-     * Tries to convert from string and float.
-     *
-     * @param integer $currentPage
-     *
-     * @return self
-     *
-     * @throws NotValidCurrentPageException If the current page is not an integer even converting.
      * @throws LessThan1CurrentPageException  If the current page is less than 1.
      * @throws OutOfRangeCurrentPageException If It is not allowed out of range pages and they are not normalized.
      */
-    public function setCurrentPage($currentPage)
+    public function setCurrentPage(int $currentPage): static
     {
-        $this->useDeprecatedCurrentPageBooleanArguments(func_get_args());
-
         $this->currentPage = $this->filterCurrentPage($currentPage);
         $this->resetForCurrentPageChange();
 
@@ -233,73 +191,29 @@ class AsyncPager implements PagerfantaInterface
     }
 
     /**
-     * @param array<bool> $arguments
+     * @return positive-int
      */
-    private function useDeprecatedCurrentPageBooleanArguments($arguments): void
+    private function filterCurrentPage(int $currentPage): int
     {
-        $this->useDeprecatedCurrentPageAllowOutOfRangePagesBooleanArgument($arguments);
-        $this->useDeprecatedCurrentPageNormalizeOutOfRangePagesBooleanArgument($arguments);
-    }
-
-    /**
-     * @param array<bool> $arguments
-     */
-    private function useDeprecatedCurrentPageAllowOutOfRangePagesBooleanArgument($arguments): void
-    {
-        $index = 1;
-        $method = 'setAllowOutOfRangePages';
-
-        $this->useDeprecatedBooleanArgument($arguments, $index, $method);
-    }
-
-    /**
-     * @param array<bool> $arguments
-     */
-    private function useDeprecatedCurrentPageNormalizeOutOfRangePagesBooleanArgument($arguments): void
-    {
-        $index = 2;
-        $method = 'setNormalizeOutOfRangePages';
-
-        $this->useDeprecatedBooleanArgument($arguments, $index, $method);
-    }
-
-    /**
-     * @param array<bool> $arguments
-     * @param int $index
-     * @param string $method
-     */
-    private function useDeprecatedBooleanArgument($arguments, $index, $method): void
-    {
-        if (isset($arguments[$index])) {
-            $this->$method($arguments[$index]);
-        }
-    }
-
-    /**
-     * @param mixed $currentPage
-     * @return int
-     */
-    private function filterCurrentPage($currentPage): int
-    {
-        $currentPage = $this->toInteger($currentPage);
         $this->checkCurrentPage($currentPage);
+
         return $this->filterOutOfRangeCurrentPage($currentPage);
     }
 
     /**
-     * @param mixed $currentPage
+     * @phpstan-assert positive-int $currentPage
      */
-    private function checkCurrentPage($currentPage): void
+    private function checkCurrentPage(int $currentPage): void
     {
-        if (!is_int($currentPage)) {
-            throw new NotValidCurrentPageException();
-        }
-
         if ($currentPage < 1) {
             throw new LessThan1CurrentPageException();
         }
     }
 
+    /**
+     * @param positive-int $currentPage
+     * @return positive-int
+     */
     private function filterOutOfRangeCurrentPage(int $currentPage): int
     {
         if ($this->notAllowedCurrentPageOutOfRange($currentPage)) {
@@ -321,13 +235,10 @@ class AsyncPager implements PagerfantaInterface
     }
 
     /**
-     * @param int $currentPage
-     *
-     * @return int
-     *
+     * @return positive-int
      * @throws OutOfRangeCurrentPageException If the page should not be normalized
      */
-    private function normalizeOutOfRangeCurrentPage($currentPage): int
+    private function normalizeOutOfRangeCurrentPage(int $currentPage): int
     {
         if ($this->getNormalizeOutOfRangePages()) {
             return $this->getNbPages();
@@ -358,15 +269,15 @@ class AsyncPager implements PagerfantaInterface
     /**
      * Returns the results for the current page.
      *
-     * @return iterable<mixed>|null
+     * @return iterable<array-key, mixed>
      */
-    public function getCurrentPageResults()
+    public function getCurrentPageResults(): iterable
     {
         if ($this->notCachedCurrentPageResults()) {
             $this->currentPageResults = $this->getCurrentPageResultsFromAdapter();
         }
 
-        return $this->currentPageResults;
+        return $this->currentPageResults ?? [];
     }
 
     private function notCachedCurrentPageResults(): bool
@@ -375,13 +286,16 @@ class AsyncPager implements PagerfantaInterface
     }
 
     /**
-     * @return iterable<mixed>|null
+     * @return iterable<array-key, mixed>|null
      */
     private function getCurrentPageResultsFromAdapter()
     {
         return $this->slice;
     }
 
+    /**
+     * @return int<0, max>
+     */
     private function calculateOffsetForCurrentPageResults(): int
     {
         return ($this->getCurrentPage() - 1) * $this->getMaxPerPage();
@@ -400,7 +314,7 @@ class AsyncPager implements PagerfantaInterface
     /**
      * {@inheritDoc}
      */
-    public function getCurrentPageOffsetEnd(): ?int
+    public function getCurrentPageOffsetEnd(): int
     {
         return $this->hasNextPage() ?
             $this->getCurrentPage() * $this->getMaxPerPage() :
@@ -408,34 +322,63 @@ class AsyncPager implements PagerfantaInterface
     }
 
     /**
-     * {@inheritDoc}
+     * @return int<0, max>
      */
-    public function getNbResults(): ?int
+    public function getNbResults(): int
     {
-        return $this->nbResults;
+        return $this->nbResults ?? 0;
     }
 
     /**
      * Returns the number of pages.
-     *
-     * @return integer
      */
-    public function getNbPages()
+    public function getNbPages(): int
     {
         $nbPages = $this->calculateNbPages();
 
-        if ($nbPages == 0) {
+        if (0 === $nbPages) {
             return $this->minimumNbPages();
+        }
+
+        if (null !== $this->maxNbPages && $this->maxNbPages < $nbPages) {
+            return $this->maxNbPages;
         }
 
         return $nbPages;
     }
 
-    private function calculateNbPages(): int
+    public function setMaxNbPages(int $maxNbPages): static
     {
-        return (int) ceil($this->getNbResults() / $this->getMaxPerPage());
+        if ($maxNbPages < 1) {
+            throw new LessThan1MaxPagesException();
+        }
+
+        $this->maxNbPages = $maxNbPages;
+
+        return $this;
     }
 
+    public function resetMaxNbPages(): static
+    {
+        $this->maxNbPages = null;
+
+        return $this;
+    }
+
+    /**
+     * @return int<0, max>
+     */
+    private function calculateNbPages(): int
+    {
+        $nbPages = (int) ceil($this->getNbResults() / $this->getMaxPerPage());
+        \assert($nbPages >= 0);
+
+        return $nbPages;
+    }
+
+    /**
+     * @return positive-int
+     */
     private function minimumNbPages(): int
     {
         return 1;
@@ -460,25 +403,23 @@ class AsyncPager implements PagerfantaInterface
     /**
      * Returns the previous page.
      *
-     * @return integer
-     *
      * @throws \LogicException If there is no previous page.
      */
-    public function getPreviousPage()
+    public function getPreviousPage(): int
     {
         if (!$this->hasPreviousPage()) {
             throw new \LogicException('There is no previous page.');
         }
+
+        \assert($this->currentPage > 1);
 
         return $this->currentPage - 1;
     }
 
     /**
      * Returns whether there is next page or not.
-     *
-     * @return boolean
      */
-    public function hasNextPage()
+    public function hasNextPage(): bool
     {
         return $this->currentPage < $this->getNbPages();
     }
@@ -486,11 +427,9 @@ class AsyncPager implements PagerfantaInterface
     /**
      * Returns the next page.
      *
-     * @return integer
-     *
      * @throws \LogicException If there is no next page.
      */
-    public function getNextPage()
+    public function getNextPage(): int
     {
         if (!$this->hasNextPage()) {
             throw new \LogicException('There is no next page.');
@@ -501,13 +440,13 @@ class AsyncPager implements PagerfantaInterface
 
     public function count(): int
     {
-        return $this->getNbResults() ?? 0;
+        return $this->getNbResults();
     }
 
     /**
      * @return \Traversable<mixed>
      */
-    public function getIterator()
+    public function getIterator(): \Traversable
     {
         $results = $this->getCurrentPageResults();
 
@@ -517,10 +456,6 @@ class AsyncPager implements PagerfantaInterface
 
         if ($results instanceof \IteratorAggregate) {
             return $results->getIterator();
-        }
-
-        if (null === $results) {
-            return new \ArrayIterator([]);
         }
 
         if (!is_array($results)) {
@@ -540,50 +475,14 @@ class AsyncPager implements PagerfantaInterface
             return iterator_to_array($results);
         }
 
-        if (null === $results) {
-            return [];
-        }
-
-        if (!is_array($results)) {
-            throw new \RuntimeException('Invalid current page results.');
-        }
-
         return $results;
     }
 
     /**
-     * @param mixed $value
-     * @return mixed
-     */
-    private function toInteger($value)
-    {
-        if ($this->needsToIntegerConversion($value)) {
-            return (int) $value;
-        }
-
-        return $value;
-    }
-
-    /**
-     * @param mixed $value
-     * @return bool
-     */
-    private function needsToIntegerConversion($value): bool
-    {
-        return (is_string($value) || is_float($value)) && (int) $value == $value;
-    }
-
-    /**
      * Get page number of the item at specified position (1-based index)
-     *
-     * @param integer $position
-     *
-     * @return integer
      */
-    public function getPageNumberForItemAtPosition($position)
+    public function getPageNumberForItemAtPosition(int $position): int
     {
-        Assert::integer($position);
-
         if ($this->getNbResults() < $position) {
             throw new \OutOfBoundsException(sprintf(
                 'Item requested at position %d, but there are only %d items.',
@@ -592,6 +491,9 @@ class AsyncPager implements PagerfantaInterface
             ));
         }
 
-        return (int) ceil($position / $this->getMaxPerPage());
+        $pageNumber = (int) ceil($position / $this->getMaxPerPage());
+        \assert($pageNumber > 0);
+
+        return $pageNumber;
     }
 }

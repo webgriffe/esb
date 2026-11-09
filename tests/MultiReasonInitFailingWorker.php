@@ -10,11 +10,9 @@ use function Amp\call;
 
 final class MultiReasonInitFailingWorker implements WorkerInterface
 {
-    /**
-     * @return Promise
-     */
     public function init(): Promise
     {
+        // @phpstan-ignore return.type
         return Promise\some([
             call(function () { throw new \Exception('Exception number one'); } ),
             call(function () { throw new \Exception('Exception number two'); } ),

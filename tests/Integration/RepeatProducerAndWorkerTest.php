@@ -16,7 +16,7 @@ class RepeatProducerAndWorkerTest extends KernelTestCase
 
     use TestUtils;
 
-    public function testRepeatProducerAndWorkerTogether()
+    public function testRepeatProducerAndWorkerTogether(): void
     {
         $producerDir = vfsStream::url('root/producer_dir');
         $workerFile = vfsStream::url('root/worker.data');
@@ -50,7 +50,7 @@ class RepeatProducerAndWorkerTest extends KernelTestCase
             return (yield exists($workerFile)) && count($this->getFileLines($workerFile)) === 2;
         });
 
-        self::$kernel->boot();
+        self::kernel()->boot();
 
         $workerFileLines = $this->getFileLines($workerFile);
         $this->assertOneArrayEntryContains('job1', $workerFileLines);
@@ -58,7 +58,7 @@ class RepeatProducerAndWorkerTest extends KernelTestCase
         $this->assertReadyJobsCountInTube(0, self::FLOW_CODE);
     }
 
-    public function testLongProduceRepeatProducerDoesNotOverlapProduceInvokations()
+    public function testLongProduceRepeatProducerDoesNotOverlapProduceInvokations(): void
     {
         $producerInterval = 50;
         $produceDelay = 200; // The producer is invoked every 50ms but it takes 200ms to produce every Job
@@ -90,7 +90,7 @@ class RepeatProducerAndWorkerTest extends KernelTestCase
             return (yield exists($workerFile)) && count($this->getFileLines($workerFile)) === 2;
         });
 
-        self::$kernel->boot();
+        self::kernel()->boot();
 
         $workerFileLines = $this->getFileLines($workerFile);
         $this->assertStringContainsString('job1', $workerFileLines[0]);
@@ -98,13 +98,17 @@ class RepeatProducerAndWorkerTest extends KernelTestCase
         $this->assertReadyJobsCountInTube(0, self::FLOW_CODE);
     }
 
+    /**
+     * @param string[] $array
+     */
     private function assertOneArrayEntryContains(string $expected, array $array): void
     {
         foreach ($array as $item) {
-            if (strpos($item, $expected) !== false) {
+            if (str_contains($item, $expected)) {
                 return;
             }
         }
+
         $this->fail(sprintf('Failed asserting that array has one entry that contains "%s".', $expected));
     }
 }

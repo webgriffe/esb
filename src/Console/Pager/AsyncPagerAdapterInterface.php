@@ -16,12 +16,12 @@ interface AsyncPagerAdapterInterface
     public function getNbResults(): Promise;
 
     /**
-     * Returns an slice of the results.
+     * Returns a slice of the results.
      *
      * @param int $offset The offset.
      * @param int $length The length.
      *
-     * @return Promise<iterable<mixed>>
+     * @return Promise<iterable<array-key, mixed>>
      */
     public function getSlice(int $offset, int $length): Promise;
 }

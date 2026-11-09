@@ -5,18 +5,20 @@ declare(strict_types=1);
 namespace Webgriffe\Esb\Console\Controller;
 
 use Amp\Beanstalk\BeanstalkClient;
-use function Amp\call;
 use Amp\Http\Server\FormParser\Form;
-use function Amp\Http\Server\FormParser\parseForm;
 use Amp\Http\Server\Request;
 use Amp\Http\Server\Response;
 use Amp\Promise;
 use Psr\Log\LoggerInterface;
 use Twig\Environment;
 use Webgriffe\Esb\FlowManager;
+use Webgriffe\Esb\Model\JobInterface;
 use Webgriffe\Esb\Model\RequeuedJobEvent;
 use Webgriffe\Esb\NonUtf8Cleaner;
 use Webgriffe\Esb\Service\ElasticSearch;
+use Webmozart\Assert\Assert;
+use function Amp\call;
+use function Amp\Http\Server\FormParser\parseForm;
 
 /**
  * @internal
@@ -27,26 +29,14 @@ class MassActionController extends AbstractController
     public const ACTION_FIELD_NAME = 'job-select-action';
     public const ACTION_REQUEUE = 'requeue';
 
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
-
-    /**
-     * @var BeanstalkClient
-     */
-    private $beanstalkClient;
-
     public function __construct(
         Environment $twig,
         FlowManager $flowManager,
         ElasticSearch $elasticSearch,
-        LoggerInterface $logger,
-        BeanstalkClient $beanstalkClient
+        private readonly LoggerInterface $logger,
+        private readonly BeanstalkClient $beanstalkClient,
     ) {
         parent::__construct($twig, $flowManager, $elasticSearch);
-        $this->logger = $logger;
-        $this->beanstalkClient = $beanstalkClient;
     }
 
     /**
@@ -70,13 +60,14 @@ class MassActionController extends AbstractController
 
     /**
      * @param array<string> $jobs
-     * @param string $flow
-     * @return \Generator<Promise>
+     *
+     * @return \Generator<int, mixed, mixed, void>
      */
     private function requeue(array $jobs, string $flow): \Generator
     {
         foreach ($jobs as $jobId) {
             $job = yield $this->getElasticsearch()->fetchJob($jobId, $flow);
+            Assert::isInstanceOf($job, JobInterface::class);
             $job->addEvent(new RequeuedJobEvent(new \DateTime()));
             yield $this->getElasticsearch()->indexJob($job, $flow);
 

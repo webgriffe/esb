@@ -6,26 +6,33 @@ namespace Webgriffe\Esb\Model;
 
 /**
  * @internal
+ *
+ * @phpstan-type FlowConfigData array{
+ *     description: string,
+ *     es_index_settings: array<string, mixed>|null,
+ *     es_index_mapping: array<string, mixed>|null,
+ *     es_index_aliases: array<string, array<string, mixed>|null>|null,
+ *     producer: array{service: string, batch_size: int},
+ *     worker: array{service: string, instances: int, error_retry_delay: int, max_retry: int},
+ *     dependencies: array{
+ *         enabled: bool,
+ *         flows: list<string>,
+ *         delay_after_idle_time: int,
+ *         initial_polling_interval: int,
+ *         maximum_polling_interval: int,
+ *         polling_interval_multiplier: float,
+ *     },
+ * }
  */
 class FlowConfig
 {
     /**
-     * @var string
+     * @param FlowConfigData $config
      */
-    private $tube;
-    /**
-     * @var array<string, mixed>
-     */
-    private $config;
-
-    /**
-     * @param string $tube
-     * @param array<string, mixed> $config
-     */
-    public function __construct(string $tube, array $config)
-    {
-        $this->tube = $tube;
-        $this->config = $config;
+    public function __construct(
+        private readonly string $tube,
+        private readonly array $config,
+    ) {
     }
 
     public function getName(): string
@@ -59,10 +66,9 @@ class FlowConfig
         return $this->config['worker']['instances'];
     }
 
-    public function getWorkerReleaseDelay(): int
+    public function getWorkerErrorRetryDelay(): int
     {
-        //error_retry_delay is the new name, so give precedence to that
-        return $this->config['worker']['error_retry_delay'] ?: $this->config['worker']['release_delay'];
+        return $this->config['worker']['error_retry_delay'];
     }
 
     public function getWorkerMaxRetry(): int
@@ -104,27 +110,27 @@ class FlowConfig
     }
 
     /**
-     * @return array<array-key, mixed>|null
+     * @return array<string, mixed>|null
      */
     public function getElasticSearchIndexUpdateSettingsBody(): ?array
     {
-        return $this->config['es_index_settings'] ?? null;
+        return $this->config['es_index_settings'];
     }
 
     /**
-     * @return array<array-key, mixed>|null
+     * @return array<string, mixed>|null
      */
     public function getElasticSearchIndexUpdateMappingBody(): ?array
     {
-        return $this->config['es_index_mapping'] ?? null;
+        return $this->config['es_index_mapping'];
     }
 
     /**
-     * @return array<array-key, mixed>|null
+     * @return array<string, array<string, mixed>|null>|null
      */
     public function getElasticSearchIndexUpdateAliasesBody(): ?array
     {
-        return $this->config['es_index_aliases'] ?? null;
+        return $this->config['es_index_aliases'];
     }
 
     public function hasAdditionalIndexConfiguration(): bool

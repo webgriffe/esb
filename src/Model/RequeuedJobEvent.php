@@ -6,14 +6,9 @@ namespace Webgriffe\Esb\Model;
 
 final class RequeuedJobEvent implements JobEventInterface
 {
-    /**
-     * @var \DateTime
-     */
-    private $time;
-
-    public function __construct(\DateTime $time)
-    {
-        $this->time = $time;
+    public function __construct(
+        private readonly \DateTime $time,
+    ) {
     }
 
     public function getTime(): \DateTime

@@ -1,5 +1,9 @@
-parameters:
-    checkGenericClassInNonGenericObjectType: false
+includes:
+    - vendor/phpstan/phpstan-symfony/extension.neon
+    - vendor/phpstan/phpstan-webmozart-assert/extension.neon
 
-    ignoreErrors:
-        - '/Call to an undefined method Symfony\\Component\\Config\\Definition\\Builder\\NodeDefinition::useAttributeAsKey\(\)\./'
+parameters:
+    level: max
+    paths:
+        - %currentWorkingDirectory%/src/
+        - %currentWorkingDirectory%/tests/

@@ -18,6 +18,7 @@ use Webgriffe\Esb\Model\ProducedJobEvent;
 use Webgriffe\Esb\Model\ReservedJobEvent;
 use Webgriffe\Esb\Model\WorkedJobEvent;
 use Webgriffe\Esb\TestUtils;
+use Webmozart\Assert\Assert;
 
 class ElasticSearchIndexingTest extends KernelTestCase
 {
@@ -28,7 +29,7 @@ class ElasticSearchIndexingTest extends KernelTestCase
     /**
      * @test
      */
-    public function itIndexSuccessfulJobsOntoElasticSearchWithAllEvents()
+    public function itIndexSuccessfulJobsOntoElasticSearchWithAllEvents(): void
     {
         $producerDir = vfsStream::url('root/producer_dir');
         $workerFile = vfsStream::url('root/worker.data');
@@ -62,15 +63,14 @@ class ElasticSearchIndexingTest extends KernelTestCase
             $successLog = array_filter(
                 $this->logHandler()->getRecords(),
                 function ($log) {
-                    return strpos($log['message'], 'Successfully worked a Job') !== false;
+                    return str_contains($log->message, 'Successfully worked a Job');
                 }
             );
             return count($successLog) >= 2;
         });
-        self::$kernel->boot();
+        self::kernel()->boot();
 
-        Promise\wait($this->esClient->refresh());
-        $search = Promise\wait($this->esClient->uriSearchOneIndex(self::FLOW_CODE, ''));
+        $search = $this->urlSearchOneIndex();
         $this->assertCount(2, $search['hits']['hits']);
         $this->assertForEachJob(
             function (Job $job) {
@@ -97,7 +97,7 @@ class ElasticSearchIndexingTest extends KernelTestCase
     /**
      * @test
      */
-    public function itIndexErroredJobsOntoElasticSearchWithErrorEvents()
+    public function itIndexErroredJobsOntoElasticSearchWithErrorEvents(): void
     {
         $producerDir = vfsStream::url('root/producer_dir');
         self::createKernel([
@@ -130,16 +130,15 @@ class ElasticSearchIndexingTest extends KernelTestCase
             $buryLog = array_filter(
                 $this->logHandler()->getRecords(),
                 function ($log) {
-                    return strpos($log['message'], 'A Job reached maximum work retry limit') !== false;
+                    return strpos($log->message, 'A Job reached maximum work retry limit') !== false;
                 }
             );
             return count($buryLog) >= 2;
         });
 
-        self::$kernel->boot();
+        self::kernel()->boot();
 
-        Promise\wait($this->esClient->refresh());
-        $search = Promise\wait($this->esClient->uriSearchOneIndex(self::FLOW_CODE, ''));
+        $search = $this->urlSearchOneIndex();
         $this->assertCount(2, $search['hits']['hits']);
         $this->assertForEachJob(
             function (Job $job) {
@@ -175,7 +174,7 @@ class ElasticSearchIndexingTest extends KernelTestCase
     /**
      * @test
      */
-    public function itLogsAndSkipsJobsThatCouldNotBeIndexedOntoElasticSearch()
+    public function itLogsAndSkipsJobsThatCouldNotBeIndexedOntoElasticSearch(): void
     {
         $producerDir = vfsStream::url('root/producer_dir');
         $workerFile = vfsStream::url('root/worker.data');
@@ -205,22 +204,21 @@ class ElasticSearchIndexingTest extends KernelTestCase
             $successLog = array_filter(
                 $this->logHandler()->getRecords(),
                 function ($log) {
-                    return strpos($log['message'], 'Successfully worked a Job') !== false;
+                    return str_contains($log->message, 'Successfully worked a Job');
                 }
             );
             return count($successLog) >= 1;
         });
-        self::$kernel->boot();
+        self::kernel()->boot();
 
-        Promise\wait($this->esClient->refresh());
-        $search = Promise\wait($this->esClient->uriSearchOneIndex(self::FLOW_CODE, ''));
+        $search = $this->urlSearchOneIndex();
         $this->assertCount(1, $search['hits']['hits']);
         $this->assertTrue($this->logHandler()->hasErrorThatContains('Job could not be indexed in ElasticSearch'));
         $logRecords = $this->logHandler()->getRecords();
         $successfullyIndexedLog = array_filter(
             $logRecords,
             function ($log) {
-                return strpos($log['message'], 'Successfully enqueued a new Job') !== false;
+                return str_contains($log->message, 'Successfully enqueued a new Job');
             }
         );
         $this->assertCount(1, $successfullyIndexedLog);
@@ -229,7 +227,7 @@ class ElasticSearchIndexingTest extends KernelTestCase
     /**
      * @test
      */
-    public function itUpdatesIndexSettingsAccordingToFlowConfigTest()
+    public function itUpdatesIndexSettingsAccordingToFlowConfigTest(): void
     {
         $producerDir = vfsStream::url('root/producer_dir');
         $workerFile = vfsStream::url('root/worker.data');
@@ -260,36 +258,56 @@ class ElasticSearchIndexingTest extends KernelTestCase
             $successLog = array_filter(
                 $this->logHandler()->getRecords(),
                 function ($log) {
-                    return strpos($log['message'], 'Successfully worked a Job') !== false;
+                    return str_contains($log->message, 'Successfully worked a Job');
                 }
             );
             return count($successLog) >= 2;
         });
-        self::$kernel->boot();
+        self::kernel()->boot();
 
-        Promise\wait($this->esClient->refresh());
-        $search = Promise\wait($this->esClient->uriSearchOneIndex(self::FLOW_CODE, ''));
+        $search = $this->urlSearchOneIndex();
         $this->assertCount(2, $search['hits']['hits']);
         $this->assertFalse($this->logHandler()->hasErrorThatContains('Job could not be indexed in ElasticSearch'));
         $logRecords = $this->logHandler()->getRecords();
         $successfullyIndexedLog = array_filter(
             $logRecords,
             function ($log) {
-                return strpos($log['message'], 'Successfully enqueued a new Job') !== false;
+                return str_contains($log->message, 'Successfully enqueued a new Job');
             }
         );
         $this->assertCount(2, $successfullyIndexedLog);
     }
 
-    private function assertForEachJob(callable $callable, array $jobsData)
+    /**
+     * @param array<array-key, mixed> $jobsData
+     */
+    private function assertForEachJob(callable $callable, array $jobsData): void
     {
         /** @var Serializer $serializer */
-        $serializer = self::$kernel->getContainer()->get('serializer');
+        $serializer = self::kernel()->getContainer()->get('serializer');
         foreach ($jobsData as $jobData) {
+            Assert::isArray($jobData);
+            Assert::keyExists($jobData, '_source');
             $jobData = $jobData['_source'];
             /** @var Job $job */
             $job = $serializer->denormalize($jobData, Job::class);
             $callable($job);
         }
+    }
+
+    /**
+     * @return array{hits: array{hits: array<array-key, mixed>}}
+     */
+    private function urlSearchOneIndex(): array
+    {
+        self::wait($this->esClient->refresh());
+        $search = self::wait($this->esClient->uriSearchOneIndex(self::FLOW_CODE, ''));
+        Assert::isArray($search);
+        Assert::keyExists($search, 'hits');
+        Assert::isArray($search['hits']);
+        Assert::keyExists($search['hits'], 'hits');
+        Assert::isArray($search['hits']['hits']);
+
+        return ['hits' => ['hits' => $search['hits']['hits']]];
     }
 }

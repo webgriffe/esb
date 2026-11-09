@@ -6,39 +6,28 @@ namespace Webgriffe\Esb;
 use Amp\Iterator;
 use Amp\Promise;
 use Amp\Success;
+use Webgriffe\Esb\Model\JobInterface;
 
 final class AlwaysFailingProducer implements RepeatProducerInterface
 {
-    /**
-     * @var int
-     */
-    private $interval;
-
-    public function __construct(int $interval)
-    {
-        $this->interval = $interval;
+    public function __construct(
+        private readonly int $interval,
+    ) {
     }
 
-    /**
-     * @return Promise
-     */
     public function init(): Promise
     {
         return new Success();
     }
 
     /**
-     * @param mixed $data
-     * @return Iterator An Amp Iterator that must emit Jobs.
+     * @return Iterator<JobInterface> An Amp Iterator that must emit Jobs.
      */
-    public function produce($data = null): Iterator
+    public function produce(mixed $data = null): Iterator
     {
         throw new \RuntimeException('You cannot expect anything good from an always failing producer!');
     }
 
-    /**
-     * @return int
-     */
     public function getInterval(): int
     {
         return $this->interval;

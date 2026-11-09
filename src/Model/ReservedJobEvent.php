@@ -6,19 +6,10 @@ namespace Webgriffe\Esb\Model;
 
 final class ReservedJobEvent implements JobEventInterface
 {
-    /**
-     * @var \DateTime
-     */
-    private $time;
-    /**
-     * @var string
-     */
-    private $workerFqcn;
-
-    public function __construct(\DateTime $time, string $workerFqcn)
-    {
-        $this->time = $time;
-        $this->workerFqcn = $workerFqcn;
+    public function __construct(
+        private readonly \DateTime $time,
+        private readonly string $workerFqcn,
+    ) {
     }
 
     public function getTime(): \DateTime

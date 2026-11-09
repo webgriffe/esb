@@ -6,24 +6,11 @@ namespace Webgriffe\Esb\Model;
 
 final class ErroredJobEvent implements JobEventInterface
 {
-    /**
-     * @var \DateTime
-     */
-    private $time;
-    /**
-     * @var string
-     */
-    private $workerFqcn;
-    /**
-     * @var string
-     */
-    private $errorMessage;
-
-    public function __construct(\DateTime $time, string $workerFqcn, string $errorMessage)
-    {
-        $this->time = $time;
-        $this->workerFqcn = $workerFqcn;
-        $this->errorMessage = $errorMessage;
+    public function __construct(
+        private readonly \DateTime $time,
+        private readonly string $workerFqcn,
+        private readonly string $errorMessage,
+    ) {
     }
 
     public function getTime(): \DateTime

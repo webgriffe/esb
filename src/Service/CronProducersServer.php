@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Webgriffe\Esb\Service;
 
-use function Amp\call;
 use Amp\Loop;
 use Amp\Promise;
 use Cron\CronExpression;
@@ -12,6 +11,7 @@ use Psr\Log\LoggerInterface;
 use Webgriffe\Esb\CrontabProducerInterface;
 use Webgriffe\Esb\DateTimeBuilderInterface;
 use Webgriffe\Esb\ProducerInstance;
+use function Amp\call;
 
 /**
  * @internal
@@ -20,27 +20,15 @@ class CronProducersServer
 {
     public const CRON_TICK_SECONDS = 60;
 
-    /**
-     * @var ProducerInstance[]
-     */
-    private $producerInstances = [];
-    /**
-     * @var DateTimeBuilderInterface
-     */
-    private $dateTimeBuilder;
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
-    /**
-     * @var string
-     */
-    private $cronTickWatcherId;
+    /** @var ProducerInstance[] */
+    private array $producerInstances = [];
 
-    public function __construct(DateTimeBuilderInterface $dateTimeBuilder, LoggerInterface $logger)
-    {
-        $this->dateTimeBuilder = $dateTimeBuilder;
-        $this->logger = $logger;
+    private ?string $cronTickWatcherId = null;
+
+    public function __construct(
+        private readonly DateTimeBuilderInterface $dateTimeBuilder,
+        private readonly LoggerInterface $logger,
+    ) {
     }
 
     public function addProducerInstance(ProducerInstance $producerInstance): void
@@ -71,7 +59,7 @@ class CronProducersServer
     }
 
     /**
-     * @return \Generator<Promise>
+     * @return \Generator<Promise<int>>
      */
     private function cronTick(): \Generator
     {
@@ -81,7 +69,7 @@ class CronProducersServer
                 // This should never happen but maybe we should add a warning here?
                 continue;
             }
-            $cronExpression = CronExpression::factory($producer->getCrontab());
+            $cronExpression = new CronExpression($producer->getCrontab());
             $now = $this->dateTimeBuilder->build();
             if ($cronExpression->isDue($now)) {
                 $this->logger->info(
@@ -92,6 +80,7 @@ class CronProducersServer
                         'cron_expression' => $producer->getCrontab()
                     ]
                 );
+
                 yield $producerInstance->produceAndQueueJobs();
             }
         }

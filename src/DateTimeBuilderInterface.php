@@ -6,10 +6,5 @@ namespace Webgriffe\Esb;
 
 interface DateTimeBuilderInterface
 {
-    /**
-     * @param string $time
-     * @param \DateTimeZone|null $timezone
-     * @return \DateTime
-     */
-    public function build($time = 'now', ?\DateTimeZone $timezone = null): \DateTime;
+    public function build(string $time = 'now', ?\DateTimeZone $timezone = null): \DateTime;
 }

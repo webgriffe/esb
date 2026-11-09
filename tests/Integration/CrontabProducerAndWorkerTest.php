@@ -20,10 +20,10 @@ class CrontabProducerAndWorkerTest extends KernelTestCase
 
     use TestUtils;
 
-    public function testCrontabProducerAndWorkerDoesNotProduceIfIsNotTheRightTime()
+    public function testCrontabProducerAndWorkerDoesNotProduceIfIsNotTheRightTime(): void
     {
         vfsStream::setup();
-        DummyCrontabProducer::$jobs = [new Job(['job1']), new Job(['job2'])];
+        DummyCrontabProducer::$jobs = [new Job(['job1']), new Job(['job2'])];   // @phpstan-ignore-line
         $workerFile = vfsStream::url('root/worker.data');
         self::createKernel([
             'services' => [
@@ -45,15 +45,15 @@ class CrontabProducerAndWorkerTest extends KernelTestCase
             Loop::stop();
         });
 
-        self::$kernel->boot();
+        self::kernel()->boot();
 
         $this->assertFileDoesNotExist($workerFile);
     }
 
-    public function testCrontabProducerAndWorkerProducesIfItsTheRightTime()
+    public function testCrontabProducerAndWorkerProducesIfItsTheRightTime(): void
     {
         vfsStream::setup();
-        DummyCrontabProducer::$jobs = [new Job(['job1']), new Job(['job2'])];
+        DummyCrontabProducer::$jobs = [new Job(['job1']), new Job(['job2'])];   // @phpstan-ignore-line
         $workerFile = vfsStream::url('root/worker.data');
         self::createKernel([
             'services' => [
@@ -74,7 +74,7 @@ class CrontabProducerAndWorkerTest extends KernelTestCase
             return (yield exists($workerFile)) && count($this->getFileLines($workerFile)) === 2;
         });
 
-        self::$kernel->boot();
+        self::kernel()->boot();
 
         $workerFileLines = $this->getFileLines($workerFile);
         $this->assertStringContainsString('job1', $workerFileLines[0]);

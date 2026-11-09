@@ -6,11 +6,15 @@ namespace Webgriffe\Esb;
 trait TestUtils
 {
     /**
-     * @param string $file
-     * @return array
+     * @return string[]
      */
     private function getFileLines(string $file): array
     {
-        return array_filter(explode(PHP_EOL, file_get_contents($file)));
+        $fileContents = file_get_contents($file);
+        if (!is_string($fileContents)) {
+            throw new \RuntimeException('Could not read file contents');
+        }
+
+        return array_filter(explode(PHP_EOL, $fileContents));
     }
 }

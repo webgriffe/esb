@@ -4,52 +4,29 @@ declare(strict_types=1);
 
 namespace Webgriffe\Esb\Console\Pager;
 
-use function Amp\call;
 use Amp\Promise;
 use Amp\Success;
 use Webgriffe\AmpElasticsearch\Client;
 use Webgriffe\AmpElasticsearch\Error as AmpElasticsearchError;
+use Webmozart\Assert\Assert;
+use function Amp\call;
 
 final class AmpElasticsearchUriSearchAdapter implements AsyncPagerAdapterInterface
 {
-    /**
-     * @var Client
-     */
-    private $client;
+    /** @var array<string, string|int>  */
+    private readonly array $options;
+
+    private ?int $totalHits = null;
 
     /**
-     * @var string
-     */
-    private $index;
-
-    /**
-     * @var string
-     */
-    private $query;
-
-    /**
-     * @var array<string, string|int>
-     */
-    private $options;
-
-    /**
-     * @var int|null
-     */
-    private $totalHits;
-
-
-    /**
-     * AmpElasticsearchAdapter constructor.
-     * @param Client $client
-     * @param string $index
-     * @param string $query
      * @param array<string, string|int> $options
      */
-    public function __construct(Client $client, string $index, string $query, array $options = [])
-    {
-        $this->client = $client;
-        $this->index = $index;
-        $this->query = $query;
+    public function __construct(
+        private readonly Client $client,
+        private readonly string $index,
+        private readonly string $query,
+        array $options = [],
+    ) {
         $this->options = $options;
     }
 
@@ -66,11 +43,13 @@ final class AmpElasticsearchUriSearchAdapter implements AsyncPagerAdapterInterfa
                     $this->query,
                     $this->options
                 );
-                return $response['hits']['total']['value'];
+
+                return self::extractHits($response)['total']['value'];
             } catch (AmpElasticsearchError $e) {
                 if ($this->isIndexNotFoundException($e)) {
                     return 0;
                 }
+
                 throw $e;
             }
         });
@@ -90,26 +69,49 @@ final class AmpElasticsearchUriSearchAdapter implements AsyncPagerAdapterInterfa
                     $this->totalHits = 0;
                     return [];
                 }
+
                 throw $e;
             }
 
-            $this->totalHits = $response['hits']['total']['value'];
+            $hits = self::extractHits($response);
+            $this->totalHits = $hits['total']['value'];
             $jobs = [];
-            foreach ($response['hits']['hits'] as $rawJob) {
+            foreach ($hits['hits'] as $rawJob) {
+                Assert::isArray($rawJob);
+                Assert::keyExists($rawJob, '_source');
                 $jobs[] = $rawJob['_source'];
             }
+
             return $jobs;
         });
     }
 
+    /**
+     * @return array{total: array{value: int<0, max>}, hits: array<mixed>}
+     */
+    private static function extractHits(mixed $response): array
+    {
+        Assert::isArray($response);
+        Assert::keyExists($response, 'hits');
+        $hits = $response['hits'];
+        Assert::isArray($hits);
+        Assert::keyExists($hits, 'total');
+        Assert::isArray($hits['total']);
+        Assert::keyExists($hits['total'], 'value');
+        Assert::natural($hits['total']['value']);
+        Assert::keyExists($hits, 'hits');
+        Assert::isArray($hits['hits']);
+
+        return [
+            'total' => ['value' => $hits['total']['value']],
+            'hits' => $hits['hits'],
+        ];
+    }
+
     private function isIndexNotFoundException(AmpElasticsearchError $e): bool
     {
-        $exceptionData = $e->getData();
-        return
-            $exceptionData &&
-            isset($exceptionData['error']) &&
-            isset($exceptionData['error']['type']) &&
-            $exceptionData['error']['type'] === 'index_not_found_exception'
-        ;
+        $error = $e->getData()['error'] ?? null;
+
+        return is_array($error) && ($error['type'] ?? null) === 'index_not_found_exception';
     }
 }

@@ -19,6 +19,7 @@ use FastRoute\RouteCollector;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerAwareInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Webmozart\Assert\Assert;
 
 /**
  * @internal
@@ -27,33 +28,16 @@ class Server implements ContainerAwareInterface
 {
     use CallableMaker;
 
-    /**
-     * @var string
-     */
-    private $publicDir;
-    /**
-     * @var array<string, string>
-     */
-    private $config;
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
-    /**
-     * @var ContainerInterface|null
-     */
-    private $container;
+    private ?ContainerInterface $container = null;
 
     /**
-     * @param string $publicDir
      * @param array<string, string> $config
-     * @param LoggerInterface $logger
      */
-    public function __construct(string $publicDir, array $config, LoggerInterface $logger)
-    {
-        $this->publicDir = $publicDir;
-        $this->config = $config;
-        $this->logger = $logger;
+    public function __construct(
+        private readonly string $publicDir,
+        private readonly array $config,
+        private readonly LoggerInterface $logger,
+    ) {
     }
 
     public function boot(): void
@@ -83,10 +67,11 @@ class Server implements ContainerAwareInterface
         $this->container = $container;
     }
 
-    /** @noinspection PhpUnusedPrivateMethodInspection */
+
     /**
-     * @param Request $request
-     * @return \Generator<Promise>
+     * @return \Generator<int, Promise<mixed>, mixed, Response>
+     *
+     * @phpstan-ignore method.unused
      */
     private function requestHandler(Request $request): \Generator
     {
@@ -98,7 +83,9 @@ class Server implements ContainerAwareInterface
         $uri = $request->getUri()->getPath();
         $filePath = $this->publicDir . DIRECTORY_SEPARATOR . ltrim($uri, '/');
         if ((yield File\exists($filePath)) && (yield File\isFile($filePath))) {
-            return new Response(Status::OK, [], yield File\read($filePath));
+            $fileContent = yield File\read($filePath);
+            Assert::string($fileContent);
+            return new Response(Status::OK, [], $fileContent);
         }
 
         $dispatcher = $this->getDispatcher($request);
@@ -107,6 +94,8 @@ class Server implements ContainerAwareInterface
         switch ($routeInfo[0]) {
             case Dispatcher::METHOD_NOT_ALLOWED:
                 $allowedMethods = $routeInfo[1];
+                Assert::isArray($allowedMethods);
+                Assert::allString($allowedMethods);
                 $response = new Response(
                     Status::METHOD_NOT_ALLOWED,
                     [],
@@ -115,10 +104,14 @@ class Server implements ContainerAwareInterface
                 break;
             case Dispatcher::FOUND:
                 $handler = $routeInfo[1];
+                Assert::isCallable($handler);
+                Assert::isArray($routeInfo[2]);
                 $vars = array_values($routeInfo[2]);
                 array_unshift($vars, $request);
-                /** @var Response $response */
-                $response = yield \call_user_func_array($handler, $vars);
+                $responsePromise = \call_user_func_array($handler, $vars);
+                Assert::isInstanceOf($responsePromise, Promise::class);
+                $response = yield $responsePromise;
+                Assert::isInstanceOf($response, Response::class);
                 $response->addHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
                 $response->addHeader('Pragma', 'no-cache');
                 $response->addHeader('Expires', '0');
@@ -127,13 +120,10 @@ class Server implements ContainerAwareInterface
                 $response = new Response(Status::NOT_FOUND, [], 'Not Found');
                 break;
         }
+
         return $response;
     }
 
-    /**
-     * @param Request $request
-     * @return Dispatcher
-     */
     private function getDispatcher(Request $request): Dispatcher
     {
         return \FastRoute\simpleDispatcher(
@@ -155,10 +145,6 @@ class Server implements ContainerAwareInterface
         );
     }
 
-    /**
-     * @param Request $request
-     * @return bool
-     */
     private function isAuthorized(Request $request): bool
     {
         $authorization = $request->getHeader('Authorization');

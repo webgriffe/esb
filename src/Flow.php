@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Webgriffe\Esb;
 
 use Amp\Loop;
+use Amp\Promise;
 use Psr\Log\LoggerInterface;
 use Webgriffe\Esb\Model\FlowConfig;
 
@@ -14,41 +15,14 @@ use Webgriffe\Esb\Model\FlowConfig;
 class Flow
 {
     /**
-     * @var FlowConfig
-     */
-    private $flowConfig;
-
-    /**
-     * @var ProducerInstance
-     */
-    private $producerInstance;
-
-    /**
-     * @var WorkerInstanceInterface[]
-     */
-    private $workerInstances;
-
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
-
-    /**
-     * @param FlowConfig $flowConfig
-     * @param ProducerInstance $producerInstance
      * @param array<WorkerInstanceInterface> $workerInstances
-     * @param LoggerInterface $logger
      */
     public function __construct(
-        FlowConfig $flowConfig,
-        ProducerInstance $producerInstance,
-        array $workerInstances,
-        LoggerInterface $logger
+        private readonly FlowConfig $flowConfig,
+        private readonly ProducerInstance $producerInstance,
+        private readonly array $workerInstances,
+        private readonly LoggerInterface $logger
     ) {
-        $this->flowConfig = $flowConfig;
-        $this->producerInstance = $producerInstance;
-        $this->workerInstances = $workerInstances;
-        $this->logger = $logger;
     }
 
     public function boot(): void
@@ -61,7 +35,8 @@ class Flow
 
             yield $this->producerInstance->boot();
             foreach ($this->workerInstances as $workerInstance) {
-                yield $workerInstance->boot();
+                // A worker instance's boot() never resolves because it runs the worker loop
+                Promise\rethrow($workerInstance->boot());
             }
         });
     }
@@ -84,6 +59,7 @@ class Flow
     public function getWorkerClassName(): string
     {
         $workerInstance = $this->workerInstances[0];
+
         return get_class($workerInstance->getWorker());
     }
 }

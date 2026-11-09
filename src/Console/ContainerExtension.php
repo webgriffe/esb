@@ -27,17 +27,21 @@ final class ContainerExtension implements ExtensionInterface, PrependExtensionIn
     }
 
     /**
-     * @param array<int, array> $configs
-     * @param ContainerBuilder $container
+     * @param array<int, mixed> $configs
      */
     public function load(array $configs, ContainerBuilder $container): void
     {
     }
 
+    public function getNamespace(): string
+    {
+        return '';
+    }
+
     /**
-     * @return false|string
+     * @inheritDoc
      */
-    public function getNamespace()
+    public function getXsdValidationBasePath(): bool
     {
         return false;
     }
@@ -45,15 +49,7 @@ final class ContainerExtension implements ExtensionInterface, PrependExtensionIn
     /**
      * @inheritDoc
      */
-    public function getXsdValidationBasePath()
-    {
-        return false;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function getAlias()
+    public function getAlias(): string
     {
         return self::ALIAS;
     }

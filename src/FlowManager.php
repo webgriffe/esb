@@ -12,23 +12,12 @@ use Psr\Log\LoggerInterface;
  */
 class FlowManager
 {
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
+    /** @var Flow[] */
+    private array $flows = [];
 
-    /**
-     * @var Flow[]
-     */
-    private $flows = [];
-
-    /**
-     * FlowManager constructor.
-     * @param LoggerInterface $logger
-     */
-    public function __construct(LoggerInterface $logger)
-    {
-        $this->logger = $logger;
+    public function __construct(
+        private readonly LoggerInterface $logger,
+    ) {
     }
 
     public function bootFlows(): void
@@ -45,9 +34,6 @@ class FlowManager
         });
     }
 
-    /**
-     * @param Flow $flow
-     */
     public function addFlow(Flow $flow): void
     {
         $this->flows[] = $flow;

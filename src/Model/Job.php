@@ -8,40 +8,17 @@ use Ramsey\Uuid\Uuid;
 
 final class Job implements JobInterface
 {
-    /**
-     * @var string
-     */
-    private $uuid;
-    /**
-     * @var array<string, mixed>
-     */
-    private $payloadData;
-    /**
-     * @var int
-     */
-    private $timeout;
-    /**
-     * @var int
-     */
-    private $delay;
-    /**
-     * @var int
-     */
-    private $priority;
-    /**
-     * @var JobEventInterface[]
-     */
-    private $events;
+    private readonly string $uuid;
+
+    private readonly int $timeout;
+
+    private readonly int $delay;
+
+    private readonly int $priority;
 
     /**
-     * Job constructor.
      * @param array<string, mixed> $payloadData
-     * @param int $timeout
-     * @param int $delay
-     * @param int $priority
      * @param array<JobEventInterface> $events
-     * @param string|null $uuid
-     * @throws \Exception
      *
      * TODO:    $events and $uuid constructor argument shouldn't be set by ProducerInterface implementations.
      *          They are declared as constructor arguments because the Serializer should be able to set them when
@@ -49,27 +26,23 @@ final class Job implements JobInterface
      *          Maybe we need to change the design of this?
      */
     public function __construct(
-        array $payloadData,
+        private readonly array $payloadData,
         int $timeout = 60,
         int $delay = 0,
-        $priority = 0,
-        array $events = [],
+        int $priority = 0,
+        private array $events = [],
         ?string $uuid = null
     ) {
         if ($uuid === null) {
             $uuid = Uuid::uuid1()->toString();
         }
         $this->uuid = $uuid;
-        $this->payloadData = $payloadData;
+
         $this->timeout = $timeout;
         $this->delay = $delay;
         $this->priority = $priority;
-        $this->events = $events;
     }
 
-    /**
-     * @return string
-     */
     public function getUuid(): string
     {
         return $this->uuid;
@@ -83,33 +56,21 @@ final class Job implements JobInterface
         return $this->payloadData;
     }
 
-    /**
-     * @return int
-     */
     public function getTimeout(): int
     {
         return $this->timeout;
     }
 
-    /**
-     * @return int
-     */
     public function getDelay(): int
     {
         return $this->delay;
     }
 
-    /**
-     * @return int
-     */
     public function getPriority(): int
     {
         return $this->priority;
     }
 
-    /**
-     * @param JobEventInterface $event
-     */
     public function addEvent(JobEventInterface $event): void
     {
         if ($this->getLastEvent() !== null && $this->getLastEvent()->getTime() > $event->getTime()) {
@@ -122,6 +83,7 @@ final class Job implements JobInterface
                 )
             );
         }
+
         $this->events[] = $event;
     }
 
@@ -133,14 +95,12 @@ final class Job implements JobInterface
         return $this->events;
     }
 
-    /**
-     * @return JobEventInterface|null
-     */
     public function getLastEvent(): ?JobEventInterface
     {
         if (empty($this->events)) {
             return null;
         }
+
         return array_slice($this->events, -1)[0];
     }
 }

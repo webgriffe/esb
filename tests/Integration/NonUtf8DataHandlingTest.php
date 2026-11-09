@@ -19,7 +19,7 @@ class NonUtf8DataHandlingTest extends KernelTestCase
     /**
      * @throws \Exception
      */
-    public function testHandlesNonUtf8Data()
+    public function testHandlesNonUtf8Data(): void
     {
         $producerDir = vfsStream::url('root/producer_dir');
         self::createKernel([
@@ -50,7 +50,7 @@ class NonUtf8DataHandlingTest extends KernelTestCase
             }
         );
 
-        self::$kernel->boot();
+        self::kernel()->boot();
 
         $this->assertStringNotContainsString('Successfully produced a new Job  []', $this->dumpLog());
         $this->assertStringNotContainsString('Successfully worked a Job  []', $this->dumpLog());

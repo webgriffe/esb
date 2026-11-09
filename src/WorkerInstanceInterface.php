@@ -8,13 +8,8 @@ use Amp\Promise;
 
 interface WorkerInstanceInterface
 {
-    /**
-     * @return Promise<void>
-     */
+    /** @return Promise<void> */
     public function boot(): Promise;
 
-    /**
-     * @return WorkerInterface
-     */
     public function getWorker(): WorkerInterface;
 }
