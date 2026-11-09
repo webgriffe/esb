@@ -3,17 +3,17 @@ Webgriffe ESB
 
 Simple, beanstalkd powered, ESB framework.
 
-[![Build Status](https://travis-ci.org/webgriffe/esb.svg?branch=master)](https://travis-ci.org/webgriffe/esb)
+[![Continuous Integration](https://github.com/webgriffe/esb/actions/workflows/ci.yaml/badge.svg)](https://github.com/webgriffe/esb/actions/workflows/ci.yaml)
 
 Introduction
 ------------
 
 Webgriffe ESB is a PHP framework that aims to speed up the development of [Enterprise Service Buses](https://en.wikipedia.org/wiki/Enterprise_service_bus).
 
-It uses [Beanstalkd](http://kr.github.io/beanstalkd/) as a queue engine and [Elasticsearch](https://www.elastic.co/elasticsearch/) as jobs persistence layer. 
+It uses [Beanstalkd](https://beanstalkd.github.io/) as a queue engine and [Elasticsearch](https://www.elastic.co/elasticsearch/) as jobs persistence layer. 
 It's built on top of popular open-sourced PHP libraries like:
 
-* [Amp](http://amphp.org/)
+* [Amp](https://amphp.org/) (version 2)
 * [Symfony's Dependency Injection](http://symfony.com/doc/current/components/dependency_injection.html)
 * [Monolog](https://github.com/Seldaek/monolog)
 
@@ -24,7 +24,7 @@ Integrating different systems together is a matter of data flows. With Webgriffe
 
 With Webgriffe ESB you integrate different systems by only implementing producers and workers. The framework takes care of the rest.
 
-Webgriffe ESB is designed to use a single binary which is used as the main entry point of the whole application; all the producers and workers are started and executed by that single PHP binary. This is possible thanks to the [Amp](http://amphp.org/) concurrency framework.
+Webgriffe ESB is designed to use a single binary which is used as the main entry point of the whole application; all the producers and workers are started and executed by that single PHP binary. This is possible thanks to the [Amp](https://amphp.org/) concurrency framework.
 
 Requirements
 ------------
@@ -39,6 +39,8 @@ Require this package using [Composer](https://getcomposer.org/):
 ```bash
 composer require webgriffe/esb
 ```
+
+If you are upgrading from a previous major version, see [UPGRADE.md](UPGRADE.md).
 
 Configuration
 -------------
@@ -171,9 +173,9 @@ A producer can be any service whose class implements the `ProducerInterface`. Ho
 * `HttpRequestProducerInterface`: these producers are invoked when the ESB's HTTP server receives a corresponding HTTP request.
 
 Refer to these interfaces in the source code for more information.
-The `produce` method of the `ProducerInterface` must return an Amp's [Iterator](https://amphp.org/amp/iterators/), this allows you to produce a collection of jobs with a single `produce` invocation. Moreover iterators allows to have long running produce operations which are executed asyncronously.
+The `produce` method of the `ProducerInterface` must return an Amp's [Iterator](https://github.com/amphp/amp/blob/2.x/docs/iterators/README.md), this allows you to produce a collection of jobs with a single `produce` invocation. Moreover iterators allow to have long running produce operations which are executed asynchronously.
 
-Also, keep in mind that **you should never use I/O blocking function calls inside your producers**. Use [Amp](https://amphp.org/) or [ReactPHP](https://reactphp.org) libraries when you need to do I/O operations.
+Also, keep in mind that **you should never use I/O blocking function calls inside your producers**. Use [Amp](https://amphp.org/) libraries compatible with Amp version 2, or [ReactPHP](https://reactphp.org) libraries when you need to do I/O operations.
 
 See the dummy producers in the [tests/](https://github.com/webgriffe/esb/tree/master/tests) directory for some examples.
 
@@ -182,11 +184,11 @@ Workers
 
 A worker can be any service whose class implements the `WorkerInterface`. Every worker is invoked immediately when a job is available on its flow's tube.
 
-The `work` method of a worker must return an Amp's [Promise](https://amphp.org/amp/promises/) that must resolve when the job is worked succesfully. Otherwise the `work` method must throw an exception.
+The `work` method of a worker must return an Amp's [Promise](https://github.com/amphp/amp/blob/2.x/docs/promises/README.md) that must resolve when the job is worked successfully. Otherwise the `work` method must throw an exception.
 
-When a worker successfully works a job, the ESB framwork deletes it from the tube. Conversely, when a worker fails to work a job the ESB framework keeps it in the tube for a maximum of a `max_retry` times. If an `error_retry_delay` other than 0 is specified, then the job will not be retried for at least the specified number of seconds. If the maximum number of retries is exceeded, the job is **buried** and a critical event is logged.
+When a worker successfully works a job, the ESB framework deletes it from the tube. Conversely, when a worker fails to work a job the ESB framework keeps it in the tube for a maximum of a `max_retry` times. If an `error_retry_delay` other than 0 is specified, then the job will not be retried for at least the specified number of seconds. If the maximum number of retries is exceeded, the job is **buried** and a critical event is logged.
 
-Like for producers, **you should never use I/O blocking function calls inside your workers**. Use [Amp](https://amphp.org/) or [ReactPHP](https://reactphp.org) libraries if you need to do I/O operations.
+Like for producers, **you should never use I/O blocking function calls inside your workers**. Use [Amp](https://amphp.org/) libraries compatible with Amp version 2, or [ReactPHP](https://reactphp.org) libraries if you need to do I/O operations.
 
 See the dummy workers in the [tests/](https://github.com/webgriffe/esb/tree/master/tests) directory for some examples.
 
@@ -195,7 +197,7 @@ Initialization
 
 `WorkerInterface` and `ProducerInterface` both support an `init` method which is called by the ESB framework at the boot phase.
 
-The `init` method must return an Amp's [Promise](https://amphp.org/amp/promises/). This allows you to perform initialization operations asyncronously (for example instantiating a SOAP client with a remote WSDL URL).
+The `init` method must return an Amp's [Promise](https://github.com/amphp/amp/blob/2.x/docs/promises/README.md). This allows you to perform initialization operations asynchronously (for example instantiating a SOAP client with a remote WSDL URL).
 
 Unit testing
 ------------
@@ -218,8 +220,8 @@ public function testShouldProduceMultipleJobsWithMultipleEntriesFile()
 
     $this->jobs = [];
     Loop::run(
-        function () use ($data) {
-            $iterator = $this->producer->produce($data);
+        function () {
+            $iterator = $this->producer->produce();
             while (yield $iterator->advance()) {
                 $this->jobs[] = $iterator->getCurrent();
             }
@@ -259,7 +261,7 @@ public function testWorksSimpleJob()
     ;
     $this->client->endSession()->shouldBeCalled()->willReturn(new Success());
 
-    $job = new QueuedJob(1, ['sku' => $sku, 'qty' => $qty]);
+    $job = new Job(['sku' => $sku, 'qty' => $qty]);
     Loop::run(function () use ($job) {
         yield $this->worker->init();
         yield $this->worker->work($job);
@@ -270,7 +272,7 @@ public function testWorksSimpleJob()
 Web Console
 -----------
 
-A web console UI is available and allows to inspect tubes and jobs; is it also possible to search jobs and requeue them. The web console is currentyl only available under HTTP (not HTTPS) and must be configured using the following parameters:
+A web console UI is available and allows to inspect tubes and jobs; it is also possible to search jobs and requeue them. The web console is currently only available under HTTP (not HTTPS) and must be configured using the following parameters:
 
 ```yaml
 # esb.yml
@@ -286,7 +288,7 @@ parameters:
 
 For example, given the configuration above, you can access to the web console at the URL `http://<ip_or_hostname>:8080/` using `admin` as username and `password` as password.
 
-The web console HTTP server must be set on a different port then the one used by the `HttpRequestProducerInterface` producers (and identified by the `http_server_port` parameter).
+The web console HTTP server must be set on a different port than the one used by the `HttpRequestProducerInterface` producers (and identified by the `http_server_port` parameter).
 
 In the web console dashboard you can check the status of the configured flows:
 
@@ -304,9 +306,9 @@ Deployment
 ----------
 As said all workers and producers are managed by a single PHP binary. This binary is located at `vendor/bin/esb`. To deploy and run your ESB application all you have to do is deploy your application as any other PHP application (for example using [Deployer](https://deployer.org/)) and make sure that `vendor/bin/esb` is always running (we suggest to use [Supervisord](http://supervisord.org/) for this purpose).
 
-Keep in mind that the `vendor/bin/esb` binary logs its operations to `stdout` and it reports errors using `error_log()` function. With a standard PHP CLI configuration all the `error_log()` entries are then redirected to `stderr`. This is done through [Monolog](https://github.com/Seldaek/monolog)'s [StreamHandler](https://github.com/Seldaek/monolog/blob/master/src/Monolog/Handler/StreamHandler.php) and [ErrorHandler](https://github.com/Seldaek/monolog/blob/master/src/Monolog/Handler/ErrorLogHandler.php) handlers. Moreover all warning (or higher level) events are handled by the [NativeMailHander](https://github.com/Seldaek/monolog/blob/master/src/Monolog/Handler/NativeMailerHandler.php) (configured with `logger_mail_to` and `logger_mail_from` parameters).
+Keep in mind that the `vendor/bin/esb` binary logs its operations to `stdout` and it reports errors using `error_log()` function. With a standard PHP CLI configuration all the `error_log()` entries are then redirected to `stderr`. This is done through [Monolog](https://github.com/Seldaek/monolog)'s [StreamHandler](https://github.com/Seldaek/monolog/blob/main/src/Monolog/Handler/StreamHandler.php) and [ErrorLogHandler](https://github.com/Seldaek/monolog/blob/main/src/Monolog/Handler/ErrorLogHandler.php) handlers. Moreover all warning (or higher level) events are handled by the [NativeMailerHandler](https://github.com/Seldaek/monolog/blob/main/src/Monolog/Handler/NativeMailerHandler.php) (configured with `logger_mail_to` and `logger_mail_from` parameters).
 
-You can also add your own handlers using the `esb.yml` configuration file.
+You can also add your own handlers using the `esb.yml` configuration file. Custom handlers, formatters and processors must be compatible with Monolog 3.
 
 Contributing
 ------------
@@ -317,7 +319,7 @@ We recommend to use Docker. Indeed a [`docker-compose.yml`](https://github.com/w
 
 Just copy the `.env.dist` file to `.env` and adjust the environment variables values according to your environment.
 
-For example, to **run the entire test suite** (PHP Code Sniffer, PHPStan, PHPUnit, etc...) you can simply run:
+For example, to **run the entire test suite** (Easy Coding Standard, PHPStan and PHPUnit) you can simply run:
 
 ```bash
 docker-compose run php composer tests
@@ -329,7 +331,16 @@ Or to only run PHPUnit tests you can use:
 docker-compose run php vendor/bin/phpunit
 ```
 
-The test suite uses the `ESB_BEANSTALKD_URL` environment variable to get the connection URL of the Beanstalkd instance. This environment variable is already set in the provided [`docker-compose.yml`](https://github.com/webgriffe/esb/blob/master/docker-compose.yml) file.
+The test suite reads the following environment variables, which are already set in the provided [`docker-compose.yml`](https://github.com/webgriffe/esb/blob/master/docker-compose.yml) file through the `.env` file:
+
+* `ESB_BEANSTALKD_URL`: the connection URL of the Beanstalkd instance;
+* `ES_BASE_URI`: the base URL of the Elasticsearch instance;
+* `ESB_HTTP_SERVER_PORT`: the port of the HTTP server used by the `HttpRequestProducerInterface` producers;
+* `ESB_CONSOLE_PORT`: the port of the web console.
+
+If you run the tests outside Docker you must set them yourself.
+
+**Warning:** the test suite deletes all the indices of the Elasticsearch instance it connects to, so never point it to an instance holding data you want to keep.
 
 You can also run an instance of the ESB locally using Docker. You must create an `esb.yml` configuration file in the root directory and then run:
 
