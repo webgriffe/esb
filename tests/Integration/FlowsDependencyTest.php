@@ -88,14 +88,14 @@ class FlowsDependencyTest extends KernelTestCase
             $successLog = array_filter(
                 $this->logHandler()->getRecords(),
                 function ($log) {
-                    return str_contains($log['message'], 'Successfully worked a Job');
+                    return str_contains($log->message, 'Successfully worked a Job');
                 }
             );
 
             return count($successLog) >= 2;
         });
 
-        self::$kernel->boot();
+        self::kernel()->boot();
 
         $this->assertReadyJobsCountInTube(0, self::FLOW1_CODE);
         $workerFileLines = $this->getFileLines($workerFile1);
@@ -195,7 +195,7 @@ class FlowsDependencyTest extends KernelTestCase
                 $successLog = array_filter(
                     $this->logHandler()->getRecords(),
                     function ($log) {
-                        return str_contains($log['message'], 'Successfully worked a Job');
+                        return str_contains($log->message, 'Successfully worked a Job');
                     }
                 );
                 return count($successLog) >= 3;
@@ -203,7 +203,7 @@ class FlowsDependencyTest extends KernelTestCase
             20
         );
 
-        self::$kernel->boot();
+        self::kernel()->boot();
 
         $this->assertReadyJobsCountInTube(0, self::FLOW1_CODE);
         $workerFileLines = $this->getFileLines($workerFile1);

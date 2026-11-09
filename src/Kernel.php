@@ -6,7 +6,6 @@ namespace Webgriffe\Esb;
 
 use Amp\Loop;
 use Amp\MultiReasonException;
-use Doctrine\Common\Annotations\AnnotationRegistry;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Config\Exception\FileLocatorFileNotFoundException;
 use Symfony\Component\Config\FileLocator;
@@ -34,7 +33,6 @@ class Kernel
     ) {
         $this->environment = $environment;
 
-        AnnotationRegistry::registerUniqueLoader('class_exists');
         $this->container = new ContainerBuilder();
         $loader = new YamlFileLoader($this->container, new FileLocator(dirname(__DIR__)));
         $this->loadSystemConfiguration($loader);
@@ -97,7 +95,7 @@ class Kernel
 
     public function shutdown(): void
     {
-        Loop::stop(); // TODO it should be a more gracefully shutdown...
+        Loop::stop(); // TODO it should be a more graceful shutdown...
     }
 
     /**
@@ -132,7 +130,7 @@ class Kernel
 
         $environmentLocalConfigFile = sprintf(
             '%s/%s_%s.yml',
-            $localConfigPathinfo['dirname'],    // @phpstan-ignore-line
+            $localConfigPathinfo['dirname'],
             $localConfigPathinfo['filename'],
             $this->environment
         );

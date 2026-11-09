@@ -17,9 +17,12 @@ use Webgriffe\Esb\Service\BatchManager;
 use Webgriffe\Esb\Service\BatchManagerFactory;
 use Webgriffe\Esb\Service\BeanstalkElasticsearchQueueBackend;
 
+/**
+ * @phpstan-import-type FlowConfigData from FlowConfig
+ */
 final class FlowExtension implements ExtensionInterface, CompilerPassInterface
 {
-    /** @var array<string, mixed> */
+    /** @var array<string, FlowConfigData> */
     private array $flowsConfig = [];
 
     /**
@@ -31,7 +34,9 @@ final class FlowExtension implements ExtensionInterface, CompilerPassInterface
     {
         $configuration = new FlowConfiguration();
         $processor = new Processor();
-        $this->flowsConfig = $processor->processConfiguration($configuration, $configs);
+        /** @var array<string, FlowConfigData> $flowsConfig Validated against FlowConfiguration by the processor */
+        $flowsConfig = $processor->processConfiguration($configuration, $configs);
+        $this->flowsConfig = $flowsConfig;
     }
 
     public function getNamespace(): string

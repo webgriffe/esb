@@ -65,13 +65,13 @@ class TwoFlowsTest extends KernelTestCase
             $successLog = array_filter(
                 $this->logHandler()->getRecords(),
                 function ($log) {
-                    return str_contains($log['message'], 'Successfully worked a Job');
+                    return str_contains($log->message, 'Successfully worked a Job');
                 }
             );
             return count($successLog) >= 4;
         });
 
-        self::$kernel->boot();
+        self::kernel()->boot();
 
         $workerFileLines = $this->getFileLines($workerFile1);
         $this->assertOneArrayEntryContains('job1', $workerFileLines);

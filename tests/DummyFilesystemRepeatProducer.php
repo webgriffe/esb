@@ -10,6 +10,7 @@ use Amp\Success;
 use Amp\Deferred;
 use Amp\Iterator;
 use Webgriffe\Esb\Model\Job;
+use Webmozart\Assert\Assert;
 
 /**
  * Sample repeat producer which produces a job for every file found in a given directory.
@@ -43,6 +44,8 @@ final class DummyFilesystemRepeatProducer implements RepeatProducerInterface
                 }
             }
             $files = yield File\listFiles($this->directory);
+            Assert::isArray($files);
+            Assert::allString($files);
             foreach ($files as $file) {
                 $file = $this->directory . DIRECTORY_SEPARATOR . $file;
                 if (yield File\isDirectory($file)) {
@@ -50,7 +53,9 @@ final class DummyFilesystemRepeatProducer implements RepeatProducerInterface
                 }
                 yield $this->longRunningOperation();
                 $fileContent = yield File\read($file);
+                Assert::string($fileContent);
                 $fileContentAsArray = json_decode($fileContent, true);
+                /** @var array<string, mixed> $payloadData */
                 $payloadData = is_array($fileContentAsArray) ?
                     $fileContentAsArray :
                     ['file' => $file, 'data' => $fileContent];

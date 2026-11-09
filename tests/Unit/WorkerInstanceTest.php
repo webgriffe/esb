@@ -19,7 +19,7 @@ use Webmozart\Assert\Assert;
 
 class WorkerInstanceTest extends AsyncTestCase
 {
-    private ?TestHandler $logHandler = null;
+    private TestHandler $logHandler;
 
     public function testAWorkedJobIsNotRequeuedWhenItCannotBeDequeued(): \Generator
     {
@@ -66,8 +66,19 @@ class WorkerInstanceTest extends AsyncTestCase
             'worker_instance_test',
             [
                 'description' => 'Worker instance test flow',
-                'worker' => ['error_retry_delay' => 0, 'max_retry' => 5],
-                'dependencies' => ['flows' => []],
+                'es_index_settings' => null,
+                'es_index_mapping' => null,
+                'es_index_aliases' => null,
+                'producer' => ['service' => 'unused', 'batch_size' => 1000],
+                'worker' => ['service' => 'unused', 'instances' => 1, 'error_retry_delay' => 0, 'max_retry' => 5],
+                'dependencies' => [
+                    'enabled' => false,
+                    'flows' => [],
+                    'delay_after_idle_time' => 1000,
+                    'initial_polling_interval' => 1000,
+                    'maximum_polling_interval' => 60000,
+                    'polling_interval_multiplier' => 2.0,
+                ],
             ]
         );
 
@@ -106,7 +117,7 @@ class WorkerInstanceTest extends AsyncTestCase
     private function getWorkedJobs(WorkerInterface $worker): array
     {
         Assert::propertyExists($worker, 'workedJobs');
-        $workedJobs = $worker->workedJobs;  // @phpstan-ignore-line
+        $workedJobs = $worker->workedJobs;
         Assert::isArray($workedJobs);
         Assert::allIsInstanceOf($workedJobs, JobInterface::class);
 

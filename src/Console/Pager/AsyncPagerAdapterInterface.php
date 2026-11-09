@@ -21,7 +21,7 @@ interface AsyncPagerAdapterInterface
      * @param int $offset The offset.
      * @param int $length The length.
      *
-     * @return Promise<iterable<mixed>>
+     * @return Promise<iterable<array-key, mixed>>
      */
     public function getSlice(int $offset, int $length): Promise;
 }

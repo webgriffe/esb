@@ -9,6 +9,7 @@ use Amp\File;
 use Amp\Promise;
 use Amp\Success;
 use Webgriffe\Esb\Model\JobInterface;
+use Webmozart\Assert\Assert;
 use function Amp\call;
 
 /**
@@ -39,6 +40,7 @@ final class DummyFilesystemWorker implements WorkerInterface
             $content = '';
             if (yield File\exists($this->filename)) {
                 $content = yield \Amp\File\read($this->filename);
+                Assert::string($content);
             }
             if ($this->duration) {
                 yield delay($this->duration * 1000);

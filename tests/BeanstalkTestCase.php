@@ -4,12 +4,12 @@ namespace Webgriffe\Esb;
 
 use Amp\PHPUnit\AsyncTestCase;
 use Pheanstalk\Pheanstalk;
-use Pheanstalk\Response;
-use Webmozart\Assert\Assert;
+use Pheanstalk\Values\TubeName;
+use Pheanstalk\Values\TubeStats;
 
 class BeanstalkTestCase extends AsyncTestCase
 {
-    protected ?Pheanstalk $pheanstalk = null;
+    protected Pheanstalk $pheanstalk;
 
     protected function setUp(): void
     {
@@ -24,40 +24,26 @@ class BeanstalkTestCase extends AsyncTestCase
         return getenv('ESB_BEANSTALKD_URL') ?: 'tcp://127.0.0.1:11300';
     }
 
-    /**
-     * @return Pheanstalk
-     */
     protected function getPheanstalk(): Pheanstalk
     {
         $uri = self::getBeanstalkdConnectionUri();
         $parsedUri = parse_url($uri);
 
-        return new Pheanstalk($parsedUri['host'], (int)$parsedUri['port']); // @phpstan-ignore-line
+        return Pheanstalk::create($parsedUri['host'], (int)$parsedUri['port']); // @phpstan-ignore-line
     }
 
     protected function purgeBeanstalk(): void
     {
         foreach ($this->pheanstalk->listTubes() as $tube) {
-            try {
-                while ($job = $this->pheanstalk->peekReady($tube)) {    // @phpstan-ignore while.alwaysTrue
-                    $this->pheanstalk->delete($job);
-                }
-            } catch (\Throwable $e) {
-                // Continue
+            $this->pheanstalk->useTube($tube);
+            while ($job = $this->pheanstalk->peekReady()) {
+                $this->pheanstalk->delete($job);
             }
-            try {
-                while ($job = $this->pheanstalk->peekDelayed($tube)) {  // @phpstan-ignore while.alwaysTrue
-                    $this->pheanstalk->delete($job);
-                }
-            } catch (\Throwable $e) {
-                // Continue
+            while ($job = $this->pheanstalk->peekDelayed()) {
+                $this->pheanstalk->delete($job);
             }
-            try {
-                while ($job = $this->pheanstalk->peekBuried($tube)) {   // @phpstan-ignore while.alwaysTrue
-                    $this->pheanstalk->delete($job);
-                }
-            } catch (\Throwable $e) {
-                // Continue
+            while ($job = $this->pheanstalk->peekBuried()) {
+                $this->pheanstalk->delete($job);
             }
         }
     }
@@ -99,41 +85,38 @@ class BeanstalkTestCase extends AsyncTestCase
         $this->assertEquals($expectedDeletedJobsCount, $deletedJobs);
     }
 
-    protected function getStats(string $tube): Response
+    protected function getStats(string $tube): TubeStats
     {
-        $response = $this->pheanstalk->statsTube($tube);
-        Assert::isInstanceOf($response, Response::class);
-
-        return $response;
+        return $this->pheanstalk->statsTube(new TubeName($tube));
     }
 
-    protected function getTotalJobs(Response $stats): int
+    protected function getTotalJobs(TubeStats $stats): int
     {
-        return $stats['total-jobs'];    // @phpstan-ignore-line
+        return $stats->totalJobs;
     }
 
-    protected function getCurrentJobsReady(Response $stats): int
+    protected function getCurrentJobsReady(TubeStats $stats): int
     {
-        return $stats['current-jobs-ready'];    // @phpstan-ignore-line
+        return $stats->currentJobsReady;
     }
 
-    protected function getCurrentJobsBuried(Response $stats): int
+    protected function getCurrentJobsBuried(TubeStats $stats): int
     {
-        return $stats['current-jobs-buried'];    // @phpstan-ignore-line
+        return $stats->currentJobsBuried;
     }
 
-    protected function getCurrentJobsUrgent(Response $stats): int
+    protected function getCurrentJobsUrgent(TubeStats $stats): int
     {
-        return $stats['current-jobs-urgent'];    // @phpstan-ignore-line
+        return $stats->currentJobsUrgent;
     }
 
-    protected function getCurrentJobsReserved(Response $stats): int
+    protected function getCurrentJobsReserved(TubeStats $stats): int
     {
-        return $stats['current-jobs-reserved'];    // @phpstan-ignore-line
+        return $stats->currentJobsReserved;
     }
 
-    protected function getCurrentJobsDelayed(Response $stats): int
+    protected function getCurrentJobsDelayed(TubeStats $stats): int
     {
-        return $stats['current-jobs-delayed'];    // @phpstan-ignore-line
+        return $stats->currentJobsDelayed;
     }
 }

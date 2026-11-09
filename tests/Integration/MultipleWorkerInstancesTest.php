@@ -6,6 +6,7 @@ use org\bovigo\vfs\vfsStream;
 use Webgriffe\Esb\DummyFilesystemRepeatProducer;
 use Webgriffe\Esb\DummyFilesystemWorker;
 use Webgriffe\Esb\KernelTestCase;
+use Webmozart\Assert\Assert;
 
 class MultipleWorkerInstancesTest extends KernelTestCase
 {
@@ -32,7 +33,7 @@ class MultipleWorkerInstancesTest extends KernelTestCase
             return count($this->getBootedWorkerInstanceIds()) === 3;
         });
 
-        self::$kernel->boot();
+        self::kernel()->boot();
 
         $this->assertEqualsCanonicalizing([1, 2, 3], $this->getBootedWorkerInstanceIds());
     }
@@ -44,8 +45,10 @@ class MultipleWorkerInstancesTest extends KernelTestCase
     {
         $instanceIds = [];
         foreach ($this->logHandler()->getRecords() as $record) {
-            if ($record['message'] === 'A Worker instance has been successfully initialized') {
-                $instanceIds[] = $record['context']['instance_id'];
+            if ($record->message === 'A Worker instance has been successfully initialized') {
+                $instanceId = $record->context['instance_id'] ?? null;
+                Assert::integer($instanceId);
+                $instanceIds[] = $instanceId;
             }
         }
 

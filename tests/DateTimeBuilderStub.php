@@ -6,7 +6,7 @@ final class DateTimeBuilderStub implements DateTimeBuilderInterface
 {
     public static ?string $forcedNow = null;
 
-    public function build(string $time = 'now', \DateTimeZone $timezone = null): \DateTime
+    public function build(string $time = 'now', ?\DateTimeZone $timezone = null): \DateTime
     {
         if (self::$forcedNow) {
             $dateTime = new \DateTime(self::$forcedNow, $timezone);

@@ -10,7 +10,7 @@ use Webgriffe\Esb\Model\JobEventInterface;
 
 class JobTest extends TestCase
 {
-    private ?string $originalTimezone = null;
+    private string $originalTimezone;
 
     protected function setUp(): void
     {

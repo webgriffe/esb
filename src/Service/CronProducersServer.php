@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Webgriffe\Esb\Service;
 
-use function Amp\call;
 use Amp\Loop;
 use Amp\Promise;
 use Cron\CronExpression;
@@ -12,6 +11,7 @@ use Psr\Log\LoggerInterface;
 use Webgriffe\Esb\CrontabProducerInterface;
 use Webgriffe\Esb\DateTimeBuilderInterface;
 use Webgriffe\Esb\ProducerInstance;
+use function Amp\call;
 
 /**
  * @internal
@@ -69,7 +69,7 @@ class CronProducersServer
                 // This should never happen but maybe we should add a warning here?
                 continue;
             }
-            $cronExpression = CronExpression::factory($producer->getCrontab());
+            $cronExpression = new CronExpression($producer->getCrontab());
             $now = $this->dateTimeBuilder->build();
             if ($cronExpression->isDue($now)) {
                 $this->logger->info(

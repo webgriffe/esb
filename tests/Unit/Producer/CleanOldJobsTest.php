@@ -15,7 +15,7 @@ class CleanOldJobsTest extends TestCase
 {
     const CRONTAB_EXPRESSION = '0 15 10 ? * *';
 
-    private ?CleanOldJobs $producer = null;
+    private CleanOldJobs $producer;
 
     protected function setUp(): void
     {

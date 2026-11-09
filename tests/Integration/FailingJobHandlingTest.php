@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Webgriffe\Esb\Integration;
 
 use Amp\Loop;
+use Monolog\LogRecord;
 use Webgriffe\Esb\AlwaysFailingWorker;
 use Webgriffe\Esb\DummyRepeatProducer;
 use Webgriffe\Esb\KernelTestCase;
@@ -37,20 +38,20 @@ class FailingJobHandlingTest extends KernelTestCase
         $this->stopWhen(
             function () {
                 return $this->logHandler()->hasErrorThatPasses(
-                    function (array $record) {
-                        return $record['message'] === 'A Job reached maximum work retry limit and has been removed ' .
-                            'from queue.' && $record['context']['max_retry'] === 2;
+                    function (LogRecord $record) {
+                        return $record->message === 'A Job reached maximum work retry limit and has been removed ' .
+                            'from queue.' && $record->context['max_retry'] === 2;
                     }
                 );
             }
         );
-        self::$kernel->boot();
+        self::kernel()->boot();
 
         $this->assertDeletedJobsCountInTube(1, self::FLOW_CODE);
         $this->assertTrue(
             $this->logHandler()->hasInfoThatPasses(
-                function (array $record) {
-                    return $record['message'] === 'Worker released a Job' && $record['context']['error_retry_delay'] === 1;
+                function (LogRecord $record) {
+                    return $record->message === 'Worker released a Job' && $record->context['error_retry_delay'] === 1;
                 }
             )
         );

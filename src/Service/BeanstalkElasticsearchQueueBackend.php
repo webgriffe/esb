@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Webgriffe\Esb\Service;
 
 use Amp\Beanstalk\BeanstalkClient;
-use function Amp\call;
+use Amp\Beanstalk\Stats\Tube;
 use Amp\Promise;
 use Psr\Log\LoggerInterface;
 use Webgriffe\Esb\Exception\ElasticSearch\JobNotFoundException;
@@ -13,8 +13,10 @@ use Webgriffe\Esb\Exception\FatalQueueException;
 use Webgriffe\Esb\Model\FlowConfig;
 use Webgriffe\Esb\Model\Job;
 use Webgriffe\Esb\Model\JobInterface;
-
 use Webgriffe\Esb\NonUtf8Cleaner;
+use Webmozart\Assert\Assert;
+
+use function Amp\call;
 
 final class BeanstalkElasticsearchQueueBackend implements QueueBackendInterface
 {
@@ -116,7 +118,10 @@ final class BeanstalkElasticsearchQueueBackend implements QueueBackendInterface
                 throw new FatalQueueException($ex->getMessage(), $ex->getCode(), $ex);
             }
 
+            Assert::isArray($rawJob);
             [$jobBeanstalkId, $jobUuid] = $rawJob;
+            Assert::integer($jobBeanstalkId);
+            Assert::string($jobUuid);
 
             try {
                 /** @var Job $job */
@@ -176,6 +181,10 @@ final class BeanstalkElasticsearchQueueBackend implements QueueBackendInterface
     {
         return call(function () use ($queueName) {
             $tubeStats = yield $this->beanstalkClient->getTubeStats($queueName);
+            Assert::isInstanceOf($tubeStats, Tube::class);
+            Assert::integer($tubeStats->currentJobsReady);
+            Assert::integer($tubeStats->currentJobsReserved);
+            Assert::integer($tubeStats->currentJobsDelayed);
             return ($tubeStats->currentJobsReady + $tubeStats->currentJobsReserved + $tubeStats->currentJobsDelayed) === 0;
         });
     }
@@ -217,9 +226,12 @@ final class BeanstalkElasticsearchQueueBackend implements QueueBackendInterface
             $this->logger->debug('Enqueuing jobs batch...');
             $result = yield $this->elasticSearch->bulkIndexJobs($jobs, $this->flowConfig->getTube());
 
-            if ($result['errors'] === true) {
+            Assert::isArray($result);
+            if (($result['errors'] ?? null) === true) {
+                Assert::keyExists($result, 'items');
+                Assert::isArray($result['items']);
                 foreach ($result['items'] as $item) {
-                    if (!array_key_exists('index', $item)) {
+                    if (!is_array($item) || !is_array($item['index'] ?? null)) {
                         $this->logger->error(
                             'Unexpected response item in bulk index response',
                             ['bulk_index_response_item' => $item]
@@ -227,8 +239,10 @@ final class BeanstalkElasticsearchQueueBackend implements QueueBackendInterface
                         continue;
                     }
                     $itemStatusCode = $item['index']['status'] ?? null;
+                    Assert::nullOrInteger($itemStatusCode);
                     if (!$this->isSuccessfulStatusCode($itemStatusCode)) {
                         $uuid = $item['index']['_id'];
+                        Assert::string($uuid);
                         unset($jobs[$uuid]);
                         $this->logger->error(
                             'Job could not be indexed in ElasticSearch',

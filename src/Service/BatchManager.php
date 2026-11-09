@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Webgriffe\Esb\Service;
 
-use function Amp\call;
 use Amp\Promise;
-
 use Webgriffe\Esb\Model\JobInterface;
+
+use function Amp\call;
 
 final class BatchManager implements BatchManagerInterface
 {

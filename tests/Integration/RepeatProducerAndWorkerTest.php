@@ -50,7 +50,7 @@ class RepeatProducerAndWorkerTest extends KernelTestCase
             return (yield exists($workerFile)) && count($this->getFileLines($workerFile)) === 2;
         });
 
-        self::$kernel->boot();
+        self::kernel()->boot();
 
         $workerFileLines = $this->getFileLines($workerFile);
         $this->assertOneArrayEntryContains('job1', $workerFileLines);
@@ -90,7 +90,7 @@ class RepeatProducerAndWorkerTest extends KernelTestCase
             return (yield exists($workerFile)) && count($this->getFileLines($workerFile)) === 2;
         });
 
-        self::$kernel->boot();
+        self::kernel()->boot();
 
         $workerFileLines = $this->getFileLines($workerFile);
         $this->assertStringContainsString('job1', $workerFileLines[0]);

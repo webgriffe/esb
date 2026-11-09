@@ -9,8 +9,10 @@ use Webgriffe\AmpElasticsearch\Client;
 use Amp\Loop;
 use Amp\Promise;
 use Monolog\Handler\TestHandler;
+use Monolog\LogRecord;
 use org\bovigo\vfs\vfsStream;
 use Symfony\Component\Yaml\Yaml;
+use Webmozart\Assert\Assert;
 use function Amp\call;
 use function Amp\File\filesystem;
 
@@ -20,7 +22,7 @@ class KernelTestCase extends BeanstalkTestCase
 
     protected static ?Kernel $kernel = null;
 
-    protected ?Client $esClient = null;
+    protected Client $esClient;
 
     /**
      * @throws \Throwable
@@ -54,14 +56,20 @@ class KernelTestCase extends BeanstalkTestCase
         self::$kernel = new Kernel(vfsStream::url('root/config.yml'), 'test');
     }
 
+    protected static function kernel(): Kernel
+    {
+        Assert::notNull(self::$kernel, 'Kernel not created, call createKernel() first.');
+
+        return self::$kernel;
+    }
+
     /**
      * @throws \Exception
      */
     protected function logHandler(): TestHandler
     {
-        /** @noinspection OneTimeUseVariablesInspection */
-        /** @var TestHandler $logHandler */
-        $logHandler = self::$kernel->getContainer()->get(TestHandler::class);
+        $logHandler = self::kernel()->getContainer()->get(TestHandler::class);
+        Assert::isInstanceOf($logHandler, TestHandler::class);
 
         return $logHandler;
     }
@@ -69,16 +77,14 @@ class KernelTestCase extends BeanstalkTestCase
     protected function dumpLog(): string
     {
         $records = $this->logHandler()->getRecords();
-        return implode('', array_map(function ($entry) {
-            return $entry['formatted'];
-        }, $records));
+        return implode('', array_map(static fn (LogRecord $entry): string => is_string($entry->formatted) ? $entry->formatted : '', $records));
     }
 
     protected function stopWhen(callable $stopCondition, int $timeoutInSeconds = 10): void
     {
         $start = Loop::now();
         //Setting the interval to a too-small value causes segmentation faults in some environments (such as Travis)
-        Loop::repeat(1000, function ($watcherId) use ($start, $stopCondition, $timeoutInSeconds) {
+        Loop::repeat(1000, function (string $watcherId) use ($start, $stopCondition, $timeoutInSeconds) {
             if (yield call($stopCondition)) {
                 Loop::cancel($watcherId);
                 Loop::stop();
@@ -92,13 +98,24 @@ class KernelTestCase extends BeanstalkTestCase
         });
     }
 
+    /**
+     * @param Promise<mixed> $promise
+     */
+    protected static function wait(Promise $promise): mixed
+    {
+        return Promise\wait($promise);
+    }
+
     private function elasticSearchReset(): void
     {
         $this->waitForElasticSearch();
-        Promise\wait($this->esClient->deleteIndex('_all')); // @phpstan-ignore-line
-        Promise\wait($this->esClient->refresh());   // @phpstan-ignore-line
+        self::wait($this->esClient->deleteIndex('_all'));
+        self::wait($this->esClient->refresh());
         do {
-            $stats = Promise\wait($this->esClient->statsIndex('_all')); // @phpstan-ignore-line
+            $stats = self::wait($this->esClient->statsIndex('_all'));
+            Assert::isArray($stats);
+            Assert::keyExists($stats, 'indices');
+            Assert::isArray($stats['indices']);
         } while (count($stats['indices']));
     }
 
@@ -118,8 +135,11 @@ class KernelTestCase extends BeanstalkTestCase
             }
 
             try {
-                $response = Promise\wait($this->esClient->catHealth()); // @phpstan-ignore-line
-                $status = $response[0]['status'];
+                $response = self::wait($this->esClient->catHealth());
+                Assert::isArray($response);
+                Assert::keyExists($response, 0);
+                Assert::isArray($response[0]);
+                $status = $response[0]['status'] ?? false;
             } catch (SocketException $e) {
                 // We want to retry until timeout is reached
                 $status = false;

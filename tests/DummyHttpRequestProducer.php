@@ -8,6 +8,7 @@ use Amp\Producer;
 use Amp\Promise;
 use Amp\Success;
 use Webgriffe\Esb\Model\Job;
+use Webmozart\Assert\Assert;
 
 final class DummyHttpRequestProducer implements HttpRequestProducerInterface
 {
@@ -40,7 +41,12 @@ final class DummyHttpRequestProducer implements HttpRequestProducerInterface
                     sprintf('Expected "%s" as data for "%s"', Request::class, __CLASS__)
                 );
             }
-            $body = json_decode(yield $data->getBody()->buffer(), true);
+            $requestBody = yield $data->getBody()->buffer();
+            Assert::string($requestBody);
+            $body = json_decode($requestBody, true);
+            Assert::isArray($body);
+            Assert::keyExists($body, 'jobs');
+            Assert::isIterable($body['jobs']);
             $jobsData = $body['jobs'];
             foreach ($jobsData as $jobData) {
                 yield $emit(new Job([$jobData]));   // @phpstan-ignore-line

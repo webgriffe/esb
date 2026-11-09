@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Webgriffe\Esb\Service;
 
-use function Amp\call;
 use Amp\CallableMaker;
 use Amp\Http\Server\HttpServer;
 use Amp\Http\Server\Options;
@@ -18,6 +17,8 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Webgriffe\Esb\HttpRequestProducerInterface;
 use Webgriffe\Esb\ProducerInstance;
+use Webmozart\Assert\Assert;
+use function Amp\call;
 
 /**
  * @internal
@@ -106,7 +107,9 @@ class HttpProducersServer
                 ]
             );
 
-            $jobsCount += yield $producerInstance->produceAndQueueJobs($request);
+            $producedCount = yield $producerInstance->produceAndQueueJobs($request);
+            Assert::integer($producedCount);
+            $jobsCount += $producedCount;
         }
 
         return new Response(

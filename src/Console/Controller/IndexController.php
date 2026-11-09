@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace Webgriffe\Esb\Console\Controller;
 
-use function Amp\call;
 use Amp\Http\Server\Request;
 use Amp\Http\Server\Response;
 use Amp\Http\Status;
 use Amp\Promise;
 use Webgriffe\AmpElasticsearch\Error as AmpElasticsearchError;
+use Webmozart\Assert\Assert;
+use function Amp\call;
 
 /**
  * @internal
@@ -50,7 +51,7 @@ class IndexController extends AbstractController
             try {
                 $response = yield $this->getElasticsearch()->getClient()->count($flowCode);
 
-                return $response['count'];
+                return $this->extractCount($response);
             } catch (AmpElasticsearchError $e) {
                 if ($this->isIndexNotFoundException($e)) {
                     return 0;
@@ -74,7 +75,7 @@ class IndexController extends AbstractController
                     ['term' => ['lastEvent.type.keyword' => 'errored']]
                 );
 
-                return $response['count'];
+                return $this->extractCount($response);
             } catch (AmpElasticsearchError $e) {
                 if ($this->isIndexNotFoundException($e)) {
                     return 0;
@@ -98,7 +99,7 @@ class IndexController extends AbstractController
                     ['term' => ['lastEvent.type.keyword' => 'worked']]
                 );
 
-                return $response['count'];
+                return $this->extractCount($response);
             } catch (AmpElasticsearchError $e) {
                 if ($this->isIndexNotFoundException($e)) {
                     return 0;
@@ -109,14 +110,19 @@ class IndexController extends AbstractController
         });
     }
 
+    private function extractCount(mixed $response): int
+    {
+        Assert::isArray($response);
+        Assert::keyExists($response, 'count');
+        Assert::integer($response['count']);
+
+        return $response['count'];
+    }
+
     private function isIndexNotFoundException(AmpElasticsearchError $e): bool
     {
-        $exceptionData = $e->getData();
-        return
-            $exceptionData &&
-            isset($exceptionData['error']) &&
-            isset($exceptionData['error']['type']) &&
-            $exceptionData['error']['type'] === 'index_not_found_exception'
-        ;
+        $error = $e->getData()['error'] ?? null;
+
+        return is_array($error) && ($error['type'] ?? null) === 'index_not_found_exception';
     }
 }

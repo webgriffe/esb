@@ -19,6 +19,7 @@ use FastRoute\RouteCollector;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerAwareInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Webmozart\Assert\Assert;
 
 /**
  * @internal
@@ -68,7 +69,7 @@ class Server implements ContainerAwareInterface
 
 
     /**
-     * @return \Generator<Promise<bool|string>>
+     * @return \Generator<int, Promise<mixed>, mixed, Response>
      *
      * @phpstan-ignore method.unused
      */
@@ -82,7 +83,9 @@ class Server implements ContainerAwareInterface
         $uri = $request->getUri()->getPath();
         $filePath = $this->publicDir . DIRECTORY_SEPARATOR . ltrim($uri, '/');
         if ((yield File\exists($filePath)) && (yield File\isFile($filePath))) {
-            return new Response(Status::OK, [], yield File\read($filePath));
+            $fileContent = yield File\read($filePath);
+            Assert::string($fileContent);
+            return new Response(Status::OK, [], $fileContent);
         }
 
         $dispatcher = $this->getDispatcher($request);
@@ -91,6 +94,8 @@ class Server implements ContainerAwareInterface
         switch ($routeInfo[0]) {
             case Dispatcher::METHOD_NOT_ALLOWED:
                 $allowedMethods = $routeInfo[1];
+                Assert::isArray($allowedMethods);
+                Assert::allString($allowedMethods);
                 $response = new Response(
                     Status::METHOD_NOT_ALLOWED,
                     [],
@@ -99,10 +104,14 @@ class Server implements ContainerAwareInterface
                 break;
             case Dispatcher::FOUND:
                 $handler = $routeInfo[1];
+                Assert::isCallable($handler);
+                Assert::isArray($routeInfo[2]);
                 $vars = array_values($routeInfo[2]);
                 array_unshift($vars, $request);
-                /** @var Response $response */
-                $response = yield \call_user_func_array($handler, $vars);
+                $responsePromise = \call_user_func_array($handler, $vars);
+                Assert::isInstanceOf($responsePromise, Promise::class);
+                $response = yield $responsePromise;
+                Assert::isInstanceOf($response, Response::class);
                 $response->addHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
                 $response->addHeader('Pragma', 'no-cache');
                 $response->addHeader('Expires', '0');

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Webgriffe\Esb;
 
-use function Amp\call;
 use Amp\Loop;
 use Amp\Promise;
 use Psr\Log\LoggerInterface;
@@ -13,10 +12,12 @@ use Webgriffe\Esb\Model\Job;
 use Webgriffe\Esb\Model\ProducedJobEvent;
 use Webgriffe\Esb\Service\BatchManagerFactory;
 use Webgriffe\Esb\Service\CronProducersServer;
-
 use Webgriffe\Esb\Service\HttpProducersServer;
 
 use Webgriffe\Esb\Service\QueueBackendInterface;
+use Webmozart\Assert\Assert;
+
+use function Amp\call;
 
 final class ProducerInstance implements ProducerInstanceInterface
 {
@@ -44,7 +45,7 @@ final class ProducerInstance implements ProducerInstanceInterface
             if ($this->producer instanceof RepeatProducerInterface) {
                 Loop::repeat(
                     $this->producer->getInterval(),
-                    function ($watcherId) {
+                    function (string $watcherId) {
                         Loop::disable($watcherId);
                         yield $this->produceAndQueueJobs();
                         Loop::enable($watcherId);
@@ -87,10 +88,14 @@ final class ProducerInstance implements ProducerInstanceInterface
                     /** @var Job $job */
                     $job = $jobs->getCurrent();
                     $job->addEvent(new ProducedJobEvent(new \DateTime(), \get_class($this->producer)));
-                    $jobsCount += yield $batchManager->enqueue($job);
+                    $enqueuedCount = yield $batchManager->enqueue($job);
+                    Assert::integer($enqueuedCount);
+                    $jobsCount += $enqueuedCount;
                 }
 
-                $jobsCount += yield $batchManager->flush();
+                $flushedCount = yield $batchManager->flush();
+                Assert::integer($flushedCount);
+                $jobsCount += $flushedCount;
             } catch (\Throwable $error) {
                 $this->logger->error(
                     'An error occurred producing/queueing jobs.',

@@ -69,6 +69,7 @@ class ElasticSearch
                 throw $error;
             }
 
+            Assert::isArray($response);
             Assert::keyExists($response, '_source');
             return $this->normalizer->denormalize($response['_source'], Job::class, 'json');
         });
@@ -148,12 +149,7 @@ class ElasticSearch
             try {
                 return yield $this->client->indexDocument($indexName, $job->getUuid(), $normalizedJob);
             } catch (Error $error) {
-                $errorData = $error->getData();
-                if (null === $errorData) {
-                    throw $error;
-                }
-                $errorType = $errorData['error']['type'] ?? null;
-                if ($errorType === 'no_shard_available_action_exception' &&
+                if (self::getErrorType($error) === 'no_shard_available_action_exception' &&
                     ++$retry <= self::NO_SHARD_AVAILABLE_INDEX_MAX_RETRY) {
                     // TODO Log no shard available and number of retrials
                     yield Amp\delay(1000);
@@ -193,12 +189,7 @@ class ElasticSearch
             try {
                 return yield $this->client->getDocument($indexName, $uuid);
             } catch (Error $error) {
-                $errorData = $error->getData();
-                if (null === $errorData) {
-                    throw $error;
-                }
-                $errorType = $errorData['error']['type'] ?? null;
-                if ($errorType === 'no_shard_available_action_exception' &&
+                if (self::getErrorType($error) === 'no_shard_available_action_exception' &&
                     ++$retry < self::NO_SHARD_AVAILABLE_INDEX_MAX_RETRY) {
                     // TODO Log no shard available retrials
                     yield Amp\delay(1000);
@@ -209,5 +200,15 @@ class ElasticSearch
                 throw $error;
             }
         }
+    }
+
+    private static function getErrorType(Error $error): ?string
+    {
+        $errorDetails = $error->getData()['error'] ?? null;
+        if (!is_array($errorDetails) || !is_string($errorDetails['type'] ?? null)) {
+            return null;
+        }
+
+        return $errorDetails['type'];
     }
 }

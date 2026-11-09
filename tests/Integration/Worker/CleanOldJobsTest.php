@@ -21,7 +21,7 @@ class CleanOldJobsTest extends KernelTestCase
     public function itDoesNothingIfThereAreNoOldJobs(): void
     {
         self::createKernel([]);
-        $container = self::$kernel->getContainer();
+        $container = self::kernel()->getContainer();
 
         /** @var ElasticSearch $esService */
         $esService = $container->get(ElasticSearch::class);
@@ -41,7 +41,7 @@ class CleanOldJobsTest extends KernelTestCase
     public function itDeletesOldJobs(): void
     {
         self::createKernel([]);
-        $container = self::$kernel->getContainer();
+        $container = self::kernel()->getContainer();
 
         /** @var ElasticSearch $esService */
         $esService = $container->get(ElasticSearch::class);

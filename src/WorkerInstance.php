@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Webgriffe\Esb;
 
-use function Amp\call;
-use function Amp\delay;
 use Amp\Promise;
 use Psr\Log\LoggerInterface;
 use Webgriffe\Esb\Exception\FatalQueueException;
@@ -15,6 +13,8 @@ use Webgriffe\Esb\Model\JobInterface;
 use Webgriffe\Esb\Model\ReservedJobEvent;
 use Webgriffe\Esb\Model\WorkedJobEvent;
 use Webgriffe\Esb\Service\QueueBackendInterface;
+use function Amp\call;
+use function Amp\delay;
 
 final class WorkerInstance implements WorkerInstanceInterface
 {

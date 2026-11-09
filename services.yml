@@ -20,17 +20,17 @@ services:
 
   Monolog\Handler\StreamHandler:
     class: \Monolog\Handler\StreamHandler
-    arguments: [ 'php://stdout', !php/const Monolog\Logger::DEBUG ]
+    arguments: [ 'php://stdout', 'debug' ]
 
   Monolog\Handler\ErrorLogHandler:
     class: \Monolog\Handler\ErrorLogHandler
-    arguments: [ !php/const Monolog\Handler\ErrorLogHandler::OPERATING_SYSTEM, !php/const Monolog\Logger::ERROR ]
+    arguments: [ !php/const Monolog\Handler\ErrorLogHandler::OPERATING_SYSTEM, 'error' ]
 
   Monolog\Formatter\HtmlFormatter: {}
 
   Monolog\Handler\NativeMailerHandler:
     class: \Monolog\Handler\NativeMailerHandler
-    arguments: [ '%logger_mail_to%', 'Significant event from ESB', '%logger_mail_from%', !php/const Monolog\Logger::WARNING ]
+    arguments: [ '%logger_mail_to%', 'Significant event from ESB', '%logger_mail_from%', 'warning' ]
     calls:
       - method: setFormatter
         arguments:
@@ -51,9 +51,6 @@ services:
     arguments:
       $baseUri: '%elasticsearch_base_uri%'
 
-  annotation_reader:
-    class: \Doctrine\Common\Annotations\AnnotationReader
-
   serializer.json_encoder:
     class: \Symfony\Component\Serializer\Encoder\JsonEncoder
   serializer.object_normalizer.reflection_extractor:
@@ -62,14 +59,12 @@ services:
     class: \Symfony\Component\Serializer\Normalizer\DateTimeNormalizer
   serializer.array_denormalizer:
     class: \Symfony\Component\Serializer\Normalizer\ArrayDenormalizer
-  serializer.class_metadata_factory.annotation_loader:
-    class: \Symfony\Component\Serializer\Mapping\Loader\AnnotationLoader
-    arguments:
-      - '@annotation_reader'
+  serializer.class_metadata_factory.attribute_loader:
+    class: \Symfony\Component\Serializer\Mapping\Loader\AttributeLoader
   serializer.class_metadata_factory:
     class: \Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactory
     arguments:
-      - '@serializer.class_metadata_factory.annotation_loader'
+      - '@serializer.class_metadata_factory.attribute_loader'
   serializer.object_normalizer:
     class: \Symfony\Component\Serializer\Normalizer\ObjectNormalizer
     arguments:

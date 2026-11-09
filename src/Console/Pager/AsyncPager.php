@@ -4,31 +4,43 @@ declare(strict_types=1);
 
 namespace Webgriffe\Esb\Console\Pager;
 
-use function Amp\call;
 use Amp\Promise;
+use Pagerfanta\Adapter\AdapterInterface;
+use Pagerfanta\Adapter\FixedAdapter;
 use Pagerfanta\Exception\LessThan1CurrentPageException;
+use Pagerfanta\Exception\LessThan1MaxPagesException;
 use Pagerfanta\Exception\LessThan1MaxPerPageException;
-use Pagerfanta\Exception\NotValidCurrentPageException;
-use Pagerfanta\Exception\NotValidMaxPerPageException;
 use Pagerfanta\Exception\OutOfRangeCurrentPageException;
 use Pagerfanta\PagerfantaInterface;
 use Webmozart\Assert\Assert;
+use function Amp\call;
 
 /**
  * @internal
+ * @implements PagerfantaInterface<mixed>
  */
 class AsyncPager implements PagerfantaInterface
 {
+    /** @var int<0, max>|null */
     private ?int $nbResults = null;
 
-    /** @var iterable<mixed>|null */
+    /** @var positive-int */
+    private int $maxPerPage;
+
+    /** @var positive-int */
+    private int $currentPage;
+
+    /** @var iterable<array-key, mixed>|null */
     private $slice;
+
+    /** @var positive-int|null */
+    private ?int $maxNbPages = null;
 
     private bool $allowOutOfRangePages = false;
 
     private bool $normalizeOutOfRangePages = false;
 
-    /** @var iterable<mixed>|null */
+    /** @var iterable<array-key, mixed>|null */
     private $currentPageResults;
 
     /**
@@ -37,9 +49,13 @@ class AsyncPager implements PagerfantaInterface
      */
     public function __construct(
         private readonly AsyncPagerAdapterInterface $adapter,
-        private int $maxPerPage = 10,
-        private int $currentPage = 1,
+        int $maxPerPage = 10,
+        int $currentPage = 1,
     ) {
+        $this->checkMaxPerPage($maxPerPage);
+        $this->checkCurrentPage($currentPage);
+        $this->maxPerPage = $maxPerPage;
+        $this->currentPage = $currentPage;
     }
 
     /**
@@ -48,24 +64,29 @@ class AsyncPager implements PagerfantaInterface
     public function init(): Promise
     {
         return call(function () {
-            $this->nbResults = yield $this->adapter->getNbResults();
+            $nbResults = yield $this->adapter->getNbResults();
+            Assert::natural($nbResults);
+            $this->nbResults = $nbResults;
             $offset = $this->calculateOffsetForCurrentPageResults();
             $length = $this->getMaxPerPage();
-            $this->slice = yield $this->adapter->getSlice($offset, $length);
+            $slice = yield $this->adapter->getSlice($offset, $length);
+            Assert::isIterable($slice);
+            $this->slice = $slice;
         });
     }
 
-    public function getAdapter(): AsyncPagerAdapterInterface
+    /**
+     * @return AdapterInterface<mixed>
+     */
+    public function getAdapter(): AdapterInterface
     {
-        return $this->adapter;
+        return new FixedAdapter($this->getNbResults(), $this->getCurrentPageResults());
     }
 
     /**
      * Sets whether or not allow out of range pages.
-     *
-     * @return self
      */
-    public function setAllowOutOfRangePages(bool $allowOutOfRangePages)
+    public function setAllowOutOfRangePages(bool $allowOutOfRangePages): static
     {
         $this->allowOutOfRangePages = $this->filterBoolean($allowOutOfRangePages);
 
@@ -82,10 +103,8 @@ class AsyncPager implements PagerfantaInterface
 
     /**
      * Sets whether or not normalize out of range pages.
-     *
-     * @return self
      */
-    public function setNormalizeOutOfRangePages(bool $normalizeOutOfRangePages)
+    public function setNormalizeOutOfRangePages(bool $normalizeOutOfRangePages): static
     {
         $this->normalizeOutOfRangePages = $this->filterBoolean($normalizeOutOfRangePages);
 
@@ -113,14 +132,9 @@ class AsyncPager implements PagerfantaInterface
     /**
      * Sets the max per page.
      *
-     * Tries to convert from string and float.
-     *
-     * @return self
-     *
-     * @throws NotValidMaxPerPageException If the max per page is not an integer even converting.
      * @throws LessThan1MaxPerPageException  If the max per page is less than 1.
      */
-    public function setMaxPerPage(int $maxPerPage)
+    public function setMaxPerPage(int $maxPerPage): static
     {
         $this->maxPerPage = $this->filterMaxPerPage($maxPerPage);
         $this->resetForMaxPerPageChange();
@@ -129,25 +143,20 @@ class AsyncPager implements PagerfantaInterface
     }
 
     /**
-     * @param mixed $maxPerPage
+     * @return positive-int
      */
-    private function filterMaxPerPage($maxPerPage): int
+    private function filterMaxPerPage(int $maxPerPage): int
     {
-        $maxPerPage = $this->toInteger($maxPerPage);
         $this->checkMaxPerPage($maxPerPage);
 
         return $maxPerPage;
     }
 
     /**
-     * @param mixed $maxPerPage
+     * @phpstan-assert positive-int $maxPerPage
      */
-    private function checkMaxPerPage($maxPerPage): void
+    private function checkMaxPerPage(int $maxPerPage): void
     {
-        if (!is_int($maxPerPage)) {
-            throw new NotValidMaxPerPageException();
-        }
-
         if ($maxPerPage < 1) {
             throw new LessThan1MaxPerPageException();
         }
@@ -170,15 +179,10 @@ class AsyncPager implements PagerfantaInterface
     /**
      * Sets the current page.
      *
-     * Tries to convert from string and float.
-     *
-     * @return self
-     *
-     * @throws NotValidCurrentPageException If the current page is not an integer even converting.
      * @throws LessThan1CurrentPageException  If the current page is less than 1.
      * @throws OutOfRangeCurrentPageException If It is not allowed out of range pages and they are not normalized.
      */
-    public function setCurrentPage(int $currentPage)
+    public function setCurrentPage(int $currentPage): static
     {
         $this->currentPage = $this->filterCurrentPage($currentPage);
         $this->resetForCurrentPageChange();
@@ -187,30 +191,29 @@ class AsyncPager implements PagerfantaInterface
     }
 
     /**
-     * @return int
+     * @return positive-int
      */
     private function filterCurrentPage(int $currentPage): int
     {
-        $currentPage = $this->toInteger($currentPage);
         $this->checkCurrentPage($currentPage);
 
         return $this->filterOutOfRangeCurrentPage($currentPage);
     }
 
     /**
-     * @param mixed $currentPage
+     * @phpstan-assert positive-int $currentPage
      */
-    private function checkCurrentPage($currentPage): void
+    private function checkCurrentPage(int $currentPage): void
     {
-        if (!is_int($currentPage)) {
-            throw new NotValidCurrentPageException();
-        }
-
         if ($currentPage < 1) {
             throw new LessThan1CurrentPageException();
         }
     }
 
+    /**
+     * @param positive-int $currentPage
+     * @return positive-int
+     */
     private function filterOutOfRangeCurrentPage(int $currentPage): int
     {
         if ($this->notAllowedCurrentPageOutOfRange($currentPage)) {
@@ -232,6 +235,7 @@ class AsyncPager implements PagerfantaInterface
     }
 
     /**
+     * @return positive-int
      * @throws OutOfRangeCurrentPageException If the page should not be normalized
      */
     private function normalizeOutOfRangeCurrentPage(int $currentPage): int
@@ -265,15 +269,15 @@ class AsyncPager implements PagerfantaInterface
     /**
      * Returns the results for the current page.
      *
-     * @return iterable<mixed>|null
+     * @return iterable<array-key, mixed>
      */
-    public function getCurrentPageResults()
+    public function getCurrentPageResults(): iterable
     {
         if ($this->notCachedCurrentPageResults()) {
             $this->currentPageResults = $this->getCurrentPageResultsFromAdapter();
         }
 
-        return $this->currentPageResults;
+        return $this->currentPageResults ?? [];
     }
 
     private function notCachedCurrentPageResults(): bool
@@ -282,13 +286,16 @@ class AsyncPager implements PagerfantaInterface
     }
 
     /**
-     * @return iterable<mixed>|null
+     * @return iterable<array-key, mixed>|null
      */
     private function getCurrentPageResultsFromAdapter()
     {
         return $this->slice;
     }
 
+    /**
+     * @return int<0, max>
+     */
     private function calculateOffsetForCurrentPageResults(): int
     {
         return ($this->getCurrentPage() - 1) * $this->getMaxPerPage();
@@ -307,7 +314,7 @@ class AsyncPager implements PagerfantaInterface
     /**
      * {@inheritDoc}
      */
-    public function getCurrentPageOffsetEnd(): ?int
+    public function getCurrentPageOffsetEnd(): int
     {
         return $this->hasNextPage() ?
             $this->getCurrentPage() * $this->getMaxPerPage() :
@@ -315,11 +322,11 @@ class AsyncPager implements PagerfantaInterface
     }
 
     /**
-     * {@inheritDoc}
+     * @return int<0, max>
      */
-    public function getNbResults(): ?int
+    public function getNbResults(): int
     {
-        return $this->nbResults;
+        return $this->nbResults ?? 0;
     }
 
     /**
@@ -329,18 +336,49 @@ class AsyncPager implements PagerfantaInterface
     {
         $nbPages = $this->calculateNbPages();
 
-        if ($nbPages == 0) {
+        if (0 === $nbPages) {
             return $this->minimumNbPages();
+        }
+
+        if (null !== $this->maxNbPages && $this->maxNbPages < $nbPages) {
+            return $this->maxNbPages;
         }
 
         return $nbPages;
     }
 
-    private function calculateNbPages(): int
+    public function setMaxNbPages(int $maxNbPages): static
     {
-        return (int) ceil($this->getNbResults() / $this->getMaxPerPage());
+        if ($maxNbPages < 1) {
+            throw new LessThan1MaxPagesException();
+        }
+
+        $this->maxNbPages = $maxNbPages;
+
+        return $this;
     }
 
+    public function resetMaxNbPages(): static
+    {
+        $this->maxNbPages = null;
+
+        return $this;
+    }
+
+    /**
+     * @return int<0, max>
+     */
+    private function calculateNbPages(): int
+    {
+        $nbPages = (int) ceil($this->getNbResults() / $this->getMaxPerPage());
+        \assert($nbPages >= 0);
+
+        return $nbPages;
+    }
+
+    /**
+     * @return positive-int
+     */
     private function minimumNbPages(): int
     {
         return 1;
@@ -373,6 +411,8 @@ class AsyncPager implements PagerfantaInterface
             throw new \LogicException('There is no previous page.');
         }
 
+        \assert($this->currentPage > 1);
+
         return $this->currentPage - 1;
     }
 
@@ -400,13 +440,13 @@ class AsyncPager implements PagerfantaInterface
 
     public function count(): int
     {
-        return $this->getNbResults() ?? 0;
+        return $this->getNbResults();
     }
 
     /**
      * @return \Traversable<mixed>
      */
-    public function getIterator()
+    public function getIterator(): \Traversable
     {
         $results = $this->getCurrentPageResults();
 
@@ -416,10 +456,6 @@ class AsyncPager implements PagerfantaInterface
 
         if ($results instanceof \IteratorAggregate) {
             return $results->getIterator();
-        }
-
-        if (null === $results) {
-            return new \ArrayIterator([]);
         }
 
         if (!is_array($results)) {
@@ -439,32 +475,7 @@ class AsyncPager implements PagerfantaInterface
             return iterator_to_array($results);
         }
 
-        if (null === $results) {
-            return [];
-        }
-
         return $results;
-    }
-
-    /**
-     * @param mixed $value
-     * @return mixed
-     */
-    private function toInteger($value)
-    {
-        if ($this->needsToIntegerConversion($value)) {
-            return (int) $value;
-        }
-
-        return $value;
-    }
-
-    /**
-     * @param mixed $value
-     */
-    private function needsToIntegerConversion($value): bool
-    {
-        return (is_string($value) || is_float($value)) && (int) $value == $value;
     }
 
     /**
@@ -480,6 +491,9 @@ class AsyncPager implements PagerfantaInterface
             ));
         }
 
-        return (int) ceil($position / $this->getMaxPerPage());
+        $pageNumber = (int) ceil($position / $this->getMaxPerPage());
+        \assert($pageNumber > 0);
+
+        return $pageNumber;
     }
 }

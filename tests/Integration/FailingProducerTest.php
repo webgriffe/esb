@@ -36,7 +36,7 @@ class FailingProducerTest extends KernelTestCase
             return $this->logHandler()->hasErrorRecords();
         });
 
-        self::$kernel->boot();
+        self::kernel()->boot();
 
         $this->assertTrue($this->logHandler()->hasErrorThatContains('An error occurred producing/queueing jobs'));
     }

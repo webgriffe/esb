@@ -45,7 +45,7 @@ class CrontabProducerAndWorkerTest extends KernelTestCase
             Loop::stop();
         });
 
-        self::$kernel->boot();
+        self::kernel()->boot();
 
         $this->assertFileDoesNotExist($workerFile);
     }
@@ -74,7 +74,7 @@ class CrontabProducerAndWorkerTest extends KernelTestCase
             return (yield exists($workerFile)) && count($this->getFileLines($workerFile)) === 2;
         });
 
-        self::$kernel->boot();
+        self::kernel()->boot();
 
         $workerFileLines = $this->getFileLines($workerFile);
         $this->assertStringContainsString('job1', $workerFileLines[0]);

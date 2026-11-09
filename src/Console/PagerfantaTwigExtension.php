@@ -24,6 +24,7 @@ final class PagerfantaTwigExtension extends AbstractExtension
     }
 
     /**
+     * @param PagerfantaInterface<mixed> $pagerfanta
      * @param array<string, string|int> $options
      */
     public function renderPagerfanta(

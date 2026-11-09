@@ -8,7 +8,7 @@ use Amp\Loop;
 use Amp\Promise;
 use Amp\Socket\ConnectException;
 use Amp\Socket\Socket;
-use Monolog\Logger;
+use Monolog\LogRecord;
 use org\bovigo\vfs\vfsStream;
 use Webgriffe\Esb\DummyFilesystemWorker;
 use Webgriffe\Esb\DummyHttpRequestProducer;
@@ -16,6 +16,7 @@ use Webgriffe\Esb\KernelTestCase;
 use Webgriffe\Esb\TestUtils;
 
 use Webmozart\Assert\Assert;
+use Amp\Http\Client\Response;
 use function Amp\call;
 use function Amp\File\exists;
 use function Amp\Socket\connect;
@@ -44,7 +45,7 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
                 ]
             ]
         );
-        $httpPort = self::$kernel->getContainer()->getParameter('http_server_port');
+        $httpPort = self::kernel()->getContainer()->getParameter('http_server_port');
         Assert::integerish($httpPort);
 
         Loop::delay(100, function () use ($httpPort){
@@ -56,32 +57,23 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
             $response = yield $client->request($request);
             $this->assertStringContainsString(
                 '"Successfully scheduled 3 job(s) to be queued."',
-                yield $response->getBody()->read()
+                yield from $this->readBody($response)
             );
         });
         $this->stopWhen(function () use ($workerFile) {
             return (yield exists($workerFile)) && count($this->getFileLines($workerFile)) === 3;
         });
 
-        self::$kernel->boot();
+        self::kernel()->boot();
 
         $workerFileLines = $this->getFileLines($workerFile);
         $this->assertCount(3, $workerFileLines);
         $this->assertStringContainsString('job1', $workerFileLines[0]);
         $this->assertStringContainsString('job2', $workerFileLines[1]);
         $this->assertStringContainsString('job3', $workerFileLines[2]);
-        $this->logHandler()->hasRecordThatMatches(
-            '/Successfully produced a new Job .*? "payload_data":["job1"]/',
-            Logger::INFO
-        );
-        $this->logHandler()->hasRecordThatMatches(
-            '/Successfully produced a new Job .*? "payload_data":["job2"]/',
-            Logger::INFO
-        );
-        $this->logHandler()->hasRecordThatMatches(
-            '/Successfully produced a new Job .*? "payload_data":["job3"]/',
-            Logger::INFO
-        );
+        $this->assertEnqueuedJobLogged('job1');
+        $this->assertEnqueuedJobLogged('job2');
+        $this->assertEnqueuedJobLogged('job3');
         $this->assertReadyJobsCountInTube(0, self::FLOW_CODE);
     }
 
@@ -120,7 +112,7 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
                 ]
             ]
         );
-        $httpPort = self::$kernel->getContainer()->getParameter('http_server_port');
+        $httpPort = self::kernel()->getContainer()->getParameter('http_server_port');
         Assert::integerish($httpPort);
 
         Loop::delay(100, function () use ($httpPort){
@@ -132,7 +124,7 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
             $response = yield $client->request($request);
             $this->assertStringContainsString(
                 '"Successfully scheduled 2 job(s) to be queued."',
-                yield $response->getBody()->read()
+                yield from $this->readBody($response)
             );
         });
         $this->stopWhen(function () use ($firstWorkerFile, $secondWorkerFile) {
@@ -144,7 +136,7 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
             ;
         });
 
-        self::$kernel->boot();
+        self::kernel()->boot();
 
         $firstWorkerFileLines = $this->getFileLines($firstWorkerFile);
         $secondWorkerFileLines = $this->getFileLines($secondWorkerFile);
@@ -174,7 +166,7 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
                 ]
             ]
         );
-        $httpPort = self::$kernel->getContainer()->getParameter('http_server_port');
+        $httpPort = self::kernel()->getContainer()->getParameter('http_server_port');
         Assert::integerish($httpPort);
 
         Loop::delay(100, function () use ($httpPort) {
@@ -184,13 +176,14 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
             $request = new Request("http://127.0.0.1:{$httpPort}/wrong-uri", 'POST');
             $request->setBody($payload);
             $response = yield $client->request($request);
+            Assert::isInstanceOf($response, Response::class);
             $this->assertEquals(404, $response->getStatus());
             Loop::delay(200, function () {
                 Loop::stop();
             });
         });
 
-        self::$kernel->boot();
+        self::kernel()->boot();
 
         $this->assertFileDoesNotExist($workerFile);
         $this->assertReadyJobsCountInTube(0, self::FLOW_CODE);
@@ -214,7 +207,7 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
                 ]
             ]
         );
-        $httpPort = self::$kernel->getContainer()->getParameter('http_server_port');
+        $httpPort = self::kernel()->getContainer()->getParameter('http_server_port');
         Assert::integerish($httpPort);
 
         Loop::delay(100, function () use ($httpPort) {
@@ -228,33 +221,28 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
             $request2 = new Request("http://127.0.0.1:{$httpPort}/dummy", 'POST');
             $request2->setBody($payload2);
             $responses = yield [$client1->request($request1), $client2->request($request2)];
+            Assert::isArray($responses);
             $this->assertStringContainsString(
                 '"Successfully scheduled 1 job(s) to be queued."',
-                yield $responses[0]->getBody()->read()
+                yield from $this->readBody($responses[0])
             );
             $this->assertStringContainsString(
                 '"Successfully scheduled 1 job(s) to be queued."',
-                yield $responses[1]->getBody()->read()
+                yield from $this->readBody($responses[1])
             );
         });
         $this->stopWhen(function () use ($workerFile) {
             return (yield exists($workerFile)) && count($this->getFileLines($workerFile)) === 2;
         });
 
-        self::$kernel->boot();
+        self::kernel()->boot();
 
         $workerFileLines = $this->getFileLines($workerFile);
         $this->assertCount(2, $workerFileLines);
         $this->assertStringContainsString('job1', implode(PHP_EOL, $workerFileLines));
         $this->assertStringContainsString('job2', implode(PHP_EOL, $workerFileLines));
-        $this->logHandler()->hasRecordThatMatches(
-            '/Successfully produced a new Job .*? "payload_data":["job1"]/',
-            Logger::INFO
-        );
-        $this->logHandler()->hasRecordThatMatches(
-            '/Successfully produced a new Job .*? "payload_data":["job2"]/',
-            Logger::INFO
-        );
+        $this->assertEnqueuedJobLogged('job1');
+        $this->assertEnqueuedJobLogged('job2');
         $this->assertReadyJobsCountInTube(0, self::FLOW_CODE);
     }
 
@@ -272,7 +260,30 @@ class HttpRequestProducerAndWorkerTest extends KernelTestCase
                 }
             } while ($connection === null);
 
+            Assert::isInstanceOf($connection, Socket::class);
             $connection->close();
         });
+    }
+
+    private function assertEnqueuedJobLogged(string $payload): void
+    {
+        $this->assertTrue(
+            $this->logHandler()->hasInfoThatPasses(
+                fn (LogRecord $record): bool => $record->message === 'Successfully enqueued a new Job'
+                    && $record->context['payload_data'] === [$payload]
+            )
+        );
+    }
+
+    /**
+     * @return \Generator<int, Promise<mixed>, mixed, string>
+     */
+    private function readBody(mixed $response): \Generator
+    {
+        Assert::isInstanceOf($response, Response::class);
+        $body = yield $response->getBody()->read();
+        Assert::string($body);
+
+        return $body;
     }
 }

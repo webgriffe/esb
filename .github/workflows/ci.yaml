@@ -74,7 +74,7 @@ jobs:
         run: vendor/bin/ecs check
 
       - name: Run PHPStan
-        run: vendor/bin/phpstan analyse --no-progress -l max -c phpstan.neon src/
+        run: vendor/bin/phpstan analyse --no-progress -c phpstan.neon
 
       - name: PHPUnit tests
         run: vendor/bin/phpunit tests
