@@ -6,8 +6,10 @@ namespace Webgriffe\Esb\Service;
 
 use Amp\Beanstalk\BeanstalkClient;
 use function Amp\call;
+use Amp\Http\Client\HttpException;
 use Amp\Promise;
 use Psr\Log\LoggerInterface;
+use Webgriffe\AmpElasticsearch\Error as ElasticSearchError;
 use Webgriffe\Esb\Exception\ElasticSearch\JobNotFoundException;
 use Webgriffe\Esb\Exception\FatalQueueException;
 use Webgriffe\Esb\Model\FlowConfig;
@@ -208,6 +210,12 @@ final class QueueManager implements ProducerQueueManagerInterface, WorkerQueueMa
                 /** @var Job $job */
                 $job = yield $this->elasticSearch->fetchJob($jobUuid, $this->flowConfig->getTube());
             } catch (\Throwable $exception) {
+                if ($this->isElasticSearchUnavailable($exception)) {
+                    yield $this->beanstalkClient->release($jobBeanstalkId);
+
+                    throw new FatalQueueException($exception->getMessage(), $exception->getCode(), $exception);
+                }
+
                 yield $this->beanstalkClient->bury($jobBeanstalkId);
 
                 throw new JobNotFoundException($jobUuid, 0, $exception);
@@ -351,6 +359,17 @@ final class QueueManager implements ProducerQueueManagerInterface, WorkerQueueMa
         }
 
         throw new \RuntimeException("Unknown Beanstalk id for job {$uuid}");
+    }
+
+    private function isElasticSearchUnavailable(\Throwable $exception): bool
+    {
+        // Only failures that do not depend on the job itself are fatal: stopping the ESB because of a single broken
+        // job would make it loop on that job forever.
+        if ($exception instanceof HttpException) {
+            return true;
+        }
+
+        return $exception instanceof ElasticSearchError && $exception->getCode() >= 500;
     }
 
     public function isSuccessfulStatusCode(?int $statusCode): bool
